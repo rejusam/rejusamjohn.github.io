@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dr Reju Sam John — Computational Epidemiologist &amp; AI Researcher</title>
+    <meta name="description" content="Computational epidemiologist, AI researcher, and data scientist with 7+ years in health data science. PhD-qualified, 169+ citations, published in Nature Communications and J. Royal Society Interface.">
+    <meta name="keywords" content="data scientist, computational epidemiology, AI researcher, machine learning, health data science, New Zealand, Auckland">
+    <meta name="author" content="Dr Reju Sam John">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Dr Reju Sam John — Computational Epidemiologist & AI Researcher">
+    <meta property="og:description" content="PhD-qualified data scientist and AI researcher with 169+ citations. Seeking research collaborations and data science opportunities.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rejusamjohn.pages.dev">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#hero" class="nav-logo">RSJ<span class="accent">.</span></a>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#about">About</a></li>
+                <li><a href="#experience">Experience</a></li>
+                <li><a href="#skills">Skills</a></li>
+                <li><a href="#publications">Publications</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#education">Education</a></li>
+                <li><a href="#contact" class="nav-cta">Get in Touch</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <canvas id="particleCanvas"></canvas>
+        <div class="hero-content">
+            <div class="hero-badge animate-in">Computational Epidemiologist &bull; AI Researcher &bull; Data Scientist</div>
+            <h1 class="hero-title animate-in">
+                Dr Reju Sam <span class="gradient-text">John</span>
+            </h1>
+            <p class="hero-subtitle animate-in">
+                Turning complex health data into actionable insights through
+                <span class="typed-text" id="typedText"></span><span class="cursor">|</span>
+            </p>
+            <div class="hero-stats animate-in">
+                <div class="stat">
+                    <span class="stat-number" data-target="169">0</span><span class="stat-plus">+</span>
+                    <span class="stat-label">Citations</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-number" data-target="11">0</span>
+                    <span class="stat-label">Publications</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-number" data-target="7">0</span><span class="stat-plus">+</span>
+                    <span class="stat-label">Years Experience</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-number" data-target="22">0</span>
+                    <span class="stat-label">GitHub Repos</span>
+                </div>
+            </div>
+            <div class="hero-actions animate-in">
+                <a href="#contact" class="btn btn-primary">
+                    <i class="fas fa-envelope"></i> Let's Collaborate
+                </a>
+                <a href="#publications" class="btn btn-secondary">
+                    <i class="fas fa-book-open"></i> View Research
+                </a>
+                <a href="CV_RS_John_AI_Lab.pdf" class="btn btn-outline" target="_blank">
+                    <i class="fas fa-download"></i> Download CV
+                </a>
+            </div>
+            <div class="hero-links animate-in">
+                <a href="https://github.com/rejusam" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                <a href="https://scholar.google.com/citations?user=EeZSlzsAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><i class="fas fa-graduation-cap"></i></a>
+                <a href="https://www.linkedin.com/in/dr-reju-sam-john-14b00774" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                <a href="https://orcid.org/0000-0002-5024-3700" target="_blank" rel="noopener" aria-label="ORCID"><i class="fab fa-orcid"></i></a>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="mouse">
+                <div class="wheel"></div>
+            </div>
+            <span>Scroll to explore</span>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section" id="about">
+        <div class="container">
+            <h2 class="section-title reveal">About <span class="gradient-text">Me</span></h2>
+            <div class="about-grid">
+                <div class="about-text reveal">
+                    <p class="lead">
+                        I'm a computational epidemiologist and AI researcher based in Auckland, New Zealand. With a PhD in Physics (Computational Modelling) and 7+ years of postdoctoral research, I bridge the gap between advanced computational methods and real-world health outcomes.
+                    </p>
+                    <p>
+                        My work spans the full research lifecycle &mdash; from study design and ethics applications through to data collection, analysis, and publication in high-impact journals like <em>Nature Communications</em> and the <em>Journal of the Royal Society Interface</em>.
+                    </p>
+                    <p>
+                        I'm passionate about how AI and machine learning can improve diagnostic services and advance health equity, particularly within Aotearoa New Zealand's health system. I bring a strong commitment to Te Tiriti o Waitangi principles, ensuring M&#257;ori data sovereignty is embedded in research design and practice.
+                    </p>
+                    <p>
+                        Currently seeking <strong>data scientist</strong> and <strong>research collaboration</strong> opportunities where I can apply my expertise in computational modelling, ML pipelines, and health informatics to drive evidence-based decisions.
+                    </p>
+                </div>
+                <div class="about-highlights reveal">
+                    <div class="highlight-card">
+                        <div class="highlight-icon"><i class="fas fa-brain"></i></div>
+                        <h3>AI &amp; ML in Health</h3>
+                        <p>Designing and implementing AI/ML pipelines for infection dynamics modelling, diagnostic evaluation, and health equity analysis.</p>
+                    </div>
+                    <div class="highlight-card">
+                        <div class="highlight-icon"><i class="fas fa-chart-line"></i></div>
+                        <h3>Data Science</h3>
+                        <p>Scalable ETL pipelines, ensemble ML models with 90% forecasting accuracy, and end-to-end reproducible analytical workflows.</p>
+                    </div>
+                    <div class="highlight-card">
+                        <div class="highlight-icon"><i class="fas fa-virus"></i></div>
+                        <h3>Epidemiology</h3>
+                        <p>Metapopulation SEIR models, zoonotic disease dynamics, and computational frameworks published in top-tier journals.</p>
+                    </div>
+                    <div class="highlight-card">
+                        <div class="highlight-icon"><i class="fas fa-balance-scale"></i></div>
+                        <h3>Health Equity</h3>
+                        <p>Equity-focused AI evaluation frameworks with culturally grounded research practice and M&#257;ori data sovereignty principles.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Experience Section -->
+    <section class="section section-alt" id="experience">
+        <div class="container">
+            <h2 class="section-title reveal">Work <span class="gradient-text">Experience</span></h2>
+            <div class="timeline">
+
+                <div class="timeline-item reveal">
+                    <div class="timeline-marker current"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <div>
+                                <h3>AI, Machine Learning &amp; Data Science Consultant</h3>
+                                <p class="timeline-org">Molecular Epidemiology and Public Health Laboratory</p>
+                            </div>
+                            <div class="timeline-date">
+                                <span class="badge badge-current">Current</span>
+                                Mar 2025 &ndash; Present
+                            </div>
+                        </div>
+                        <ul class="timeline-details">
+                            <li>Design and implement AI/ML pipelines (Python, R) to model infection dynamics, evaluate transmission risk, and produce evidence for public health recommendations.</li>
+                            <li>Translate analytical outputs into reports and presentations for clinical, policy, and non-technical audiences; mentor PhD researchers in reproducible workflows.</li>
+                            <li>Embed Te Tiriti o Waitangi principles and M&#257;ori data sovereignty considerations in study design, data-sharing agreements, and dissemination planning.</li>
+                        </ul>
+                        <div class="timeline-tags">
+                            <span class="tag">Python</span><span class="tag">R</span><span class="tag">ML Pipelines</span><span class="tag">Public Health</span><span class="tag">Mentoring</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item reveal">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <div>
+                                <h3>Production Operator &mdash; Regulated Healthcare Manufacturing</h3>
+                                <p class="timeline-org">Fisher &amp; Paykel Healthcare</p>
+                            </div>
+                            <div class="timeline-date">Sep 2024 &ndash; Feb 2026</div>
+                        </div>
+                        <ul class="timeline-details">
+                            <li>Operated within an ISO-regulated medical device manufacturing environment, gaining direct operational knowledge of quality systems, risk documentation, and compliance requirements applicable to health technology evaluation.</li>
+                        </ul>
+                        <div class="timeline-tags">
+                            <span class="tag">ISO Compliance</span><span class="tag">Quality Systems</span><span class="tag">Medical Devices</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item reveal">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <div>
+                                <h3>Postdoctoral Fellow &mdash; Data Science, Network Theory &amp; Health Informatics</h3>
+                                <p class="timeline-org">The University of Auckland</p>
+                            </div>
+                            <div class="timeline-date">Jan 2023 &ndash; Mar 2024</div>
+                        </div>
+                        <ul class="timeline-details">
+                            <li>Built and managed a longitudinal participant database for a clinical study tracking infection dynamics in vulnerable populations.</li>
+                            <li>Designed large-scale computational models of disease propagation coupled with (mis)information diffusion &mdash; pragmatic research designs relevant to AI-enabled health interventions.</li>
+                            <li>Developed reproducible, version-controlled analytical workflows in Linux environments and delivered results to academic, clinical, and policy audiences.</li>
+                        </ul>
+                        <div class="timeline-tags">
+                            <span class="tag">Network Theory</span><span class="tag">Health Informatics</span><span class="tag">Clinical Studies</span><span class="tag">Linux</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item reveal">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <div>
+                                <h3>Postdoctoral Fellow &mdash; Computational Epidemiologist &amp; Health Data Scientist</h3>
+                                <p class="timeline-org">Massey University</p>
+                            </div>
+                            <div class="timeline-date">Nov 2020 &ndash; Jan 2023</div>
+                        </div>
+                        <ul class="timeline-details">
+                            <li>Led the design and delivery of metapopulation SEIR models across 340 cities, producing a first-author paper in <em>Journal of the Royal Society Interface</em>.</li>
+                            <li>Built scalable ETL pipelines integrating multi-source public health datasets, achieving 90% accuracy in epidemic trend forecasting using ensemble ML models.</li>
+                            <li>Collaborated with international multidisciplinary teams across New Zealand, USA, and Europe.</li>
+                        </ul>
+                        <div class="timeline-tags">
+                            <span class="tag">SEIR Models</span><span class="tag">ETL Pipelines</span><span class="tag">Ensemble ML</span><span class="tag">Forecasting</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item reveal">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <div>
+                                <h3>Postdoctoral Fellow &mdash; Astrophysics Simulations &amp; Computational Data Science</h3>
+                                <p class="timeline-org">Inter-University Centre for Astronomy and Astrophysics (IUCAA), India</p>
+                            </div>
+                            <div class="timeline-date">Aug 2018 &ndash; Nov 2020</div>
+                        </div>
+                        <ul class="timeline-details">
+                            <li>Designed automated processing pipelines for large-scale (1 TB+) simulation datasets on HPC clusters; applied statistical inference and ML to high-dimensional data.</li>
+                        </ul>
+                        <div class="timeline-tags">
+                            <span class="tag">HPC</span><span class="tag">Simulations</span><span class="tag">Statistical Inference</span><span class="tag">Big Data</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section class="section" id="skills">
+        <div class="container">
+            <h2 class="section-title reveal">Technical <span class="gradient-text">Skills</span></h2>
+            <div class="skills-grid">
+
+                <div class="skill-category reveal">
+                    <div class="skill-icon"><i class="fas fa-code"></i></div>
+                    <h3>Programming &amp; Tools</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">Python</span>
+                        <span class="skill-tag">R</span>
+                        <span class="skill-tag">SQL</span>
+                        <span class="skill-tag">Bash/Shell</span>
+                        <span class="skill-tag">C</span>
+                        <span class="skill-tag">Git/GitHub</span>
+                        <span class="skill-tag">Linux</span>
+                        <span class="skill-tag">LaTeX</span>
+                    </div>
+                </div>
+
+                <div class="skill-category reveal">
+                    <div class="skill-icon"><i class="fas fa-robot"></i></div>
+                    <h3>AI &amp; Machine Learning</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">Scikit-learn</span>
+                        <span class="skill-tag">Deep Learning</span>
+                        <span class="skill-tag">NLP</span>
+                        <span class="skill-tag">Ensemble Methods</span>
+                        <span class="skill-tag">Statistical Modelling</span>
+                        <span class="skill-tag">Time Series</span>
+                        <span class="skill-tag">Classification</span>
+                    </div>
+                </div>
+
+                <div class="skill-category reveal">
+                    <div class="skill-icon"><i class="fas fa-database"></i></div>
+                    <h3>Data Engineering</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">ETL Pipelines</span>
+                        <span class="skill-tag">REDCap</span>
+                        <span class="skill-tag">Web Scraping</span>
+                        <span class="skill-tag">APIs</span>
+                        <span class="skill-tag">Data Validation</span>
+                        <span class="skill-tag">Pandas</span>
+                        <span class="skill-tag">NumPy</span>
+                    </div>
+                </div>
+
+                <div class="skill-category reveal">
+                    <div class="skill-icon"><i class="fas fa-chart-bar"></i></div>
+                    <h3>Visualization &amp; BI</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">Power BI</span>
+                        <span class="skill-tag">Tableau</span>
+                        <span class="skill-tag">Streamlit</span>
+                        <span class="skill-tag">Matplotlib</span>
+                        <span class="skill-tag">Seaborn</span>
+                        <span class="skill-tag">Plotly</span>
+                    </div>
+                </div>
+
+                <div class="skill-category reveal">
+                    <div class="skill-icon"><i class="fas fa-cloud"></i></div>
+                    <h3>Cloud &amp; DevOps</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">AWS</span>
+                        <span class="skill-tag">Google Cloud</span>
+                        <span class="skill-tag">GitHub Actions</span>
+                        <span class="skill-tag">CI/CD</span>
+                        <span class="skill-tag">HPC Clusters</span>
+                        <span class="skill-tag">Docker</span>
+                    </div>
+                </div>
+
+                <div class="skill-category reveal">
+                    <div class="skill-icon"><i class="fas fa-heartbeat"></i></div>
+                    <h3>Domain Expertise</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">Epidemiology</span>
+                        <span class="skill-tag">Health Informatics</span>
+                        <span class="skill-tag">Clinical Trials</span>
+                        <span class="skill-tag">ICH GCP R3</span>
+                        <span class="skill-tag">Health Equity</span>
+                        <span class="skill-tag">Te Tiriti o Waitangi</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Publications Section -->
+    <section class="section section-alt" id="publications">
+        <div class="container">
+            <h2 class="section-title reveal">Selected <span class="gradient-text">Publications</span></h2>
+            <p class="section-subtitle reveal">11 peer-reviewed articles &bull; 169+ citations &bull; <a href="https://scholar.google.com/citations?user=EeZSlzsAAAAJ&hl=en" target="_blank" rel="noopener">Google Scholar</a> &bull; <a href="https://orcid.org/0000-0002-5024-3700" target="_blank" rel="noopener">ORCID</a></p>
+
+            <div class="publications-list">
+
+                <div class="pub-card reveal">
+                    <div class="pub-year">2024</div>
+                    <div class="pub-content">
+                        <h3 class="pub-title">High connectivity and human movement limits the impact of travel time on infectious disease transmission</h3>
+                        <p class="pub-authors"><strong>John, R.S.</strong> et al.</p>
+                        <p class="pub-journal"><em>Journal of the Royal Society Interface</em>, 21(210)</p>
+                        <div class="pub-links">
+                            <a href="https://doi.org/10.1098/rsif.2023.0425" target="_blank" rel="noopener" class="pub-link"><i class="fas fa-external-link-alt"></i> DOI</a>
+                            <a href="https://github.com/rejusam/SEIR_metapopulation_China" target="_blank" rel="noopener" class="pub-link"><i class="fab fa-github"></i> Code</a>
+                        </div>
+                    </div>
+                    <div class="pub-badge">First Author</div>
+                </div>
+
+                <div class="pub-card reveal">
+                    <div class="pub-year">2024</div>
+                    <div class="pub-content">
+                        <h3 class="pub-title">Modelling Lassa virus dynamics in West African <em>Mastomys natalensis</em></h3>
+                        <p class="pub-authors"><strong>John, R.S.</strong>, Fatoyinbo, H.O., &amp; Hayman, D.T.S.</p>
+                        <p class="pub-journal"><em>Journal of the Royal Society Interface</em>, 21(216)</p>
+                        <div class="pub-links">
+                            <a href="https://doi.org/10.1098/rsif.2024.0106" target="_blank" rel="noopener" class="pub-link"><i class="fas fa-external-link-alt"></i> DOI</a>
+                            <a href="https://github.com/rejusam/Modelling_Lassa_virus_dynamics" target="_blank" rel="noopener" class="pub-link"><i class="fab fa-github"></i> Code</a>
+                        </div>
+                    </div>
+                    <div class="pub-badge">First Author</div>
+                </div>
+
+                <div class="pub-card reveal">
+                    <div class="pub-year">2023</div>
+                    <div class="pub-content">
+                        <h3 class="pub-title">Identifying SARS-like coronavirus spillover risk hotspots</h3>
+                        <p class="pub-authors">Muylaert, R.L. et al. (incl. <strong>John, R.S.</strong>)</p>
+                        <p class="pub-journal"><em>Nature Communications</em></p>
+                        <div class="pub-links">
+                            <a href="https://doi.org/10.1038/s41467-023-39567-2" target="_blank" rel="noopener" class="pub-link"><i class="fas fa-external-link-alt"></i> DOI</a>
+                        </div>
+                    </div>
+                    <div class="pub-badge pub-badge-highlight">Nature Comms</div>
+                </div>
+
+                <div class="pub-card reveal">
+                    <div class="pub-year">2022</div>
+                    <div class="pub-content">
+                        <h3 class="pub-title">Transmission models indicate Ebola virus persistence in non-human primate populations is unlikely</h3>
+                        <p class="pub-authors">Hayman, D.T.S., <strong>John, R.S.</strong>, &amp; Rohani, P.</p>
+                        <p class="pub-journal"><em>Journal of the Royal Society Interface</em>, 19(187)</p>
+                        <div class="pub-links">
+                            <a href="https://doi.org/10.1098/rsif.2021.0638" target="_blank" rel="noopener" class="pub-link"><i class="fas fa-external-link-alt"></i> DOI</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="pub-cta reveal">
+                <a href="https://scholar.google.com/citations?user=EeZSlzsAAAAJ&hl=en" target="_blank" rel="noopener" class="btn btn-secondary">
+                    <i class="fas fa-graduation-cap"></i> View All Publications on Google Scholar
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section class="section" id="projects">
+        <div class="container">
+            <h2 class="section-title reveal">Featured <span class="gradient-text">Projects</span></h2>
+            <p class="section-subtitle reveal">Open-source research code and analytics platforms</p>
+
+            <div class="projects-grid">
+
+                <div class="project-card featured reveal">
+                    <div class="project-header">
+                        <div class="project-icon"><i class="fas fa-eye"></i></div>
+                        <div class="project-links-top">
+                            <a href="https://github.com/rejusam/ai-diagnostic-evaluation" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
+                    <h3>AI Diagnostic Evaluation Framework</h3>
+                    <p>Simulation-based evaluation of AI diabetic retinopathy screening tools with NZ equity analysis. Simulated 10,000-patient cohorts with ethnicity-stratified diagnostic accuracy metrics.</p>
+                    <div class="project-tags">
+                        <span class="tag">Python</span><span class="tag">ML</span><span class="tag">Health Equity</span><span class="tag">AUC-ROC</span>
+                    </div>
+                    <div class="project-label">Equity-Focused AI Evaluation</div>
+                </div>
+
+                <div class="project-card featured reveal">
+                    <div class="project-header">
+                        <div class="project-icon"><i class="fas fa-hospital"></i></div>
+                        <div class="project-links-top">
+                            <a href="https://github.com/rejusam/healthcare-quality-insights-dashboard" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
+                    <h3>Healthcare Quality &amp; Safety Dashboard</h3>
+                    <p>Multi-page BI platform with 7 interactive modules covering adverse events, complaints, KPI tracking, health equity metrics, SPC charts, and automated reporting.</p>
+                    <div class="project-tags">
+                        <span class="tag">Python</span><span class="tag">Streamlit</span><span class="tag">Statistics</span><span class="tag">BI</span>
+                    </div>
+                    <div class="project-label">Healthcare Analytics</div>
+                </div>
+
+                <div class="project-card reveal">
+                    <div class="project-header">
+                        <div class="project-icon"><i class="fas fa-lungs"></i></div>
+                        <div class="project-links-top">
+                            <a href="https://github.com/rejusam/ClinicalDataAnalysis" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
+                    <h3>Respiratory Biometrics Analytics</h3>
+                    <p>End-to-end clinical analytics pipeline processing 34,000+ ICU vital-sign measurements with four-gate ETL, audit logging, and CI/CD via GitHub Actions.</p>
+                    <div class="project-tags">
+                        <span class="tag">Python</span><span class="tag">ETL</span><span class="tag">Power BI</span><span class="tag">CI/CD</span>
+                    </div>
+                </div>
+
+                <div class="project-card reveal">
+                    <div class="project-header">
+                        <div class="project-icon"><i class="fas fa-network-wired"></i></div>
+                        <div class="project-links-top">
+                            <a href="https://github.com/rejusam/SEIR_metapopulation_China" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
+                    <h3>SEIR Metapopulation Model</h3>
+                    <p>Open-source code accompanying first-author publication. Metapopulation SEIR model across 340 Chinese cities — end-to-end reproducible research at publication standard.</p>
+                    <div class="project-tags">
+                        <span class="tag">Jupyter</span><span class="tag">Epidemiology</span><span class="tag">Published</span>
+                    </div>
+                </div>
+
+                <div class="project-card reveal">
+                    <div class="project-header">
+                        <div class="project-icon"><i class="fas fa-virus"></i></div>
+                        <div class="project-links-top">
+                            <a href="https://github.com/rejusam/Modelling_Lassa_virus_dynamics" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
+                    <h3>Lassa Virus Dynamics Model</h3>
+                    <p>Zoonotic Lassa transmission modelling in West African rodent populations. Open-source research code accompanying Journal of the Royal Society Interface publication.</p>
+                    <div class="project-tags">
+                        <span class="tag">Jupyter</span><span class="tag">Zoonotic Disease</span><span class="tag">Published</span>
+                    </div>
+                </div>
+
+                <div class="project-card reveal">
+                    <div class="project-header">
+                        <div class="project-icon"><i class="fas fa-bread-slice"></i></div>
+                        <div class="project-links-top">
+                            <a href="https://github.com/rejusam/bakery-sales-intelligence" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
+                    <h3>Bakery Sales Intelligence</h3>
+                    <p>Market basket analysis and temporal pattern detection for bakery sales data with weather integration. Demonstrates applied data science for business analytics.</p>
+                    <div class="project-tags">
+                        <span class="tag">Python</span><span class="tag">Market Basket</span><span class="tag">Analytics</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="pub-cta reveal">
+                <a href="https://github.com/rejusam?tab=repositories" target="_blank" rel="noopener" class="btn btn-secondary">
+                    <i class="fab fa-github"></i> View All Repositories on GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Education Section -->
+    <section class="section section-alt" id="education">
+        <div class="container">
+            <h2 class="section-title reveal">Education &amp; <span class="gradient-text">Certifications</span></h2>
+            <div class="edu-grid">
+
+                <div class="edu-column">
+                    <h3 class="edu-heading reveal"><i class="fas fa-university"></i> Education</h3>
+                    <div class="edu-card reveal">
+                        <div class="edu-degree">Ph.D. in Physics</div>
+                        <div class="edu-field">Computational Modelling, Data Analysis &amp; Simulation</div>
+                        <div class="edu-institution">Pondicherry University, India</div>
+                        <div class="edu-date">2011 &ndash; 2018</div>
+                    </div>
+                    <div class="edu-card reveal">
+                        <div class="edu-degree">M.Sc. in Physics</div>
+                        <div class="edu-institution">Mahatma Gandhi University, India</div>
+                        <div class="edu-date">2006 &ndash; 2008</div>
+                    </div>
+                </div>
+
+                <div class="edu-column">
+                    <h3 class="edu-heading reveal"><i class="fas fa-certificate"></i> Certifications</h3>
+                    <div class="cert-grid">
+                        <div class="cert-card reveal">
+                            <div class="cert-icon"><i class="fas fa-handshake"></i></div>
+                            <div class="cert-name">Understanding Te Tiriti o Waitangi</div>
+                            <div class="cert-issuer">Groundwork &bull; Sep 2025</div>
+                        </div>
+                        <div class="cert-card reveal">
+                            <div class="cert-icon"><i class="fas fa-clipboard-check"></i></div>
+                            <div class="cert-name">ICH Good Clinical Practice R3</div>
+                            <div class="cert-issuer">Global Health Training Centre &bull; Jul 2025</div>
+                        </div>
+                        <div class="cert-card reveal">
+                            <div class="cert-icon"><i class="fab fa-aws"></i></div>
+                            <div class="cert-name">AWS Machine Learning Essential Training</div>
+                            <div class="cert-issuer">Mar 2025</div>
+                        </div>
+                        <div class="cert-card reveal">
+                            <div class="cert-icon"><i class="fab fa-google"></i></div>
+                            <div class="cert-name">Google Cloud: Building Data Pipelines</div>
+                            <div class="cert-issuer">Apr 2025</div>
+                        </div>
+                        <div class="cert-card reveal">
+                            <div class="cert-icon"><i class="fas fa-brain"></i></div>
+                            <div class="cert-name">Deep Learning &bull; NLP with Python &bull; Ensemble Learning</div>
+                            <div class="cert-issuer">Apr 2025</div>
+                        </div>
+                        <div class="cert-card reveal">
+                            <div class="cert-icon"><i class="fas fa-chart-pie"></i></div>
+                            <div class="cert-name">Power BI &bull; SQL, Tableau, Python &amp; Spark</div>
+                            <div class="cert-issuer">2024</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section" id="contact">
+        <div class="container">
+            <h2 class="section-title reveal">Get in <span class="gradient-text">Touch</span></h2>
+            <p class="section-subtitle reveal">Open to data science roles, research collaborations, and consulting opportunities</p>
+
+            <div class="contact-grid">
+                <div class="contact-cards">
+                    <a href="mailto:rejusamjohn@gmail.com" class="contact-card reveal">
+                        <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                        <h3>Email</h3>
+                        <p>rejusamjohn@gmail.com</p>
+                    </a>
+                    <a href="https://www.linkedin.com/in/dr-reju-sam-john-14b00774" target="_blank" rel="noopener" class="contact-card reveal">
+                        <div class="contact-icon"><i class="fab fa-linkedin"></i></div>
+                        <h3>LinkedIn</h3>
+                        <p>Connect with me</p>
+                    </a>
+                    <a href="https://github.com/rejusam" target="_blank" rel="noopener" class="contact-card reveal">
+                        <div class="contact-icon"><i class="fab fa-github"></i></div>
+                        <h3>GitHub</h3>
+                        <p>@rejusam</p>
+                    </a>
+                    <div class="contact-card reveal">
+                        <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        <h3>Location</h3>
+                        <p>Auckland, New Zealand</p>
+                    </div>
+                </div>
+
+                <div class="contact-cta reveal">
+                    <div class="cta-box">
+                        <h3>Looking for a Data Scientist?</h3>
+                        <p>I bring 7+ years of research experience, a strong publication record, and hands-on expertise in AI/ML, ETL pipelines, and health informatics. Let's talk about how I can contribute to your team.</p>
+                        <a href="mailto:rejusamjohn@gmail.com?subject=Opportunity%20-%20Data%20Scientist" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Send Me an Email
+                        </a>
+                    </div>
+                    <div class="cta-box">
+                        <h3>Research Collaboration?</h3>
+                        <p>My expertise spans computational epidemiology, disease modelling, AI diagnostic evaluation, and health equity analytics. I'm eager to collaborate on impactful health research.</p>
+                        <a href="mailto:rejusamjohn@gmail.com?subject=Research%20Collaboration%20Inquiry" class="btn btn-primary">
+                            <i class="fas fa-flask"></i> Propose a Collaboration
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="nav-logo">RSJ<span class="accent">.</span></span>
+                    <p>Computational Epidemiologist &amp; AI Researcher</p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/rejusam" target="_blank" rel="noopener"><i class="fab fa-github"></i></a>
+                    <a href="https://scholar.google.com/citations?user=EeZSlzsAAAAJ&hl=en" target="_blank" rel="noopener"><i class="fas fa-graduation-cap"></i></a>
+                    <a href="https://www.linkedin.com/in/dr-reju-sam-john-14b00774" target="_blank" rel="noopener"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://orcid.org/0000-0002-5024-3700" target="_blank" rel="noopener"><i class="fab fa-orcid"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Dr Reju Sam John. Auckland, New Zealand.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
