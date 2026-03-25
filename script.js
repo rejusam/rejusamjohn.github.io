@@ -112,9 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
             'machine learning.',
             'computational modelling.',
             'data-driven research.',
-            'AI diagnostic evaluation.',
-            'health equity analytics.',
-            'epidemiological modelling.'
+            'AI & predictive analytics.',
+            'scalable data pipelines.',
+            'reproducible science.'
         ];
 
         let phraseIndex = 0;
