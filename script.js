@@ -110,11 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typedElement) {
         const phrases = [
             'machine learning.',
-            'computational modelling.',
-            'data-driven research.',
-            'AI & predictive analytics.',
-            'scalable data pipelines.',
-            'reproducible science.'
+            'predictive analytics.',
+            'intelligent data products.',
+            'end-to-end ML pipelines.',
+            'scalable data engineering.',
+            'cross-functional collaboration.'
         ];
 
         let phraseIndex = 0;
