@@ -1296,6 +1296,14 @@ img {
 
 /* --- Responsive Design --- */
 @media (max-width: 1024px) {
+    .carousel-prev {
+        left: 8px;
+    }
+
+    .carousel-next {
+        right: 8px;
+    }
+
     .skills-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -1359,6 +1367,36 @@ img {
     }
 
     .stat-divider {
+        display: none;
+    }
+
+    .carousel-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.85rem;
+    }
+
+    .carousel-prev {
+        left: 6px;
+    }
+
+    .carousel-next {
+        right: 6px;
+    }
+
+    .slide-info {
+        padding: 18px 20px 16px;
+    }
+
+    .slide-info h3 {
+        font-size: 1.05rem;
+    }
+
+    .slide-info p {
+        font-size: 0.825rem;
+    }
+
+    .lightbox-nav {
         display: none;
     }
 
@@ -1458,6 +1496,297 @@ img {
         flex-direction: column;
         gap: 16px;
     }
+}
+
+/* --- Research Showcase Section --- */
+.showcase-filters {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 40px;
+}
+
+.filter-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 8px 20px;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    font-family: var(--font-body);
+}
+
+.filter-btn:hover {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
+
+.filter-btn.active {
+    background: var(--gradient);
+    border-color: transparent;
+    color: var(--bg-primary);
+    font-weight: 600;
+}
+
+/* --- Carousel --- */
+.carousel {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.carousel-viewport {
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    background: var(--bg-card);
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+}
+
+.carousel-slide {
+    min-width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.carousel-slide[data-hidden="true"] {
+    display: none;
+}
+
+.slide-image {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--bg-primary);
+}
+
+.slide-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.5s ease;
+}
+
+.carousel-slide:hover .slide-image img {
+    transform: scale(1.03);
+}
+
+.slide-info {
+    padding: 24px 28px 20px;
+}
+
+.slide-info h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.slide-info p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+
+.showcase-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* Carousel Navigation Buttons */
+.carousel-btn {
+    position: absolute;
+    top: calc(50% - 40px);
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all var(--transition);
+    z-index: 3;
+    box-shadow: var(--shadow-md);
+}
+
+.carousel-btn:hover {
+    background: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+    color: var(--bg-primary);
+    box-shadow: var(--shadow-glow);
+}
+
+.carousel-prev {
+    left: -22px;
+}
+
+.carousel-next {
+    right: -22px;
+}
+
+/* Carousel Dots */
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.carousel-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: none;
+    background: var(--border-light);
+    cursor: pointer;
+    transition: all var(--transition);
+    padding: 0;
+}
+
+.carousel-dot:hover {
+    background: rgba(6, 182, 212, 0.4);
+}
+
+.carousel-dot.active {
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
+    transform: scale(1.2);
+}
+
+/* Slide Counter */
+.carousel-counter {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+}
+
+/* --- Lightbox --- */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.lightbox.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.lightbox-content {
+    max-width: 90vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lightbox-content img {
+    max-width: 90vw;
+    max-height: 78vh;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.lightbox.active .lightbox-content img {
+    transform: scale(1);
+}
+
+.lightbox-caption {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-top: 16px;
+    text-align: center;
+    max-width: 700px;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2.5rem;
+    cursor: pointer;
+    z-index: 10;
+    line-height: 1;
+    transition: all var(--transition);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox-close:hover {
+    color: var(--accent-cyan);
+    transform: rotate(90deg);
+}
+
+.lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all var(--transition);
+    z-index: 10;
+}
+
+.lightbox-nav:hover {
+    background: rgba(6, 182, 212, 0.2);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
+
+.lightbox-prev {
+    left: 20px;
+}
+
+.lightbox-next {
+    right: 20px;
 }
 
 /* --- Print Styles --- */
