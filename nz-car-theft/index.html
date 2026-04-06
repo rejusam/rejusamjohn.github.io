@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Base Rate Trap: Is the Toyota Aqua Really NZ's Most Stolen Car?</title>
+    <meta name="description" content="A data-driven investigation into whether the Toyota Aqua's 'most stolen' status reflects genuine targeting or statistical illusion. Four data sources, 21,000+ theft records, one question the headlines never ask.">
+    <meta name="author" content="Dr Reju Sam John">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="The Base Rate Trap: Is the Toyota Aqua Really NZ's Most Stolen Car?">
+    <meta property="og:description" content="Four data sources. 21,000+ theft records. The question the headlines never ask.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rejusamjohn.pages.dev/nz-car-theft/">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="../reju_favicon.png">
+
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --surface: #334155;
+            --border: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-cyan: #06b6d4;
+            --accent-violet: #8b5cf6;
+            --accent-red: #E63946;
+            --gradient: linear-gradient(135deg, #06b6d4, #8b5cf6);
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: var(--accent-cyan); text-decoration: none; transition: color var(--transition); }
+        a:hover { color: #22d3ee; }
+        ::selection { background: rgba(6,182,212,0.3); color: var(--text-primary); }
+
+        /* --- Top bar --- */
+        .topbar {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            background: rgba(15,23,42,0.9); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.8rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .topbar-logo { font-weight: 700; color: var(--text-primary); font-size: 1rem; }
+        .topbar-links { display: flex; gap: 1.5rem; font-size: 0.85rem; }
+        .topbar-links a { color: var(--text-muted); }
+        .topbar-links a:hover { color: var(--accent-cyan); }
+
+        /* --- Article layout --- */
+        .article-container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 6rem 1.5rem 4rem;
+        }
+
+        /* --- Header --- */
+        .article-header { margin-bottom: 3rem; }
+        .article-kicker {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
+        .article-title {
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        .article-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            font-style: italic;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        .article-meta {
+            display: flex; gap: 1.5rem; flex-wrap: wrap;
+            font-size: 0.85rem; color: var(--text-muted);
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        .article-meta a { color: var(--text-muted); }
+        .article-meta a:hover { color: var(--accent-cyan); }
+
+        /* --- Body text --- */
+        .article-body h2 {
+            font-size: 1.5rem; font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+        }
+        .article-body h3 {
+            font-size: 1.15rem; font-weight: 600;
+            color: var(--text-primary);
+            margin: 2rem 0 0.75rem;
+        }
+        .article-body p {
+            margin-bottom: 1.25rem;
+            font-size: 1.05rem;
+        }
+
+        /* --- Pullquote --- */
+        .pullquote {
+            border-left: 3px solid var(--accent-cyan);
+            padding: 1.25rem 1.5rem;
+            margin: 2rem 0;
+            background: rgba(6,182,212,0.05);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            font-style: italic;
+        }
+
+        /* --- Stat cards --- */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem; font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-number.red {
+            background: none;
+            -webkit-text-fill-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* --- Figures --- */
+        .figure {
+            margin: 2.5rem -1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        .figure img {
+            width: 100%;
+            display: block;
+        }
+        .figure figcaption {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+        }
+
+        /* --- Table --- */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 0.6rem 0.8rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .data-table td {
+            padding: 0.5rem 0.8rem;
+            border-bottom: 1px solid rgba(51,65,85,0.5);
+        }
+        .data-table tr:hover td { background: rgba(6,182,212,0.03); }
+        .highlight-row td { color: var(--text-primary); font-weight: 500; }
+
+        /* --- Methodology note --- */
+        .method-note {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem 1.5rem;
+            margin: 2rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .method-note strong { color: var(--text-secondary); }
+
+        /* --- Footer --- */
+        .article-footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .article-footer a { color: var(--accent-cyan); }
+
+        .cta-box {
+            background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(139,92,246,0.08));
+            border: 1px solid rgba(6,182,212,0.2);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin: 3rem 0;
+            text-align: center;
+        }
+        .cta-box p { margin-bottom: 1rem; color: var(--text-primary); font-size: 1rem; }
+        .cta-btn {
+            display: inline-block;
+            padding: 0.6rem 1.5rem;
+            background: var(--gradient);
+            color: #fff; font-weight: 600;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(6,182,212,0.3);
+            color: #fff;
+        }
+
+        @media (max-width: 640px) {
+            .article-container { padding: 5rem 1rem 3rem; }
+            .figure { margin: 2rem -0.5rem; }
+            .stat-row { grid-template-columns: 1fr 1fr; }
+            .topbar { padding: 0.6rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <a href="../" class="topbar-logo">Dr Reju Sam John</a>
+        <div class="topbar-links">
+            <a href="../#projects">Projects</a>
+            <a href="https://github.com/rejusam/nz-car-theft-analysis" target="_blank" rel="noopener"><i class="fab fa-github"></i> Code</a>
+        </div>
+    </div>
+
+    <article class="article-container">
+
+        <header class="article-header">
+            <div class="article-kicker">Data Investigation</div>
+            <h1 class="article-title">The Base Rate Trap</h1>
+            <p class="article-subtitle">
+                Is the Toyota Aqua really New Zealand's most stolen car &mdash;
+                or is that just what happens when you count without dividing?
+            </p>
+            <p class="article-subtitle" style="font-size: 0.95rem;">
+                Four data sources. 21,000+ theft records. The question the headlines never ask.
+            </p>
+            <div class="article-meta">
+                <span><a href="../">Reju Sam John</a></span>
+                <span>Auckland, New Zealand</span>
+                <span>April 2026</span>
+            </div>
+        </header>
+
+        <div class="article-body">
+
+            <p>
+                Every February, AMI Insurance publishes its annual list of New Zealand's most stolen cars.
+                Every February, newsrooms across the country run the same headline:
+                <em>Toyota Aqua tops theft list &mdash; again.</em>
+                And every February, a critical number goes unmentioned.
+            </p>
+
+            <p>
+                The Aqua has held the #1 spot for four consecutive years. AMI reported more than 9,000 theft
+                claims in 2025 alone, with the Aqua accounting for 8% of them. Sounds alarming &mdash;
+                until you ask: <strong>8% of claims, but what percentage of the fleet?</strong>
+            </p>
+
+            <p>
+                That question changes everything.
+            </p>
+
+            <h2>The Missing Denominator</h2>
+
+            <p>
+                There are 52,340 Toyota Aquas registered in New Zealand. There are 320,450 Toyota Corollas.
+                Saying the Aqua is "most stolen" by raw count is like saying Auckland has the most car thefts
+                &mdash; true, but Auckland also has the most cars. The meaningful question is:
+                <strong>given that you own an Aqua, how likely is it to be stolen compared to other models?</strong>
+            </p>
+
+            <p>
+                AMI's own data contains the answer, buried in a single sentence: for every 1,000 insured
+                Aquas, 54 had a theft claim. For the Corolla &mdash; the most insured vehicle in New Zealand
+                &mdash; that number is 15. The Aqua <em>is</em> stolen disproportionately. But it's not the
+                riskiest car to own.
+            </p>
+
+            <div class="stat-row">
+                <div class="stat-card">
+                    <div class="stat-number red">54</div>
+                    <div class="stat-label">Aqua thefts per 1,000 insured</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">15</div>
+                    <div class="stat-label">Corolla thefts per 1,000 insured</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">3.6&times;</div>
+                    <div class="stat-label">Aqua rate vs Corolla rate</div>
+                </div>
+            </div>
+
+            <p>
+                Using NZ Police records and NZTA fleet data, I computed per-vehicle theft rates for
+                the 20 most commonly stolen models. The result: <strong>old utes are the real risk leaders.</strong>
+                A Ford Courier is stolen at 18.2 per 1,000 registered vehicles &mdash; three times
+                the Aqua's rate. A Mazda Bounty at 16.8 per 1,000. These models don't make AMI's top-10
+                because there are fewer of them. But their owners face higher individual risk.
+            </p>
+
+            <figure class="figure">
+                <img src="figures/01_raw_vs_adjusted_ranking.png"
+                     alt="Bump chart showing how model rankings change after adjusting for fleet size">
+                <figcaption>
+                    How rankings shift after adjusting for fleet size. Models like the Ford Courier and
+                    Mazda Bounty jump dramatically when measured per registered vehicle.
+                </figcaption>
+            </figure>
+
+            <h2>The Ranking Is About to Flip</h2>
+
+            <p>
+                AMI has published four years of data (2022&ndash;2025). Tracking each model's share of
+                theft claims over that window reveals a pattern the annual headline obscures:
+                <strong>the Corolla is overtaking the Aqua.</strong>
+            </p>
+
+            <p>
+                The Corolla's claim share has risen every year &mdash; from 2.5% in 2022 to 7.0% in 2025,
+                climbing 1.5 percentage points per year. The Aqua's share has moved the opposite direction,
+                from 11.0% to 8.0%. Extrapolating these trends, the Corolla is projected to take the #1
+                spot by 2026.
+            </p>
+
+            <figure class="figure">
+                <img src="figures/14_forecast_rank_trajectories.png"
+                     alt="Bump chart showing projected ranking trajectories through 2027">
+                <figcaption>
+                    Historical rank trajectories (solid lines) extended with projections (dashed).
+                    The Corolla crosses the Aqua by 2026. The Hilux continues rising.
+                </figcaption>
+            </figure>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>2025 Rank</th>
+                        <th>2026 (proj.)</th>
+                        <th>2027 (proj.)</th>
+                        <th>Outlook</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Toyota Corolla</td><td>#2</td><td>#1</td><td>#1</td><td>Accelerating</td></tr>
+                    <tr class="highlight-row"><td>Toyota Aqua</td><td>#1</td><td>#2</td><td>#2</td><td>Persistent</td></tr>
+                    <tr><td>Nissan Tiida</td><td>#3</td><td>#3</td><td>#3</td><td>Stable</td></tr>
+                    <tr><td>Toyota Hilux</td><td>#6</td><td>#4</td><td>#4</td><td>Rising fast</td></tr>
+                    <tr><td>Mazda Demio</td><td>#4</td><td>#6</td><td>#9</td><td>Declining</td></tr>
+                </tbody>
+            </table>
+
+            <p>
+                This isn't just an academic exercise. If the Corolla does take #1 in AMI's next report,
+                the "most stolen car" headline will change for the first time in five years &mdash; and
+                the 320,000 Corolla owners in New Zealand may face the same insurance premium spiral that
+                Aqua owners have endured.
+            </p>
+
+            <figure class="figure">
+                <img src="figures/15_claims_forecast.png"
+                     alt="National and Aqua claims with forecast bands">
+                <figcaption>
+                    National theft claims are projected to converge toward pre-spike levels.
+                    Aqua claims continue declining from the 2023 peak.
+                </figcaption>
+            </figure>
+
+            <h2>Where You Park Matters More Than What You Drive</h2>
+
+            <p>
+                Vehicle model is only one layer of theft risk. To test what else matters, I matched
+                NZ Police stolen vehicle records across 13 regions with Stats NZ socioeconomic
+                indicators: deprivation, unemployment, urbanisation, income, and housing tenure.
+            </p>
+
+            <p>
+                The finding: <strong>regional deprivation and urbanisation together explain 55% of
+                the variation in per-capita theft rates</strong> (p&nbsp;=&nbsp;0.018). No individual
+                indicator reaches significance alone with just 13 regions, but the combined model is
+                statistically significant.
+            </p>
+
+            <div class="stat-row">
+                <div class="stat-card">
+                    <div class="stat-number">2.5</div>
+                    <div class="stat-label">Thefts per 10k &mdash; Southland</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number red">33.6</div>
+                    <div class="stat-label">Thefts per 10k &mdash; Gisborne</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">13&times;</div>
+                    <div class="stat-label">Range across regions</div>
+                </div>
+            </div>
+
+            <p>
+                An Aqua in Southland faces a fundamentally different risk from one in Gisborne &mdash;
+                same car, 13 times the difference. Insurance pricing that weights model over location
+                is working from an incomplete picture.
+            </p>
+
+            <figure class="figure">
+                <img src="figures/16_socioeconomic_drivers.png"
+                     alt="Scatter plots of socioeconomic predictors vs theft rate">
+                <figcaption>
+                    Four socioeconomic predictors plotted against regional theft rate (n=13 regions).
+                    Gisborne is a consistent outlier with more theft than any indicator predicts.
+                </figcaption>
+            </figure>
+
+            <div class="pullquote">
+                Vehicle theft risk operates on three layers: what you drive, where you park it,
+                and the socioeconomic profile of your neighbourhood. The annual "most stolen" headline
+                captures only the first.
+            </div>
+
+            <h2>What the Headline Should Say</h2>
+
+            <p>
+                The claim that the Toyota Aqua is New Zealand's most theft-prone car is
+                <strong>partially true but requires context</strong>:
+            </p>
+
+            <p>
+                <strong>True:</strong> The Aqua is stolen at rates well above what its fleet size alone
+                predicts. The 54-per-1,000 rate against the Corolla's 15 is real and significant.
+                The base-rate fallacy does not fully explain the headline.
+            </p>
+
+            <p>
+                <strong>Incomplete:</strong> By per-vehicle risk, older utility vehicles face higher
+                theft odds. The Ford Courier's rate is 3&times; the Aqua's. Framing the Aqua as the
+                "most stolen" without this context overstates its relative risk and concentrates
+                insurance cost on a single model.
+            </p>
+
+            <p>
+                <strong>Changing:</strong> The Corolla's trajectory suggests the headline will flip
+                within a year. And the socioeconomic data suggests the real story isn't about any
+                particular car &mdash; it's about where in New Zealand you happen to live.
+            </p>
+
+            <div class="method-note">
+                <strong>Methodology.</strong> This analysis uses four independent data sources: AMI Insurance
+                theft claims (2022&ndash;2025), AA Insurance claims (2024), NZ Police stolen vehicle records
+                (Oct 2021&ndash;Apr 2022, 4,538 records), and MoneyHub/Police data (H2 2025, 4,373 records).
+                Fleet sizes from NZTA Motor Vehicle Register. Socioeconomic indicators from Stats NZ Census
+                2018 and NZ Deprivation Index. Full code and data:
+                <a href="https://github.com/rejusam/nz-car-theft-analysis" target="_blank" rel="noopener">
+                github.com/rejusam/nz-car-theft-analysis</a>.
+            </div>
+
+            <div class="cta-box">
+                <p>Explore the full analysis, data, and reproducible code on GitHub.</p>
+                <a href="https://github.com/rejusam/nz-car-theft-analysis"
+                   target="_blank" rel="noopener" class="cta-btn">
+                    <i class="fab fa-github"></i>&nbsp; View on GitHub
+                </a>
+            </div>
+
+        </div>
+
+        <footer class="article-footer">
+            <p>
+                <strong>Dr Reju Sam John</strong> is a data scientist and AI/ML engineer based in
+                Auckland, New Zealand. He holds a PhD in computational modelling and has published
+                11 peer-reviewed papers with 169+ citations.
+                <a href="../">rejusamjohn.pages.dev</a>
+            </p>
+        </footer>
+
+    </article>
+
+</body>
+</html>
