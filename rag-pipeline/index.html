@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From Papers to Prompts: Building a RAG Pipeline Over My Own Research</title>
+    <meta name="description" content="How I built a retrieval-augmented generation chat interface over six peer-reviewed epidemiology papers — the architecture, the design decisions, and the gotchas that only show up when you ship it.">
+    <meta name="author" content="Dr Reju Sam John">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="From Papers to Prompts: Building a RAG Pipeline Over My Own Research">
+    <meta property="og:description" content="Architecture, design decisions, and lessons from shipping a live RAG chatbot over my peer-reviewed publications.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rejusamjohn.pages.dev/rag-pipeline/">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="../reju_favicon.png">
+
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --surface: #334155;
+            --border: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-cyan: #06b6d4;
+            --accent-violet: #8b5cf6;
+            --accent-red: #E63946;
+            --gradient: linear-gradient(135deg, #06b6d4, #8b5cf6);
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: var(--accent-cyan); text-decoration: none; transition: color var(--transition); }
+        a:hover { color: #22d3ee; }
+        ::selection { background: rgba(6,182,212,0.3); color: var(--text-primary); }
+
+        /* --- Top bar --- */
+        .topbar {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            background: rgba(15,23,42,0.9); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.8rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .topbar-logo { font-weight: 700; color: var(--text-primary); font-size: 1rem; }
+        .topbar-links { display: flex; gap: 1.5rem; font-size: 0.85rem; }
+        .topbar-links a { color: var(--text-muted); }
+        .topbar-links a:hover { color: var(--accent-cyan); }
+
+        /* --- Article layout --- */
+        .article-container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 6rem 1.5rem 4rem;
+        }
+
+        /* --- Header --- */
+        .article-header { margin-bottom: 3rem; }
+        .article-kicker {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
+        .article-title {
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        .article-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            font-style: italic;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        .article-meta {
+            display: flex; gap: 1.5rem; flex-wrap: wrap;
+            font-size: 0.85rem; color: var(--text-muted);
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        .article-meta a { color: var(--text-muted); }
+        .article-meta a:hover { color: var(--accent-cyan); }
+
+        /* --- Body text --- */
+        .article-body h2 {
+            font-size: 1.5rem; font-weight: 700;
+            color: var(--text-primary);
+            margin: 3rem 0 1rem;
+            padding-top: 1rem;
+        }
+        .article-body h3 {
+            font-size: 1.15rem; font-weight: 600;
+            color: var(--text-primary);
+            margin: 2rem 0 0.75rem;
+        }
+        .article-body p {
+            margin-bottom: 1.25rem;
+            font-size: 1.05rem;
+        }
+        .article-body ul, .article-body ol {
+            margin: 0 0 1.25rem 1.5rem;
+            font-size: 1.05rem;
+        }
+        .article-body li { margin-bottom: 0.5rem; }
+
+        /* --- Inline code and code blocks --- */
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.88em;
+            color: var(--accent-cyan);
+            background: rgba(6,182,212,0.08);
+            padding: 0.1em 0.45em;
+            border-radius: 4px;
+        }
+        pre {
+            background: #0b1220;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.1rem 1.25rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-size: 0.85rem;
+            line-height: 1.65;
+        }
+        pre code {
+            background: none;
+            color: #e2e8f0;
+            padding: 0;
+            font-size: inherit;
+        }
+        pre .cmt { color: #64748b; font-style: italic; }
+        pre .kw { color: #8b5cf6; }
+        pre .str { color: #22d3ee; }
+        pre .fn { color: #f59e0b; }
+
+        /* --- Pullquote --- */
+        .pullquote {
+            border-left: 3px solid var(--accent-cyan);
+            padding: 1.25rem 1.5rem;
+            margin: 2rem 0;
+            background: rgba(6,182,212,0.05);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            font-style: italic;
+        }
+
+        /* --- Stat cards --- */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem; font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* --- Architecture diagram --- */
+        .arch-diagram {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin: 2rem 0;
+            position: relative;
+        }
+        .arch-step {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1rem 0.75rem;
+            text-align: center;
+            position: relative;
+        }
+        .arch-step-num {
+            display: inline-block;
+            width: 24px; height: 24px;
+            line-height: 24px;
+            border-radius: 50%;
+            background: var(--gradient);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .arch-step-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        .arch-step-desc {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+        @media (max-width: 640px) {
+            .arch-diagram { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* --- Table --- */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 0.6rem 0.8rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .data-table td {
+            padding: 0.55rem 0.8rem;
+            border-bottom: 1px solid rgba(51,65,85,0.5);
+            vertical-align: top;
+        }
+        .data-table tr:hover td { background: rgba(6,182,212,0.03); }
+
+        /* --- Methodology note --- */
+        .method-note {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem 1.5rem;
+            margin: 2rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .method-note strong { color: var(--text-secondary); }
+
+        /* --- Example Q&A block --- */
+        .qa-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent-violet);
+            border-radius: var(--radius-md);
+            padding: 1.1rem 1.35rem;
+            margin: 1.5rem 0;
+        }
+        .qa-q {
+            color: var(--accent-cyan);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .qa-a {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+        .qa-cite {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.35rem;
+        }
+
+        /* --- Footer --- */
+        .article-footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .article-footer a { color: var(--accent-cyan); }
+
+        .cta-box {
+            background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(139,92,246,0.08));
+            border: 1px solid rgba(6,182,212,0.2);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin: 3rem 0;
+            text-align: center;
+        }
+        .cta-box p { margin-bottom: 1rem; color: var(--text-primary); font-size: 1rem; }
+        .cta-btn {
+            display: inline-block;
+            padding: 0.6rem 1.5rem;
+            background: var(--gradient);
+            color: #fff; font-weight: 600;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: transform var(--transition), box-shadow var(--transition);
+            margin: 0 0.35rem 0.5rem;
+        }
+        .cta-btn.outline {
+            background: transparent;
+            border: 1px solid rgba(6,182,212,0.4);
+            color: var(--accent-cyan);
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(6,182,212,0.3);
+            color: #fff;
+        }
+        .cta-btn.outline:hover {
+            background: rgba(6,182,212,0.1);
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 640px) {
+            .article-container { padding: 5rem 1rem 3rem; }
+            .stat-row { grid-template-columns: 1fr 1fr; }
+            .topbar { padding: 0.6rem 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <a href="../" class="topbar-logo">Dr Reju Sam John</a>
+        <div class="topbar-links">
+            <a href="../#projects">Projects</a>
+            <a href="../#hero">Live Demo</a>
+            <a href="https://github.com/rejusam/rag-publications" target="_blank" rel="noopener"><i class="fab fa-github"></i> Code</a>
+        </div>
+    </div>
+
+    <article class="article-container">
+
+        <header class="article-header">
+            <div class="article-kicker">AI Engineering Notes</div>
+            <h1 class="article-title">From Papers to Prompts</h1>
+            <p class="article-subtitle">
+                Building a retrieval-augmented generation pipeline over my own
+                peer-reviewed research &mdash; the architecture, the tradeoffs,
+                and what I learned on the way.
+            </p>
+            <div class="article-meta">
+                <span><a href="../">Reju Sam John</a></span>
+                <span>Auckland, New Zealand</span>
+                <span>April 2026</span>
+                <span><a href="../#hero">Try the live demo &rarr;</a></span>
+            </div>
+        </header>
+
+        <div class="article-body">
+
+            <p>
+                When I decided to put an AI chat widget on my portfolio, the first question was
+                what it should actually <em>do</em>. Another generic "chat with my CV" felt unappealing.
+                But I have something more interesting sitting on a shelf: six peer-reviewed papers,
+                169+ citations, and a dense technical vocabulary that no thirty-second elevator
+                pitch could ever capture. So I built a retrieval-augmented generation (RAG) pipeline
+                over my own research &mdash; and wired it into the hero section of this site.
+            </p>
+
+            <p>
+                This is a writeup of how it works, the decisions I made, and the gotchas that only
+                show up once you actually try to ship the thing.
+            </p>
+
+            <div class="stat-row">
+                <div class="stat-card">
+                    <div class="stat-number">6</div>
+                    <div class="stat-label">Peer-reviewed papers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">779</div>
+                    <div class="stat-label">Text chunks indexed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">384</div>
+                    <div class="stat-label">Embedding dimensions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">Chunks retrieved per query</div>
+                </div>
+            </div>
+
+            <h2>What RAG actually is</h2>
+
+            <p>
+                RAG is a simple idea wrapped in some acronyms. A language model is trained on a
+                fixed corpus; it doesn't know about <em>your</em> documents. Retrieval-augmented
+                generation fixes this by chunking your documents into small pieces, embedding
+                each piece into a high-dimensional vector that captures its semantic meaning,
+                storing those vectors in a database, and &mdash; at query time &mdash; embedding
+                the user's question with the same model, finding the most similar chunks, and
+                stuffing them into the prompt as context. The LLM then answers the question while
+                grounding its response in the retrieved material.
+            </p>
+
+            <p>
+                The appeal: no fine-tuning, no hallucinations when it's done right, and the
+                knowledge base can be updated without retraining anything. Add a new paper, re-run
+                the ingestion, push to production. That's it.
+            </p>
+
+            <h2>The pipeline, end to end</h2>
+
+            <p>
+                At query time the full flow takes around one second. Here's what happens in that
+                second:
+            </p>
+
+            <div class="arch-diagram">
+                <div class="arch-step">
+                    <div class="arch-step-num">1</div>
+                    <div class="arch-step-title">Embed</div>
+                    <div class="arch-step-desc">all-MiniLM-L6-v2<br>384-dim vector</div>
+                </div>
+                <div class="arch-step">
+                    <div class="arch-step-num">2</div>
+                    <div class="arch-step-title">Search</div>
+                    <div class="arch-step-desc">ChromaDB<br>cosine similarity</div>
+                </div>
+                <div class="arch-step">
+                    <div class="arch-step-num">3</div>
+                    <div class="arch-step-title">Retrieve</div>
+                    <div class="arch-step-desc">top-4 chunks<br>with source tags</div>
+                </div>
+                <div class="arch-step">
+                    <div class="arch-step-num">4</div>
+                    <div class="arch-step-title">Generate</div>
+                    <div class="arch-step-desc">Llama 3.3 70B<br>via Groq</div>
+                </div>
+            </div>
+
+            <p>
+                The ingestion side of the pipeline is offline and runs once when the paper
+                collection changes. It loads each PDF page by page, splits the text into
+                overlapping chunks, embeds every chunk, and persists the vectors to disk. The
+                whole thing is about seventy lines of LangChain code.
+            </p>
+
+            <h2>Design decision 1: Chunking</h2>
+
+            <p>
+                Writing academic papers isn't like writing tweets. A single paragraph in a
+                Methods section can contain three dependent clauses, one equation, and a reference
+                to a figure on the next page. Chunk too small and you slice the sentence in half.
+                Chunk too large and your similarity search dilutes &mdash; the chunk ends up
+                containing multiple topics, and the embedding becomes an average that matches
+                nothing well.
+            </p>
+
+            <p>
+                I settled on 1000 characters with 200-character overlap, split recursively on
+                paragraph boundaries first, then sentences, then words. The overlap is insurance:
+                if a key claim straddles a chunk boundary, both chunks carry part of it, so
+                neither is lost at retrieval time.
+            </p>
+
+            <pre><code><span class="kw">from</span> langchain_text_splitters <span class="kw">import</span> RecursiveCharacterTextSplitter
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="str">1000</span>,
+    chunk_overlap=<span class="str">200</span>,
+    separators=[<span class="str">"\n\n"</span>, <span class="str">"\n"</span>, <span class="str">". "</span>, <span class="str">" "</span>, <span class="str">""</span>],
+)
+chunks = splitter.split_documents(docs)</code></pre>
+
+            <p>
+                Could I do better? Yes &mdash; section-aware chunking (detecting Abstract,
+                Methods, Results headers and splitting within sections) would preserve more
+                document structure. But for six papers, the gains wouldn't justify the code.
+                That's a decision I'd revisit at one hundred papers, not six.
+            </p>
+
+            <h2>Design decision 2: Embedding model</h2>
+
+            <p>
+                For local development I used Ollama's <code>nomic-embed-text</code> &mdash; 768
+                dimensions, runs on my laptop, free. For deployment I had to swap it out, because
+                Ollama can't run on Render's free tier. I went with
+                <code>sentence-transformers/all-MiniLM-L6-v2</code>: 384 dimensions, 80MB on disk,
+                runs on CPU, widely supported, and specifically designed for semantic similarity.
+            </p>
+
+            <p>
+                The tradeoff: MiniLM is smaller and slightly less accurate than nomic-embed-text
+                on retrieval benchmarks. For a portfolio demo over six papers, the difference is
+                imperceptible. At scale &mdash; thousands of domain-specific documents &mdash; I'd
+                re-evaluate. Domain-tuned embeddings like <code>BioBERT</code> or
+                <code>SciBERT</code> would likely improve recall on technical terms like
+                <em>sarbecovirus</em> or <em>Mastomys natalensis</em> that appear rarely in
+                general-purpose training data.
+            </p>
+
+            <div class="pullquote">
+                The embedding model is the most important choice in a RAG pipeline.
+                Everything downstream assumes that "semantically similar text ends up
+                geometrically close in the vector space." If your embedding model fails
+                that promise for your domain, no amount of prompt engineering will save you.
+            </div>
+
+            <h2>Design decision 3: Vector store</h2>
+
+            <p>
+                ChromaDB. I wanted boring. ChromaDB runs in-process, persists to a directory on
+                disk, has a Python API that mirrors a dictionary, and handles my 779 chunks with
+                a latency that rounds to zero. The entire vector store is a 30MB sqlite file I
+                commit to the repo.
+            </p>
+
+            <p>
+                If this ever grew to thousands of documents, I'd move to Pinecone or Weaviate for
+                managed scaling, metadata filtering, and hybrid search out of the box. For six
+                papers, a sqlite file is the right answer. Choosing the simplest thing that works
+                is an engineering virtue.
+            </p>
+
+            <h2>Design decision 4: LLM</h2>
+
+            <p>
+                This one took a few attempts. My initial plan was Google Gemini &mdash; free tier,
+                generous quota, well-documented. When I tested it from Auckland, the API returned
+                <code>RESOURCE_EXHAUSTED</code> with a free-tier limit of zero. Regional
+                restrictions, apparently. A new API key from the same Google account produced the
+                same error. Lesson learned.
+            </p>
+
+            <p>
+                I switched to <strong>Groq</strong>, which hosts Llama 3.3 70B on custom inference
+                hardware and gives away 1,000 requests per day on its free tier. For a portfolio
+                chat widget that might get fifty queries a week from curious recruiters, this is
+                effectively unlimited. Groq's latency is also genuinely impressive &mdash;
+                responses start streaming in under a second even for a 70-billion-parameter model.
+            </p>
+
+            <p>
+                The API keeps the provider swappable via an <code>LLM_PROVIDER</code> environment
+                variable. If Groq's free tier ever disappears, I can flip to OpenAI
+                <code>gpt-4o-mini</code> or Gemini with a one-line change. Hedging against
+                provider lock-in is cheap when LangChain handles the abstraction.
+            </p>
+
+            <pre><code><span class="kw">if</span> LLM_PROVIDER == <span class="str">"gemini"</span>:
+    <span class="kw">from</span> langchain_google_genai <span class="kw">import</span> ChatGoogleGenerativeAI
+    llm = ChatGoogleGenerativeAI(model=<span class="str">"gemini-2.0-flash"</span>, temperature=<span class="str">0.1</span>)
+<span class="kw">elif</span> LLM_PROVIDER == <span class="str">"openai"</span>:
+    <span class="kw">from</span> langchain_openai <span class="kw">import</span> ChatOpenAI
+    llm = ChatOpenAI(model=<span class="str">"gpt-4o-mini"</span>, temperature=<span class="str">0.1</span>)
+<span class="kw">else</span>:
+    <span class="kw">from</span> langchain_groq <span class="kw">import</span> ChatGroq
+    llm = ChatGroq(model=<span class="str">"llama-3.3-70b-versatile"</span>, temperature=<span class="str">0.1</span>)</code></pre>
+
+            <h2>Design decision 5: The prompt</h2>
+
+            <p>
+                The prompt is where you actually earn the "grounded" in retrieval-augmented
+                generation. Mine is short but opinionated:
+            </p>
+
+            <pre><code><span class="cmt"># SYSTEM_TEMPLATE</span>
+You are a research assistant for Dr Reju Sam John, a computational
+epidemiologist and data scientist based in Auckland, New Zealand.
+
+INSTRUCTIONS:
+- Answer the question using ONLY the provided context from his
+  published peer-reviewed papers.
+- If the context does not contain enough information to answer,
+  say so honestly — do not hallucinate.
+- Cite papers using short names like (John et al., 2024) — derive
+  the author and year from the filename in the [Source:] tags.
+- Keep answers under 150 words for readability.
+
+CONTEXT:
+{context}
+
+QUESTION:
+{question}
+
+ANSWER:</code></pre>
+
+            <p>
+                Two instructions matter most. <strong>"Use ONLY the provided context"</strong> is
+                the hallucination fence. <strong>"Say so honestly when context is
+                insufficient"</strong> is the escape hatch &mdash; without it, models will invent
+                plausible-sounding answers to avoid looking stupid. Together these two lines turn
+                an unconstrained language model into a cited research assistant.
+            </p>
+
+            <p>
+                The citation format was a late addition. My first version told the model to cite
+                using the raw <code>[Source: filename]</code> tags that appear in the context.
+                It dutifully did &mdash; and the output read like this:
+                <code>[Source: john-et-al-2024-high-connectivity-and-human-movement-limits-...]</code>.
+                Correct and unreadable. I changed the instruction to derive author-year citations
+                from the filename and the output now reads like a paper:
+                <code>(John et al., 2024)</code>. Small prompt change, big UX win.
+            </p>
+
+            <h2>What actually broke</h2>
+
+            <p>
+                Three things tripped me up that the tutorials don't warn you about.
+            </p>
+
+            <h3>1. The embedding model has to match</h3>
+
+            <p>
+                The vector store is a collection of vectors produced by <em>one</em> specific
+                embedding model. If I ingest with <code>nomic-embed-text</code> and then query
+                with <code>all-MiniLM-L6-v2</code>, the query vector lives in a completely
+                different geometric space from the stored vectors. Similarity scores become
+                statistical noise. I now maintain two separate vector stores &mdash;
+                <code>chroma_db/</code> for local Ollama and <code>chroma_db_deploy/</code> for
+                the hosted API &mdash; specifically to avoid this landmine.
+            </p>
+
+            <h3>2. Free tiers are not portable</h3>
+
+            <p>
+                Gemini's free tier is zero in New Zealand. Hugging Face's Inference API quietly
+                dropped Mistral-7B support last year. OpenRouter's free models rate-limit
+                aggressively. I wrote the API with a pluggable LLM layer not because I wanted the
+                flexibility &mdash; I wanted one working provider. I wrote it that way because I
+                didn't trust any single provider to stay free for the lifetime of my portfolio.
+            </p>
+
+            <h3>3. Retrieval quality degrades on meta-questions</h3>
+
+            <p>
+                If you ask <em>"What methods did you use in the sarbecovirus study?"</em>, the
+                embedding of that question is dominated by generic words like <em>methods</em>
+                and <em>study</em> that appear in every paper. The retrieved chunks end up being
+                a mix of generic methodology text from several papers, not the specific Methods
+                section of the one you meant.
+            </p>
+
+            <p>
+                Fixing this properly needs one of: metadata filtering (search within a named
+                paper), query expansion (rephrase the question with content-specific terms), or
+                hybrid search combining BM25 keyword matching with dense retrieval. I haven't
+                implemented any of them yet. It's on the list.
+            </p>
+
+            <h2>Local vs deployed: two stacks, one codebase</h2>
+
+            <p>
+                Running the app locally and serving it in production turned out to need two
+                different stacks. Here's the split:
+            </p>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Local (Streamlit)</th>
+                        <th>Deployed (FastAPI)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Embeddings</td>
+                        <td>nomic-embed-text via Ollama</td>
+                        <td>all-MiniLM-L6-v2 via sentence-transformers</td>
+                    </tr>
+                    <tr>
+                        <td>LLM</td>
+                        <td>llama3.2 via Ollama</td>
+                        <td>llama-3.3-70b-versatile via Groq</td>
+                    </tr>
+                    <tr>
+                        <td>Vector store</td>
+                        <td>chroma_db/</td>
+                        <td>chroma_db_deploy/</td>
+                    </tr>
+                    <tr>
+                        <td>Interface</td>
+                        <td>Streamlit chat UI</td>
+                        <td>FastAPI &rarr; website JS fetch</td>
+                    </tr>
+                    <tr>
+                        <td>Hosting</td>
+                        <td>localhost</td>
+                        <td>Render (free tier)</td>
+                    </tr>
+                    <tr>
+                        <td>Cost</td>
+                        <td>$0 (local compute)</td>
+                        <td>$0 (all free tiers)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                The two stacks share <em>every other line of code</em>: chunking logic, retriever
+                setup, prompt template, chain composition. The only variation is in the
+                embeddings module and the LLM factory. That separation is what made the pivot
+                from Streamlit-on-localhost to FastAPI-on-Render take an afternoon instead of a
+                week.
+            </p>
+
+            <h2>Does it actually work?</h2>
+
+            <p>
+                Three example queries, responses verbatim from the live chat:
+            </p>
+
+            <div class="qa-block">
+                <div class="qa-q">Q: How does human movement affect infectious disease transmission?</div>
+                <div class="qa-a">
+                    Human movement limits the impact of travel time on infectious disease
+                    transmission, and its restriction can have a negligible effect on epidemic
+                    dynamics unless severely limited.
+                </div>
+                <div class="qa-cite">(John et al., 2024)</div>
+            </div>
+
+            <div class="qa-block">
+                <div class="qa-q">Q: How does Lassa virus transmit from rodents to humans?</div>
+                <div class="qa-a">
+                    Lassa virus is transmitted to humans probably through the ingestion of food
+                    or contact with contaminated rodent urine, droppings, or saliva.
+                </div>
+                <div class="qa-cite">(John et al., 2024)</div>
+            </div>
+
+            <div class="qa-block">
+                <div class="qa-q">Q: What is the connectivity paradox in pandemic spread?</div>
+                <div class="qa-a">
+                    Highly connected networks lead to rapid pandemic spread, making travel times
+                    less important as a predictor of spread, unless human movement is severely
+                    restricted.
+                </div>
+                <div class="qa-cite">(John et al., 2024)</div>
+            </div>
+
+            <p>
+                The cited paper is correct in all three cases. The answers are concise and
+                faithful to the source. When I ask a question the papers don't address
+                (<em>"Who is Reju Sam John?"</em>), the model refuses gracefully rather than
+                inventing a biography &mdash; which is exactly the failure mode the prompt
+                engineering is designed to prevent.
+            </p>
+
+            <h2>What I'd build next</h2>
+
+            <ul>
+                <li>
+                    <strong>Hybrid search.</strong> BM25 keyword retrieval fused with dense
+                    vector search. This directly fixes the meta-question problem and handles
+                    proper nouns better than pure semantic matching.
+                </li>
+                <li>
+                    <strong>Cross-encoder re-ranking.</strong> Initial retrieval pulls maybe
+                    twenty candidate chunks; a small cross-encoder model (e.g.
+                    <code>ms-marco-MiniLM</code>) re-scores them for relevance to the specific
+                    question. Expensive per query, but dramatic precision gains.
+                </li>
+                <li>
+                    <strong>Section-aware chunking.</strong> Detect paper structure (Abstract,
+                    Methods, Results, Discussion) and chunk within sections, with section type
+                    stored as metadata. Enables filtered retrieval for questions like "what
+                    methods&hellip;".
+                </li>
+                <li>
+                    <strong>Citation-aware synthesis.</strong> When multiple chunks from different
+                    papers agree, the model should combine them into a single answer with multiple
+                    citations, not pick one and ignore the rest.
+                </li>
+                <li>
+                    <strong>Evaluation harness.</strong> A held-out set of questions with
+                    ground-truth answers and hand-labelled relevant chunks, wired into CI so I
+                    can tell when a config change helps or hurts retrieval quality.
+                </li>
+            </ul>
+
+            <div class="method-note">
+                <strong>Stack.</strong> LangChain for pipeline orchestration, ChromaDB for vector
+                storage, sentence-transformers (<code>all-MiniLM-L6-v2</code>) and Ollama
+                (<code>nomic-embed-text</code>) for embeddings, Groq for inference
+                (<code>llama-3.3-70b-versatile</code>), FastAPI for the REST API, Streamlit for
+                the local dev UI, Render for deployment. Full code and papers list on
+                <a href="https://github.com/rejusam/rag-publications" target="_blank" rel="noopener">GitHub</a>.
+            </div>
+
+            <div class="cta-box">
+                <p>Try the live chat widget or explore the code.</p>
+                <a href="../#hero" class="cta-btn">
+                    <i class="fas fa-comments"></i>&nbsp; Try the live demo
+                </a>
+                <a href="https://github.com/rejusam/rag-publications"
+                   target="_blank" rel="noopener" class="cta-btn outline">
+                    <i class="fab fa-github"></i>&nbsp; View on GitHub
+                </a>
+            </div>
+
+        </div>
+
+        <footer class="article-footer">
+            <p>
+                <strong>Dr Reju Sam John</strong> is a data scientist and AI/ML engineer based in
+                Auckland, New Zealand. He holds a PhD in computational modelling and has
+                published 11 peer-reviewed papers with 169+ citations.
+                <a href="../">rejusamjohn.pages.dev</a>
+            </p>
+        </footer>
+
+    </article>
+
+</body>
+</html>

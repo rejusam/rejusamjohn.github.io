@@ -151,45 +151,101 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- Animated Counters ---
-    const statNumbers = document.querySelectorAll('.stat-number[data-target]');
+    // --- Hero Chat Widget ---
+    // Production: live FastAPI backend on Render (free tier — first call after
+    // ~15min idle is slow due to instance spin-down).
+    // For local dev, swap to: 'http://127.0.0.1:8000'
+    const RAG_API_URL = 'https://rag-publications-api.onrender.com';
 
-    function animateCounter(el) {
-        const target = parseInt(el.getAttribute('data-target'));
-        const duration = 2000;
-        const start = performance.now();
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+    const chatBody = document.getElementById('chatBody');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatWelcome = document.getElementById('chatWelcome');
+    const chatSuggestions = document.getElementById('chatSuggestions');
 
-        function update(now) {
-            const elapsed = now - start;
-            const progress = Math.min(elapsed / duration, 1);
-            // Ease out cubic
-            const eased = 1 - Math.pow(1 - progress, 3);
-            el.textContent = Math.round(target * eased);
-
-            if (progress < 1) {
-                requestAnimationFrame(update);
-            } else {
-                el.textContent = target;
-            }
-        }
-
-        requestAnimationFrame(update);
+    function appendMessage(role, text) {
+        chatWelcome.style.display = 'none';
+        const div = document.createElement('div');
+        div.className = 'chat-msg ' + role;
+        div.textContent = text;
+        chatMessages.appendChild(div);
+        chatBody.scrollTop = chatBody.scrollHeight;
+        return div;
     }
 
-    // Trigger counters when hero stats are visible
-    let countersAnimated = false;
-    const statsObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting && !countersAnimated) {
-                countersAnimated = true;
-                statNumbers.forEach(el => animateCounter(el));
-            }
-        });
-    }, { threshold: 0.5 });
+    function showTyping() {
+        const div = document.createElement('div');
+        div.className = 'chat-typing';
+        div.id = 'chatTyping';
+        div.innerHTML = '<span></span><span></span><span></span>';
+        chatMessages.appendChild(div);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
 
-    const heroStats = document.querySelector('.hero-stats');
-    if (heroStats) {
-        statsObserver.observe(heroStats);
+    function removeTyping() {
+        const el = document.getElementById('chatTyping');
+        if (el) el.remove();
+    }
+
+    async function askQuestion(question) {
+        appendMessage('user', question);
+        chatSuggestions.style.display = 'none';
+        chatSend.disabled = true;
+        chatInput.value = '';
+        showTyping();
+
+        try {
+            const res = await fetch(RAG_API_URL + '/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: question }),
+            });
+
+            removeTyping();
+
+            if (!res.ok) throw new Error('API returned ' + res.status);
+
+            const data = await res.json();
+            appendMessage('assistant', data.answer);
+        } catch (err) {
+            removeTyping();
+            const errDiv = document.createElement('div');
+            errDiv.className = 'chat-error';
+            errDiv.textContent = 'Service is waking up — please try again in 30s.';
+            chatMessages.appendChild(errDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        } finally {
+            chatSend.disabled = false;
+            chatInput.focus();
+        }
+    }
+
+    if (chatForm) {
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const q = chatInput.value.trim();
+            if (q) askQuestion(q);
+        });
+    }
+
+    // Suggestion pills
+    document.querySelectorAll('.suggestion-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            askQuestion(btn.getAttribute('data-q'));
+        });
+    });
+
+    // How-it-works toggle
+    const howtoToggle = document.getElementById('howtoToggle');
+    const chatHowto = document.getElementById('chatHowto');
+    if (howtoToggle && chatHowto) {
+        howtoToggle.addEventListener('click', () => {
+            const isOpen = howtoToggle.getAttribute('aria-expanded') === 'true';
+            howtoToggle.setAttribute('aria-expanded', String(!isOpen));
+            chatHowto.hidden = isOpen;
+        });
     }
 
 

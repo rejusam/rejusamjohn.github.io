@@ -60,37 +60,46 @@
                 Transforming complex data into evidence that drives decisions through
                 <span class="typed-text" id="typedText"></span><span class="cursor">|</span>
             </p>
-            <div class="hero-stats animate-in">
-                <div class="stat">
-                    <span class="stat-number" data-target="169">0</span><span class="stat-plus">+</span>
-                    <span class="stat-label">Citations</span>
+            <div class="hero-chat animate-in" id="heroChat">
+                <div class="chat-header">
+                    <span class="chat-title"><i class="fas fa-microscope"></i> Ask My Research</span>
+                    <button type="button" class="chat-badge chat-badge-btn" id="howtoToggle" aria-expanded="false" aria-controls="chatHowto">
+                        RAG-powered <i class="fas fa-chevron-down chevron"></i>
+                    </button>
                 </div>
-                <div class="stat-divider"></div>
-                <div class="stat">
-                    <span class="stat-number" data-target="11">0</span>
-                    <span class="stat-label">Publications</span>
+                <div class="chat-howto" id="chatHowto" hidden>
+                    <ol class="howto-steps">
+                        <li><span class="step-num">1</span><div><strong>Embed</strong> your question as a 384-dim vector (<code>all-MiniLM-L6-v2</code>)</div></li>
+                        <li><span class="step-num">2</span><div><strong>Search</strong> ChromaDB across ~780 chunks from 6 peer-reviewed papers</div></li>
+                        <li><span class="step-num">3</span><div><strong>Retrieve</strong> the top-4 most similar chunks as context</div></li>
+                        <li><span class="step-num">4</span><div><strong>Generate</strong> a cited answer with Llama 3.3 (70B, via Groq)</div></li>
+                    </ol>
+                    <div class="howto-stack">
+                        <span class="stack-pill">LangChain</span>
+                        <span class="stack-pill">ChromaDB</span>
+                        <span class="stack-pill">FastAPI</span>
+                        <span class="stack-pill">Sentence-Transformers</span>
+                        <span class="stack-pill">Groq</span>
+                    </div>
                 </div>
-                <div class="stat-divider"></div>
-                <div class="stat">
-                    <span class="stat-number" data-target="7">0</span><span class="stat-plus">+</span>
-                    <span class="stat-label">Years Experience</span>
+                <div class="chat-body" id="chatBody">
+                    <div class="chat-welcome" id="chatWelcome">
+                        <p>I study how infectious diseases spread — from pandemic connectivity patterns to zoonotic spillover of viruses like Ebola, Lassa, and SARS-CoV-2. Ask anything and get answers grounded in my peer-reviewed papers.</p>
+                    </div>
+                    <div class="chat-messages" id="chatMessages"></div>
                 </div>
-                <div class="stat-divider"></div>
-                <div class="stat">
-                    <span class="stat-number" data-target="22">0</span>
-                    <span class="stat-label">GitHub Repos</span>
+                <div class="chat-suggestions" id="chatSuggestions">
+                    <button class="suggestion-pill" data-q="What topics does your research cover?">What do you study?</button>
+                    <button class="suggestion-pill" data-q="How does human movement affect pandemic spread?">Pandemics &amp; travel</button>
+                    <button class="suggestion-pill" data-q="How does Lassa virus transmit from rodents to humans?">Lassa virus</button>
+                    <button class="suggestion-pill" data-q="What did you find about Ebola persistence in primates?">Ebola in primates</button>
                 </div>
-            </div>
-            <div class="hero-actions animate-in">
-                <a href="#contact" class="btn btn-primary">
-                    <i class="fas fa-envelope"></i> Let's Collaborate
-                </a>
-                <a href="#publications" class="btn btn-secondary">
-                    <i class="fas fa-book-open"></i> View Research
-                </a>
-                <a href="CV_RS_John_AI_Lab.pdf" class="btn btn-outline" target="_blank">
-                    <i class="fas fa-download"></i> Download CV
-                </a>
+                <form class="chat-input-row" id="chatForm">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question about my research..." autocomplete="off">
+                    <button type="submit" class="chat-send" id="chatSend" aria-label="Send">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                </form>
             </div>
             <div class="hero-links animate-in">
                 <a href="https://github.com/rejusam" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
@@ -368,6 +377,23 @@
             <p class="section-subtitle reveal">Data products, ML pipelines, and open-source research code</p>
 
             <div class="projects-grid">
+
+                <div class="project-card featured reveal">
+                    <div class="project-header">
+                        <div class="project-icon"><i class="fas fa-microscope"></i></div>
+                        <div class="project-links-top">
+                            <a href="https://github.com/rejusam/rag-publications" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                            <a href="rag-pipeline/" target="_blank" rel="noopener" aria-label="Article"><i class="fas fa-external-link-alt"></i></a>
+                            <a href="#hero" aria-label="Live demo"><i class="fas fa-comments"></i></a>
+                        </div>
+                    </div>
+                    <h3>Ask My Research: RAG Over My Publications</h3>
+                    <p>Retrieval-augmented generation pipeline over my peer-reviewed papers — 779 chunks from 6 publications, embedded with all-MiniLM-L6-v2, stored in ChromaDB, and answered by Llama 3.3 70B via Groq. Deployed as a FastAPI backend powering the live chat widget on this site.</p>
+                    <div class="project-tags">
+                        <span class="tag">LangChain</span><span class="tag">ChromaDB</span><span class="tag">FastAPI</span><span class="tag">Groq</span><span class="tag">RAG</span>
+                    </div>
+                    <div class="project-label">AI Engineering</div>
+                </div>
 
                 <div class="project-card featured reveal">
                     <div class="project-header">
