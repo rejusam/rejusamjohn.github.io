@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICU Respiratory Analytics — Enterprise BI Data Product · Dr Reju Sam John</title>
+    <meta name="description" content="A production-grade BI data product over MIMIC-III ICU vital signs: a four-gate validated ETL pipeline, Power BI star-schema export, interactive Streamlit dashboard, and CI/CD integrity on every push.">
+    <meta name="author" content="Dr Reju Sam John">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="ICU Respiratory Analytics — Enterprise BI Data Product">
+    <meta property="og:description" content="A four-gate ETL pipeline, Power BI star-schema model, and a five-module Streamlit dashboard built over 34,000+ ICU vital-sign measurements.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rejusamjohn.pages.dev/ClinicalDataAnalysis/">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="../reju_favicon.png">
+
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --surface: #334155;
+            --border: #334155;
+            --border-soft: rgba(148,163,184,0.15);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-cyan: #06b6d4;
+            --accent-violet: #8b5cf6;
+            --accent-teal: #22d3ee;
+            --accent-amber: #f59e0b;
+            --accent-red: #E63946;
+            --gradient: linear-gradient(135deg, #06b6d4, #8b5cf6);
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: var(--accent-cyan); text-decoration: none; transition: color var(--transition); }
+        a:hover { color: #22d3ee; }
+        ::selection { background: rgba(6,182,212,0.3); color: var(--text-primary); }
+
+        /* --- Top bar --- */
+        .topbar {
+            position: fixed; top: 0; width: 100%; z-index: 100;
+            background: rgba(15,23,42,0.9); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.8rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .topbar-logo { font-weight: 700; color: var(--text-primary); font-size: 1rem; }
+        .topbar-links { display: flex; gap: 1.5rem; font-size: 0.85rem; }
+        .topbar-links a { color: var(--text-muted); }
+        .topbar-links a:hover { color: var(--accent-cyan); }
+
+        /* --- Article layout --- */
+        .article-container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 6rem 1.5rem 4rem;
+        }
+
+        /* --- Header --- */
+        .article-header { margin-bottom: 3rem; }
+        .article-kicker {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
+        .article-title {
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        .article-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            font-style: italic;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            max-width: 720px;
+        }
+        .article-meta {
+            display: flex; gap: 1.5rem; flex-wrap: wrap;
+            font-size: 0.85rem; color: var(--text-muted);
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        .article-meta a { color: var(--text-muted); }
+        .article-meta a:hover { color: var(--accent-cyan); }
+
+        /* --- Stat row --- */
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 1.9rem; font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Tag chips --- */
+        .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem; }
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            letter-spacing: 0.03em;
+        }
+        .tag.cyan   { border-color: rgba(6,182,212,0.35);  color: var(--accent-cyan);   background: rgba(6,182,212,0.08); }
+        .tag.violet { border-color: rgba(139,92,246,0.35); color: var(--accent-violet); background: rgba(139,92,246,0.08); }
+        .tag.amber  { border-color: rgba(245,158,11,0.35); color: var(--accent-amber);  background: rgba(245,158,11,0.08); }
+
+        /* --- Sections --- */
+        .article-body section {
+            padding: 2.5rem 0;
+            border-top: 1px solid var(--border);
+        }
+        .article-body section:first-child { border-top: none; padding-top: 1rem; }
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
+        }
+        .article-body h2 {
+            font-size: 1.6rem; font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+            letter-spacing: -0.01em;
+        }
+        .article-body p {
+            margin-bottom: 1.1rem;
+            font-size: 1.02rem;
+            max-width: 720px;
+        }
+        .article-body p strong { color: var(--text-primary); font-weight: 600; }
+        .article-body p em { color: var(--text-primary); font-style: italic; }
+
+        /* --- Inline code --- */
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.85em;
+            color: var(--accent-cyan);
+            background: rgba(6,182,212,0.08);
+            padding: 0.1em 0.45em;
+            border-radius: 4px;
+        }
+        pre {
+            background: #0b1220;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0.9rem 1rem;
+            overflow-x: auto;
+            margin: 0;
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+        pre, pre code {
+            font-family: var(--font-mono);
+            color: #e2e8f0;
+            background: transparent;
+            padding: 0;
+        }
+
+        /* --- Pullquote / callout --- */
+        .pullquote {
+            border-left: 3px solid var(--accent-cyan);
+            padding: 1.1rem 1.4rem;
+            margin: 1.75rem 0;
+            background: rgba(6,182,212,0.05);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: 1.02rem;
+            color: var(--text-primary);
+            font-style: italic;
+            max-width: 720px;
+        }
+
+        /* --- Diagram wrapper --- */
+        .dbox {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.75rem;
+            margin: 1.75rem 0;
+            overflow-x: auto;
+        }
+
+        /* --- Gates grid --- */
+        .gates {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin: 1.75rem 0;
+        }
+        .gate {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.1rem 1.15rem;
+            transition: border-color var(--transition), background var(--transition);
+        }
+        .gate:hover { border-color: rgba(6,182,212,0.4); }
+        .gate .gn {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.1em;
+        }
+        .gate h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.4rem;
+        }
+        .gate p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.55;
+        }
+
+        /* --- Star schema --- */
+        .schema {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin: 1.75rem 0;
+        }
+        .stbl {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .stbl.fact { grid-column: 1 / -1; border-color: rgba(6,182,212,0.4); }
+        .stbl .sh {
+            padding: 0.55rem 0.85rem;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .stbl.fact .sh { background: rgba(6,182,212,0.12); }
+        .stbl .sh .sn {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .stbl.fact .sh .sn { color: var(--accent-cyan); }
+        .stbl .sh .st {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+        .stbl .sf {
+            padding: 0.32rem 0.85rem;
+            border-bottom: 1px solid rgba(148,163,184,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .stbl .sf:last-child { border-bottom: none; }
+        .stbl .sf .fn {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+        }
+        .stbl .sf .ft {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+        .pk { color: var(--accent-amber) !important; }
+        .fk { color: var(--accent-teal) !important; }
+
+        /* --- DAX measure cards --- */
+        .dax {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin: 1.25rem 0;
+        }
+        .dm {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .dm .dh {
+            padding: 0.45rem 0.85rem;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+            letter-spacing: 0.05em;
+        }
+        .dm .db { padding: 0.75rem 0.85rem; }
+        .dm .db pre {
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            line-height: 1.6;
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        /* --- Module grid --- */
+        .modules {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 0.75rem;
+            margin: 1.75rem 0;
+        }
+        .mod {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.15rem;
+        }
+        .mod .mi {
+            width: 32px; height: 32px;
+            background: rgba(6,182,212,0.12);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 0.75rem;
+        }
+        .mod h4 {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.35rem;
+        }
+        .mod p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.55;
+        }
+
+        /* --- Engineering steps --- */
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+        .step { display: flex; gap: 0.9rem; align-items: flex-start; }
+        .step .slab {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent-cyan);
+            background: rgba(6,182,212,0.1);
+            border: 1px solid rgba(6,182,212,0.25);
+            border-radius: 4px;
+            padding: 0.3rem 0.55rem;
+            min-width: 64px;
+            text-align: center;
+            margin-top: 0.15rem;
+            flex-shrink: 0;
+            letter-spacing: 0.05em;
+        }
+        .step .sb h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.2rem;
+        }
+        .step .sb p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* --- Capabilities (proof grid) --- */
+        .proof {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin: 1.75rem 0;
+        }
+        .pi {
+            padding: 1.15rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
+        .pi h4 {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.4rem;
+        }
+        .pi p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* --- Stack list --- */
+        .stack { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.25rem 0; }
+        .si {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.35rem 0.7rem;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+        .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .dp { background: var(--accent-cyan); }
+        .db2{ background: var(--accent-amber); }
+        .dc { background: var(--accent-teal); }
+        .dt { background: var(--accent-red); }
+        .dv { background: #fb923c; }
+        .ds { background: var(--accent-violet); }
+
+        /* --- CTA box --- */
+        .cta-box {
+            background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(139,92,246,0.08));
+            border: 1px solid rgba(6,182,212,0.2);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin: 3rem 0 1.5rem;
+            text-align: center;
+        }
+        .cta-box p { margin-bottom: 1rem; color: var(--text-primary); font-size: 1rem; max-width: none; }
+        .cta-btn {
+            display: inline-block;
+            padding: 0.6rem 1.5rem;
+            background: var(--gradient);
+            color: #fff; font-weight: 600;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: transform var(--transition), box-shadow var(--transition);
+            margin: 0 0.35rem 0.5rem;
+        }
+        .cta-btn.outline {
+            background: transparent;
+            border: 1px solid rgba(6,182,212,0.4);
+            color: var(--accent-cyan);
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(6,182,212,0.3);
+            color: #fff;
+        }
+        .cta-btn.outline:hover {
+            background: rgba(6,182,212,0.1);
+            color: var(--accent-cyan);
+        }
+
+        /* --- Footer --- */
+        .article-footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .article-footer a { color: var(--text-muted); }
+        .article-footer a:hover { color: var(--accent-cyan); }
+        .article-footer .flinks { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+
+        @media (max-width: 640px) {
+            .article-container { padding: 5rem 1rem 3rem; }
+            .topbar { padding: 0.6rem 1rem; }
+            .schema, .dax, .proof { grid-template-columns: 1fr; }
+            .stbl.fact { grid-column: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <a href="../" class="topbar-logo">Dr Reju Sam John</a>
+        <div class="topbar-links">
+            <a href="../#projects">Projects</a>
+            <a href="https://github.com/rejusam/ClinicalDataAnalysis" target="_blank" rel="noopener"><i class="fab fa-github"></i> Code</a>
+        </div>
+    </div>
+
+    <article class="article-container">
+
+        <header class="article-header">
+            <div class="article-kicker">BI Data Product · Analytics Engineering</div>
+            <h1 class="article-title">ICU Respiratory Analytics<br>Enterprise BI Data Product</h1>
+            <p class="article-subtitle">
+                A production-grade end-to-end analytics system &mdash; raw ICU vital-sign data
+                through a four-gate validated ETL pipeline to a Power BI star-schema model and
+                a five-module interactive clinical dashboard, with CI/CD integrity on every push.
+            </p>
+            <div class="article-meta">
+                <span><a href="../">Reju Sam John</a></span>
+                <span>Auckland, New Zealand</span>
+                <span>MIMIC-III · PhysioNet</span>
+                <span><a href="https://github.com/rejusam/ClinicalDataAnalysis" target="_blank" rel="noopener">View on GitHub &rarr;</a></span>
+            </div>
+
+            <div class="stat-row">
+                <div class="stat-card">
+                    <div class="stat-number">34,630</div>
+                    <div class="stat-label">Measurements</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">Pipeline gates</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">Dashboard modules</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">CI/CD</div>
+                    <div class="stat-label">Every push</div>
+                </div>
+            </div>
+
+            <div class="tags">
+                <span class="tag cyan">Power BI</span>
+                <span class="tag cyan">DAX</span>
+                <span class="tag cyan">Star Schema</span>
+                <span class="tag violet">Python</span>
+                <span class="tag violet">Pandas</span>
+                <span class="tag violet">SciPy</span>
+                <span class="tag amber">GitHub Actions</span>
+                <span class="tag amber">pytest</span>
+                <span class="tag">Streamlit</span>
+                <span class="tag">Plotly</span>
+                <span class="tag">MIMIC-III</span>
+            </div>
+        </header>
+
+        <div class="article-body">
+
+            <!-- 01 CONTEXT -->
+            <section>
+                <div class="section-label">01 — Context</div>
+                <h2>The Problem Worth Solving</h2>
+                <p>
+                    Most analytics portfolio projects demonstrate a skill in isolation: a Pandas
+                    notebook here, a Power BI dashboard there. What they rarely show is
+                    <strong>the full chain</strong> &mdash; from a real, messy dataset through a
+                    validated pipeline to a BI-ready data model that a team could actually trust
+                    in production.
+                </p>
+                <p>
+                    This project was built to close that gap deliberately. Using the
+                    <strong>MIMIC-III Waveform Database</strong> &mdash; a publicly available
+                    dataset of ICU patient vital signs from PhysioNet &mdash; the goal was to
+                    build exactly the kind of system a Data Centre of Excellence maintains:
+                    automated, validated, documented, and maintainable by anyone on the team.
+                </p>
+                <p>
+                    The domain choice was intentional. Respiratory biometrics &mdash; SpO&#8322;,
+                    respiratory rate, heart rate, blood pressure &mdash; map directly to the
+                    kind of measurement data that healthcare analytics teams work with daily:
+                    time-series measurements, patient cohorts, clinical thresholds, and risk
+                    stratification. The engineering challenge is identical regardless of whether
+                    the underlying metric is a vital sign or a manufacturing sensor reading.
+                </p>
+                <div class="pullquote">
+                    The benchmark for every design decision: <em>if I left tomorrow, could
+                    another analyst run this confidently &mdash; and trust the outputs?</em>
+                </div>
+            </section>
+
+            <!-- 02 ARCHITECTURE -->
+            <section>
+                <div class="section-label">02 — Architecture</div>
+                <h2>How It's Built</h2>
+                <p>
+                    The system has three layers: an <strong>ETL and validation layer</strong>
+                    that processes raw data, a <strong>Power BI export layer</strong> that
+                    generates the star-schema model, and an <strong>interactive dashboard
+                    layer</strong> for exploratory analysis. All three are orchestrated by a
+                    single pipeline runner with gate-based validation logic.
+                </p>
+
+                <div class="dbox">
+                    <svg width="100%" viewBox="0 0 780 310" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="arb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                <path d="M2 1L8 5L2 9" fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </marker>
+                            <marker id="arg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                <path d="M2 1L8 5L2 9" fill="none" stroke="rgba(148,163,184,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </marker>
+                        </defs>
+                        <!-- Raw Data -->
+                        <rect x="20" y="115" width="108" height="58" rx="8" fill="#0b1220" stroke="rgba(6,182,212,0.5)" stroke-width="1"/>
+                        <text x="74" y="138" fill="#06b6d4" font-size="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="500">RAW DATA</text>
+                        <text x="74" y="154" fill="rgba(241,245,249,0.6)" font-size="9" text-anchor="middle" font-family="'JetBrains Mono',monospace">MIMIC-III</text>
+                        <text x="74" y="166" fill="rgba(148,163,184,0.55)" font-size="9" text-anchor="middle" font-family="'JetBrains Mono',monospace">PhysioNet</text>
+                        <!-- Arrow 1 -->
+                        <line x1="128" y1="144" x2="158" y2="144" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arb)"/>
+                        <!-- ETL -->
+                        <rect x="160" y="102" width="128" height="84" rx="8" fill="#0e1b2c" stroke="rgba(34,211,238,0.5)" stroke-width="1"/>
+                        <text x="224" y="124" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="500">ETL PIPELINE</text>
+                        <text x="224" y="141" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">Extract + standardise</text>
+                        <text x="224" y="155" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">Feature engineering</text>
+                        <text x="224" y="169" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">Quality flags</text>
+                        <!-- Arrow 2 -->
+                        <line x1="288" y1="144" x2="318" y2="144" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arb)"/>
+                        <!-- Orchestrator -->
+                        <rect x="320" y="102" width="128" height="84" rx="8" fill="#1c1707" stroke="rgba(245,158,11,0.5)" stroke-width="1"/>
+                        <text x="384" y="124" fill="#f59e0b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="500">ORCHESTRATOR</text>
+                        <text x="384" y="141" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">4-gate validation</text>
+                        <text x="384" y="155" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">JSON audit logs</text>
+                        <text x="384" y="169" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">data_pipeline.py</text>
+                        <!-- Arrow to PBI -->
+                        <line x1="448" y1="128" x2="490" y2="92" stroke="rgba(148,163,184,0.4)" stroke-width="1.2" marker-end="url(#arg)"/>
+                        <!-- Arrow to Dashboard -->
+                        <line x1="448" y1="160" x2="490" y2="196" stroke="rgba(148,163,184,0.4)" stroke-width="1.2" marker-end="url(#arg)"/>
+                        <!-- Power BI Export -->
+                        <rect x="492" y="52" width="126" height="78" rx="8" fill="#1a1530" stroke="rgba(139,92,246,0.5)" stroke-width="1"/>
+                        <text x="555" y="74" fill="#8b5cf6" font-size="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="500">POWER BI EXPORT</text>
+                        <text x="555" y="90" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">Star schema CSVs</text>
+                        <text x="555" y="104" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">DAX measures</text>
+                        <text x="555" y="118" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">data_model.json</text>
+                        <!-- Arrow to PBI Desktop -->
+                        <line x1="618" y1="91" x2="650" y2="91" stroke="rgba(148,163,184,0.4)" stroke-width="1.2" marker-end="url(#arg)"/>
+                        <rect x="652" y="62" width="106" height="58" rx="8" fill="#1c1907" stroke="rgba(245,158,11,0.5)" stroke-width="1"/>
+                        <text x="705" y="87" fill="#f59e0b" font-size="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="500">POWER BI</text>
+                        <text x="705" y="103" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">Desktop</text>
+                        <!-- Streamlit Dashboard -->
+                        <rect x="492" y="160" width="126" height="78" rx="8" fill="#1a1530" stroke="rgba(251,146,60,0.5)" stroke-width="1"/>
+                        <text x="555" y="182" fill="#fb923c" font-size="10" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="500">DASHBOARD</text>
+                        <text x="555" y="198" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">5-module Streamlit</text>
+                        <text x="555" y="212" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">Plotly + real-time filter</text>
+                        <text x="555" y="226" fill="rgba(241,245,249,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">CSV export</text>
+                        <!-- CI/CD dashed band -->
+                        <rect x="160" y="218" width="288" height="42" rx="7" fill="#0b1220" stroke="rgba(34,211,238,0.35)" stroke-width="1" stroke-dasharray="4 3"/>
+                        <text x="304" y="236" fill="rgba(34,211,238,0.75)" font-size="9.5" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="500">GitHub Actions CI/CD</text>
+                        <text x="304" y="251" fill="rgba(148,163,184,0.55)" font-size="8.5" text-anchor="middle" font-family="'JetBrains Mono',monospace">lint · pytest · data validation · on every push</text>
+                        <!-- Connectors to CI/CD -->
+                        <line x1="224" y1="186" x2="224" y2="218" stroke="rgba(34,211,238,0.35)" stroke-width="1" stroke-dasharray="3 3"/>
+                        <line x1="384" y1="186" x2="384" y2="218" stroke="rgba(34,211,238,0.35)" stroke-width="1" stroke-dasharray="3 3"/>
+                    </svg>
+                </div>
+
+                <p>
+                    The <code>data_pipeline.py</code> orchestrator is the spine of the system.
+                    It runs each stage sequentially, logging every gate result before proceeding.
+                    A <code>FAIL</code> at any gate halts the pipeline &mdash; outputs are never
+                    generated from data that has not passed validation.
+                </p>
+            </section>
+
+            <!-- 03 GATES -->
+            <section>
+                <div class="section-label">03 — Validation Logic</div>
+                <h2>The Four-Gate Pipeline</h2>
+                <p>
+                    Most pipelines validate reactively &mdash; you notice something is wrong
+                    when a dashboard shows nonsense. This pipeline validates proactively, at
+                    four explicit checkpoints, with structured JSON logging at each one.
+                </p>
+                <div class="gates">
+                    <div class="gate">
+                        <div class="gn">GATE 01</div>
+                        <h4>Source Validation</h4>
+                        <p>Verify raw data directories exist and are non-empty before anything else runs. Fast-fail before wasting compute on a missing source.</p>
+                    </div>
+                    <div class="gate">
+                        <div class="gn">GATE 02</div>
+                        <h4>ETL Processing</h4>
+                        <p>Extract minute-level vital signs via WFDB, standardise inconsistent monitor naming (<code>SpO2</code>&rarr;<code>spo2</code>), engineer clinical features, apply quality flags.</p>
+                    </div>
+                    <div class="gate">
+                        <div class="gn">GATE 03</div>
+                        <h4>Quality Validation</h4>
+                        <p>Completeness checks per field, range validation against clinical thresholds, duplicate detection, Z-score outlier flagging with structured output.</p>
+                    </div>
+                    <div class="gate">
+                        <div class="gn">GATE 04</div>
+                        <h4>Power BI Export</h4>
+                        <p>Generate star-schema CSVs, pre-authored DAX measures JSON, data model documentation. Fires only on clean, fully-validated data.</p>
+                    </div>
+                </div>
+                <p>
+                    Each gate writes a timestamped <code>PASS / WARN / FAIL</code> entry to a
+                    structured JSON audit log. A complete report is generated per run. You can
+                    always answer: <em>when did this pipeline last run cleanly, and what did it
+                    find?</em>
+                </p>
+            </section>
+
+            <!-- 04 POWER BI -->
+            <section>
+                <div class="section-label">04 — Data Model</div>
+                <h2>Power BI Star Schema</h2>
+                <p>
+                    The export layer produces a proper star schema &mdash; not a flat CSV
+                    handed off to an analyst to wrestle into shape. The model is designed for
+                    <strong>query performance and self-service usability</strong>: dimension
+                    tables for filtering and slicing, a central fact table for aggregation, and
+                    pre-authored DAX measures so analysts aren't writing the same
+                    <code>CALCULATE</code> expressions from scratch.
+                </p>
+                <div class="schema">
+                    <div class="stbl fact">
+                        <div class="sh"><span class="sn">fact_vitals</span><span class="st">FACT TABLE · 34,630 rows</span></div>
+                        <div class="sf"><span class="fn pk">&#9656; vital_key</span><span class="ft">PK · INT</span></div>
+                        <div class="sf"><span class="fn fk">&#9670; patient_key</span><span class="ft">FK &rarr; dim_patient</span></div>
+                        <div class="sf"><span class="fn fk">&#9670; time_key</span><span class="ft">FK &rarr; dim_time</span></div>
+                        <div class="sf"><span class="fn fk">&#9670; quality_key</span><span class="ft">FK &rarr; dim_quality</span></div>
+                        <div class="sf"><span class="fn">heart_rate</span><span class="ft">FLOAT</span></div>
+                        <div class="sf"><span class="fn">spo2</span><span class="ft">FLOAT</span></div>
+                        <div class="sf"><span class="fn">respiratory_rate</span><span class="ft">FLOAT</span></div>
+                        <div class="sf"><span class="fn">hypoxemia_flag</span><span class="ft">INT · 0/1</span></div>
+                        <div class="sf"><span class="fn">tachypnea_flag</span><span class="ft">INT · 0/1</span></div>
+                    </div>
+                    <div class="stbl">
+                        <div class="sh"><span class="sn">dim_patient</span><span class="st">DIMENSION</span></div>
+                        <div class="sf"><span class="fn pk">&#9656; patient_key</span><span class="ft">PK · INT</span></div>
+                        <div class="sf"><span class="fn">patient_id</span><span class="ft">VARCHAR</span></div>
+                        <div class="sf"><span class="fn">risk_category</span><span class="ft">VARCHAR</span></div>
+                        <div class="sf"><span class="fn">monitoring_hours</span><span class="ft">FLOAT</span></div>
+                        <div class="sf"><span class="fn">avg_spo2</span><span class="ft">FLOAT</span></div>
+                    </div>
+                    <div class="stbl">
+                        <div class="sh"><span class="sn">dim_time</span><span class="st">DIMENSION</span></div>
+                        <div class="sf"><span class="fn pk">&#9656; time_key</span><span class="ft">PK · INT</span></div>
+                        <div class="sf"><span class="fn">hour</span><span class="ft">INT</span></div>
+                        <div class="sf"><span class="fn">shift</span><span class="ft">VARCHAR</span></div>
+                        <div class="sf"><span class="fn">day_period</span><span class="ft">VARCHAR</span></div>
+                    </div>
+                </div>
+                <p>Pre-authored DAX measures exported alongside the schema:</p>
+                <div class="dax">
+                    <div class="dm">
+                        <div class="dh">Average SpO&#8322;</div>
+                        <div class="db"><pre>Average SpO2 =
+  AVERAGE(fact_vitals[spo2])</pre></div>
+                    </div>
+                    <div class="dm">
+                        <div class="dh">Hypoxemia Rate %</div>
+                        <div class="db"><pre>Hypoxemia Rate % =
+  DIVIDE(
+    COUNTROWS(FILTER(
+      fact_vitals,
+      fact_vitals[hypoxemia_flag]=1)),
+    COUNTROWS(fact_vitals)
+  ) * 100</pre></div>
+                    </div>
+                    <div class="dm">
+                        <div class="dh">High Risk Patient Count</div>
+                        <div class="db"><pre>High Risk Patients =
+  CALCULATE(
+    DISTINCTCOUNT(
+      dim_patient[patient_key]),
+    dim_patient[risk_category]
+      = "High"
+  )</pre></div>
+                    </div>
+                    <div class="dm">
+                        <div class="dh">Pre-aggregated rollups</div>
+                        <div class="db"><pre>agg_hourly_vitals.csv
+
+Hourly rollups pre-computed
+at export for dashboard
+performance at scale.</pre></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 05 DASHBOARD -->
+            <section>
+                <div class="section-label">05 — Interactive Dashboard</div>
+                <h2>Five-Module Streamlit Application</h2>
+                <p>
+                    The dashboard is built for <strong>multi-level interrogation</strong>. A
+                    clinical or analytics team can move from cohort-level KPIs to individual
+                    patient trajectories to statistical hypothesis testing within the same
+                    application. All modules share a real-time patient filter that cascades
+                    across pages.
+                </p>
+                <div class="modules">
+                    <div class="mod">
+                        <div class="mi">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="7" width="3" height="6" rx="1" fill="#06b6d4"/><rect x="5.5" y="4.5" width="3" height="8.5" rx="1" fill="#06b6d4" opacity=".7"/><rect x="10" y="1" width="3" height="12" rx="1" fill="#06b6d4" opacity=".4"/></svg>
+                        </div>
+                        <h4>Overview &amp; Demographics</h4>
+                        <p>Cohort KPIs, severity gauges, monitoring duration stats across the full patient set.</p>
+                    </div>
+                    <div class="mod">
+                        <div class="mi">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 11L4 6L7 8L10 3L13 5" stroke="#06b6d4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                        </div>
+                        <h4>Respiratory Biometrics</h4>
+                        <p>SpO&#8322; and respiratory rate distributions, patient-level comparisons with clinical threshold overlays.</p>
+                    </div>
+                    <div class="mod">
+                        <div class="mi">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#06b6d4" stroke-width="1.4" fill="none"/><path d="M7 4.5V7l1.8 1.8" stroke="#06b6d4" stroke-width="1.4" stroke-linecap="round"/></svg>
+                        </div>
+                        <h4>Temporal Analysis</h4>
+                        <p>Per-patient time-series trajectories, hypoxemia episode detection, shift-period breakdowns.</p>
+                    </div>
+                    <div class="mod">
+                        <div class="mi">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2v10" stroke="#06b6d4" stroke-width="1.4" stroke-linecap="round"/><circle cx="7" cy="7" r="2" fill="#06b6d4"/></svg>
+                        </div>
+                        <h4>Data Quality Report</h4>
+                        <p>Completeness rates per field, quality flag summaries, outlier counts &mdash; the audit trail made visible in the UI.</p>
+                    </div>
+                    <div class="mod">
+                        <div class="mi">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 12L5.5 6.5L8 9L10 5L13 2" stroke="#06b6d4" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>
+                        </div>
+                        <h4>Statistical Analysis</h4>
+                        <p>t-tests, Cohen's d effect sizes, Pearson correlation heatmap, outcome analysis &mdash; for the analyst who wants to go deeper.</p>
+                    </div>
+                </div>
+                <p>
+                    Every chart supports CSV download. The application is stateless and
+                    configuration-driven via <code>config.py</code> &mdash; clinical thresholds
+                    and parameters are defined once and respected everywhere.
+                </p>
+            </section>
+
+            <!-- 06 ENGINEERING -->
+            <section>
+                <div class="section-label">06 — Engineering Craft</div>
+                <h2>Built to Be Maintained</h2>
+                <p>
+                    The features matter less than what they reveal about underlying discipline.
+                    Each engineering choice was made with the same question in mind:
+                    <em>what does it take for a team to own and extend this independently?</em>
+                </p>
+                <div class="steps">
+                    <div class="step">
+                        <div class="slab">CI/CD</div>
+                        <div class="sb">
+                            <h4>GitHub Actions on every push and pull request</h4>
+                            <p>Three automated stages: flake8 lint, pytest unit tests, and data validation schema checks. The CI badge is a live signal of system health &mdash; not an afterthought.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="slab">CONFIG</div>
+                        <div class="sb">
+                            <h4>Centralised configuration management</h4>
+                            <p><code>config.py</code> holds all clinical thresholds, file paths, and pipeline parameters. Change a threshold once &mdash; it propagates everywhere. No scattered magic numbers.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="slab">TESTS</div>
+                        <div class="sb">
+                            <h4>pytest unit test suite</h4>
+                            <p>Tests cover standardisation logic, metric computation, and summary generation. A breaking code change is caught before it reaches the data model.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="slab">AUDIT</div>
+                        <div class="sb">
+                            <h4>Structured JSON audit logs per run</h4>
+                            <p>Every execution writes a machine-readable log to <code>data/logs/</code>. Complete traceability: what ran, what passed, what was flagged, and when.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="slab">DEV ENV</div>
+                        <div class="sb">
+                            <h4>VS Code Dev Container configuration</h4>
+                            <p>The <code>.devcontainer/</code> setup guarantees a reproducible environment across machines. New contributor, same environment &mdash; no "works on my machine" surprises.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 07 CAPABILITIES -->
+            <section>
+                <div class="section-label">07 — Capabilities Demonstrated</div>
+                <h2>What This Project Shows</h2>
+                <div class="proof">
+                    <div class="pi">
+                        <h4>End-to-end BI delivery</h4>
+                        <p>Raw data &rarr; validated pipeline &rarr; star-schema model &rarr; Power BI exports with pre-authored DAX. The complete chain, not just a segment of it.</p>
+                    </div>
+                    <div class="pi">
+                        <h4>Power BI fluency</h4>
+                        <p>Not just connecting a CSV. Proper star-schema design, surrogate keys, dimension tables, and authored DAX measures &mdash; the architecture a BI team operates within.</p>
+                    </div>
+                    <div class="pi">
+                        <h4>Analytics engineering craft</h4>
+                        <p>CI/CD, pytest, structured logging, configuration management, Dev Container. The infrastructure that makes data products maintainable at team scale.</p>
+                    </div>
+                    <div class="pi">
+                        <h4>Multi-audience design</h4>
+                        <p>Five dashboard modules calibrated for different analytical depths &mdash; from executive KPIs to statistical hypothesis testing &mdash; in a single coherent application.</p>
+                    </div>
+                    <div class="pi">
+                        <h4>Clinical domain depth</h4>
+                        <p>Hypoxemia detection logic, clinical threshold validation, ventilation type classification. Domain knowledge embedded in the pipeline, not bolted on afterward.</p>
+                    </div>
+                    <div class="pi">
+                        <h4>Reproducible by design</h4>
+                        <p>Any analyst with the repo and PhysioNet credentials can reproduce the full pipeline from scratch &mdash; no handover session required.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 08 STACK -->
+            <section>
+                <div class="section-label">08 — Stack</div>
+                <h2>Technology Stack</h2>
+                <div class="stack">
+                    <div class="si"><span class="dot dp"></span>Python 3.11</div>
+                    <div class="si"><span class="dot dp"></span>Pandas</div>
+                    <div class="si"><span class="dot dp"></span>NumPy</div>
+                    <div class="si"><span class="dot ds"></span>SciPy</div>
+                    <div class="si"><span class="dot dv"></span>Streamlit</div>
+                    <div class="si"><span class="dot dv"></span>Plotly</div>
+                    <div class="si"><span class="dot db2"></span>Power BI</div>
+                    <div class="si"><span class="dot db2"></span>DAX</div>
+                    <div class="si"><span class="dot db2"></span>Star Schema</div>
+                    <div class="si"><span class="dot dc"></span>GitHub Actions</div>
+                    <div class="si"><span class="dot dt"></span>pytest</div>
+                    <div class="si"><span class="dot dt"></span>flake8</div>
+                    <div class="si"><span class="dot dp"></span>WFDB</div>
+                    <div class="si"><span class="dot dc"></span>Dev Containers</div>
+                    <div class="si"><span class="dot dc"></span>Makefile</div>
+                </div>
+            </section>
+
+            <div class="cta-box">
+                <p>The full code, tests, and CI configuration are open on GitHub.</p>
+                <a href="https://github.com/rejusam/ClinicalDataAnalysis" class="cta-btn" target="_blank" rel="noopener">View on GitHub</a>
+                <a href="../" class="cta-btn outline">&larr; Back to portfolio</a>
+            </div>
+
+            <footer class="article-footer">
+                <span>Dr Reju Sam John · Auckland, New Zealand</span>
+                <div class="flinks">
+                    <a href="../">Portfolio</a>
+                    <a href="https://github.com/rejusam" target="_blank" rel="noopener">GitHub</a>
+                    <a href="https://www.linkedin.com/in/dr-reju-sam-john-14b00774" target="_blank" rel="noopener">LinkedIn</a>
+                    <a href="https://orcid.org/0000-0002-5024-3700" target="_blank" rel="noopener">ORCID</a>
+                </div>
+            </footer>
+
+        </div>
+    </article>
+
+</body>
+</html>
