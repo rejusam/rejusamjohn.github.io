@@ -392,15 +392,29 @@
             <p>
                 When I decided to put an AI chat widget on my portfolio, the first question was
                 what it should actually <em>do</em>. Another generic "chat with my CV" felt unappealing.
-                But I have something more interesting sitting on a shelf: six peer-reviewed papers,
-                169+ citations, and a dense technical vocabulary that no thirty-second elevator
-                pitch could ever capture. So I built a retrieval-augmented generation (RAG) pipeline
-                over my own research &mdash; and wired it into the hero section of this site.
+                But I have something more interesting sitting on a shelf: a body of peer-reviewed
+                research in infectious disease modelling &mdash; dense technical vocabulary, formal
+                notation, results that no thirty-second elevator pitch could ever capture. So I
+                built a retrieval-augmented generation (RAG) pipeline over my own research and
+                wired it into the hero section of this site.
             </p>
 
             <p>
                 This is a writeup of how it works, the decisions I made, and the gotchas that only
                 show up once you actually try to ship the thing.
+            </p>
+
+            <p>
+                <strong>A note on scope.</strong> I have eleven peer-reviewed publications, but
+                the demo corpus is a deliberate six-paper subset &mdash; all in epidemiological
+                modelling and network science. The papers I excluded are from an earlier chapter of
+                my research life in astrophysics and computational physics, and mixing them in
+                would have hurt the demo rather than helped it. A question like <em>"how does
+                Lassa virus spread?"</em> would start pulling in passages about dark matter halos
+                just because both corpora share words like <em>"network"</em> and <em>"density"</em>.
+                That is exactly the kind of cross-domain retrieval noise a single-namespace RAG
+                system is bad at handling &mdash; and it is worth a few paragraphs at the end of
+                this article, because it is the most interesting extension of this work.
             </p>
 
             <div class="stat-row">
@@ -813,6 +827,79 @@ ANSWER:</code></pre>
                 </li>
             </ul>
 
+            <h2>Extending this to a multi-disciplinary corpus</h2>
+
+            <p>
+                I mentioned at the top that this demo deliberately excludes my earlier astrophysics
+                and computational-physics papers. That was a pragmatic choice for a portfolio
+                piece, but the underlying problem is one of the more interesting open questions in
+                applied RAG: <em>what happens when the corpus spans disciplines that share
+                vocabulary but mean different things by it?</em> The word <em>"network"</em> in an
+                epidemiology paper is a contact graph between hosts; in an astrophysics paper it
+                is a cosmic filament structure. Dense embeddings learn a single average meaning
+                and happily return the wrong one.
+            </p>
+
+            <p>
+                A single flat vector index is the wrong shape for that problem. Four techniques,
+                stacked, solve almost all of it.
+            </p>
+
+            <ol>
+                <li>
+                    <strong>Per-discipline namespaces, not a single collection.</strong> ChromaDB
+                    collections, Pinecone namespaces, Weaviate classes &mdash; the primitive exists
+                    in every serious vector store. Ingest each paper with a domain tag and store
+                    it in the collection for that domain. Retrieval is then scoped to one domain
+                    at a time, and cross-domain pollution becomes architecturally impossible
+                    rather than statistically unlikely.
+                </li>
+                <li>
+                    <strong>Metadata-filtered retrieval.</strong> Alongside the chunks, store a
+                    structured metadata record: <code>domain</code>, <code>year</code>,
+                    <code>venue</code>, <code>authors</code>, <code>section</code>. Filter at
+                    query time &mdash; either by explicit user choice (a dropdown on the chat
+                    widget) or by a classifier that infers the domain from the question itself.
+                    This is a single parameter in every modern vector DB API and solves 80% of
+                    the problem for almost no engineering cost.
+                </li>
+                <li>
+                    <strong>Query routing.</strong> A small LLM call classifies the question
+                    (<em>"epidemiology"</em>, <em>"astrophysics"</em>, <em>"methodology",
+                    spanning both</em>) and dispatches the retrieval to the correct sub-index.
+                    LlamaIndex ships a <code>RouterQueryEngine</code> for exactly this; LangChain
+                    calls the same pattern a <em>multi-retriever chain</em>. For questions that
+                    span domains, the router fans out, retrieves from both, and merges with
+                    explicit provenance so the LLM can discuss the overlap honestly.
+                </li>
+                <li>
+                    <strong>Domain-specific embeddings where it matters.</strong> A generic
+                    MiniLM embedding is a reasonable default, but for scientific corpora a
+                    model trained on academic text &mdash; SPECTER, SciBERT, or BGE fine-tuned on
+                    your own corpus &mdash; measurably improves retrieval on domain terminology.
+                    You can even run different embedding models per namespace: SPECTER for
+                    biology, a physics-tuned model for physics, and store both in their own
+                    collections. They never need to share a vector space.
+                </li>
+            </ol>
+
+            <p>
+                A good sanity check for this kind of architecture is to write the obvious failing
+                query by hand &mdash; <em>"describe the role of network structure in disease
+                spread"</em> &mdash; and confirm the retriever no longer returns dark-matter halo
+                passages. That single test is worth a hundred abstract discussions about
+                embedding quality.
+            </p>
+
+            <p>
+                The honest answer to <em>"how do you handle a mixed-discipline corpus?"</em> is
+                therefore not <em>"use a better embedding model"</em>. It is <em>"stop pretending
+                one index can represent every domain &mdash; split the index, tag the chunks,
+                route the queries, and let each domain have its own retrieval space"</em>. The
+                engineering is straightforward. The discipline is remembering to do it before
+                the embeddings quietly lie to you.
+            </p>
+
             <div class="method-note">
                 <strong>Stack.</strong> LangChain for pipeline orchestration, ChromaDB for vector
                 storage, sentence-transformers (<code>all-MiniLM-L6-v2</code>) and Ollama
@@ -839,7 +926,10 @@ ANSWER:</code></pre>
             <p>
                 <strong>Dr Reju Sam John</strong> is a data scientist and AI/ML engineer based in
                 Auckland, New Zealand. He holds a PhD in computational modelling and has
-                published 11 peer-reviewed papers with 169+ citations.
+                published eleven peer-reviewed papers across epidemiology, network science, and
+                computational physics, with 169+ citations. The six papers in this demo are the
+                epidemiology and network-science subset &mdash; a coherent domain deliberately
+                chosen for retrieval quality.
                 <a href="../">rejusamjohn.pages.dev</a>
             </p>
         </footer>

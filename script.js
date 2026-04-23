@@ -189,6 +189,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el) el.remove();
     }
 
+    function showWakeupNotice() {
+        if (document.getElementById('chatWakeupNotice')) return;
+        const div = document.createElement('div');
+        div.className = 'chat-wakeup';
+        div.id = 'chatWakeupNotice';
+        div.innerHTML =
+            '<div class="wakeup-progress"><div class="wakeup-progress-fill"></div></div>' +
+            '<p class="wakeup-text"><i class="fas fa-circle-notch fa-spin"></i>' +
+            'Research server warming up — first requests can take up to a minute.</p>';
+        chatMessages.appendChild(div);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function removeWakeupNotice() {
+        const el = document.getElementById('chatWakeupNotice');
+        if (el) el.remove();
+    }
+
     async function askQuestion(question) {
         appendMessage('user', question);
         chatSuggestions.style.display = 'none';
@@ -196,14 +214,20 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.value = '';
         showTyping();
 
+        const wakeupTimer = setTimeout(showWakeupNotice, 4000);
+        const controller = new AbortController();
+        const abortTimer = setTimeout(() => controller.abort(), 90000);
+
         try {
             const res = await fetch(RAG_API_URL + '/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ question: question }),
+                signal: controller.signal,
             });
 
             removeTyping();
+            removeWakeupNotice();
 
             if (!res.ok) throw new Error('API returned ' + res.status);
 
@@ -211,12 +235,17 @@ document.addEventListener('DOMContentLoaded', () => {
             appendMessage('assistant', data.answer);
         } catch (err) {
             removeTyping();
+            removeWakeupNotice();
             const errDiv = document.createElement('div');
             errDiv.className = 'chat-error';
-            errDiv.textContent = 'Service is waking up — please try again in 30s.';
+            errDiv.textContent = err.name === 'AbortError'
+                ? 'The server took too long to respond — please try your question again.'
+                : 'Service is waking up — please try again in 30s.';
             chatMessages.appendChild(errDiv);
             chatBody.scrollTop = chatBody.scrollHeight;
         } finally {
+            clearTimeout(wakeupTimer);
+            clearTimeout(abortTimer);
             chatSend.disabled = false;
             chatInput.focus();
         }
