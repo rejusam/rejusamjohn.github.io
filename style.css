@@ -512,6 +512,7 @@ img {
 
 .chat-msg.assistant {
     color: var(--text-secondary);
+    white-space: pre-line;
 }
 
 .chat-msg.assistant .chat-source {
@@ -523,6 +524,39 @@ img {
     padding: 1px 6px;
     border-radius: 4px;
     margin-top: 6px;
+}
+
+.chat-sources-label {
+    margin-top: 10px;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.chat-sources {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.chat-sources li {
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.chat-msg.assistant .chat-sources .chat-source {
+    margin: 0 6px 0 0;
+    text-decoration: none;
+}
+
+.chat-msg.assistant a.chat-source:hover,
+.chat-msg.assistant a.chat-source:focus-visible {
+    color: var(--accent-cyan);
 }
 
 .chat-typing {

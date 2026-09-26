@@ -157,6 +157,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // For local dev, swap to: 'http://127.0.0.1:8000'
     const RAG_API_URL = 'https://rag-publications-api.onrender.com';
 
+    // Start waking the Render instance as soon as the page loads, so it is
+    // more likely to be warm by the time someone asks a question.
+    if (document.getElementById('chatForm')) {
+        fetch(RAG_API_URL + '/health').catch(() => {});
+    }
+
     const chatForm = document.getElementById('chatForm');
     const chatInput = document.getElementById('chatInput');
     const chatSend = document.getElementById('chatSend');
@@ -173,6 +179,40 @@ document.addEventListener('DOMContentLoaded', () => {
         chatMessages.appendChild(div);
         chatBody.scrollTop = chatBody.scrollHeight;
         return div;
+    }
+
+    function appendSources(parent, sources) {
+        if (!Array.isArray(sources) || sources.length === 0) return;
+        const label = document.createElement('p');
+        label.className = 'chat-sources-label';
+        label.textContent = 'Retrieved from';
+        const list = document.createElement('ul');
+        list.className = 'chat-sources';
+        sources.forEach((s) => {
+            if (!s || typeof s.title !== 'string') return;
+            const li = document.createElement('li');
+            const cite = s.authors_short && s.year ? s.authors_short + ' (' + s.year + ')' : '';
+            const hasDoi = typeof s.doi === 'string' && /^10\.\d{4,9}\/\S+$/.test(s.doi);
+            const tag = document.createElement(hasDoi ? 'a' : 'span');
+            tag.className = 'chat-source';
+            tag.textContent = cite || s.title;
+            if (hasDoi) {
+                tag.href = 'https://doi.org/' + s.doi;
+                tag.target = '_blank';
+                tag.rel = 'noopener';
+            }
+            li.appendChild(tag);
+            if (cite) {
+                const title = document.createElement('span');
+                title.className = 'chat-source-title';
+                title.textContent = s.title;
+                li.appendChild(title);
+            }
+            list.appendChild(li);
+        });
+        if (list.children.length === 0) return;
+        parent.appendChild(label);
+        parent.appendChild(list);
     }
 
     function showTyping() {
@@ -229,18 +269,31 @@ document.addEventListener('DOMContentLoaded', () => {
             removeTyping();
             removeWakeupNotice();
 
-            if (!res.ok) throw new Error('API returned ' + res.status);
+            if (!res.ok) {
+                const httpErr = new Error('API returned ' + res.status);
+                httpErr.status = res.status;
+                throw httpErr;
+            }
 
             const data = await res.json();
-            appendMessage('assistant', data.answer);
+            const answerDiv = appendMessage('assistant', data.answer);
+            appendSources(answerDiv, data.sources);
         } catch (err) {
             removeTyping();
             removeWakeupNotice();
             const errDiv = document.createElement('div');
             errDiv.className = 'chat-error';
-            errDiv.textContent = err.name === 'AbortError'
-                ? 'The server took too long to respond — please try your question again.'
-                : 'Service is waking up — please try again in 30s.';
+            if (err.name === 'AbortError') {
+                errDiv.textContent = 'The server took too long to respond — please try your question again.';
+            } else if (err.status === 429) {
+                errDiv.textContent = 'Too many questions in a short time. Try again in a minute.';
+            } else if (err.status === 422) {
+                errDiv.textContent = 'Please ask a question between 3 and 500 characters.';
+            } else if (err.status) {
+                errDiv.textContent = 'The research assistant is unavailable right now. Please try again shortly.';
+            } else {
+                errDiv.textContent = 'Service is waking up — please try again in 30s.';
+            }
             chatMessages.appendChild(errDiv);
             chatBody.scrollTop = chatBody.scrollHeight;
         } finally {

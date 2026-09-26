@@ -72,13 +72,13 @@
                         <li><span class="step-num">1</span><div><strong>Embed</strong> your question as a 384-dim vector (<code>all-MiniLM-L6-v2</code>)</div></li>
                         <li><span class="step-num">2</span><div><strong>Search</strong> ChromaDB across ~780 chunks from 6 peer-reviewed papers</div></li>
                         <li><span class="step-num">3</span><div><strong>Retrieve</strong> the top-4 most similar chunks as context</div></li>
-                        <li><span class="step-num">4</span><div><strong>Generate</strong> a cited answer with Llama 3.3 (70B, via Groq)</div></li>
+                        <li><span class="step-num">4</span><div><strong>Generate</strong> an answer with gpt-oss-120b (via Groq), linking the papers it drew on</div></li>
                     </ol>
                     <div class="howto-stack">
                         <span class="stack-pill">LangChain</span>
                         <span class="stack-pill">ChromaDB</span>
                         <span class="stack-pill">FastAPI</span>
-                        <span class="stack-pill">Sentence-Transformers</span>
+                        <span class="stack-pill">fastembed (ONNX)</span>
                         <span class="stack-pill">Groq</span>
                     </div>
                 </div>
@@ -95,7 +95,7 @@
                     <button class="suggestion-pill" data-q="What did you find about Ebola persistence in primates?">Ebola in primates</button>
                 </div>
                 <form class="chat-input-row" id="chatForm">
-                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question about my research..." autocomplete="off">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question about my research..." autocomplete="off" maxlength="500">
                     <button type="submit" class="chat-send" id="chatSend" aria-label="Send">
                         <i class="fas fa-arrow-up"></i>
                     </button>
@@ -441,7 +441,7 @@
                         </div>
                     </div>
                     <h3>Ask My Research: RAG Over My Publications</h3>
-                    <p>Retrieval-augmented generation pipeline over my peer-reviewed papers — 779 chunks from 6 publications, embedded with all-MiniLM-L6-v2, stored in ChromaDB, and answered by Llama 3.3 70B via Groq. Deployed as a FastAPI backend powering the live chat widget on this site.</p>
+                    <p>Retrieval-augmented generation pipeline over my peer-reviewed papers — 779 chunks from 6 publications, embedded with all-MiniLM-L6-v2, stored in ChromaDB, and answered by gpt-oss-120b via Groq, with an automatic fallback model. Every answer links the papers it was retrieved from. Deployed as a tested FastAPI backend powering the live chat widget on this site.</p>
                     <div class="project-tags">
                         <span class="tag">LangChain</span><span class="tag">ChromaDB</span><span class="tag">FastAPI</span><span class="tag">Groq</span><span class="tag">RAG</span>
                     </div>
