@@ -5,6 +5,8 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     // --- Particle Background ---
     const canvas = document.getElementById('particleCanvas');
     if (canvas) {
@@ -80,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function animateParticles() {
+            if (prefersReducedMotion) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             particles.forEach(p => {
                 p.update();
@@ -117,37 +120,41 @@ document.addEventListener('DOMContentLoaded', () => {
             'cross-functional collaboration.'
         ];
 
-        let phraseIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
-        let typingSpeed = 60;
+        if (prefersReducedMotion) {
+            typedElement.textContent = phrases[0];
+        } else {
+            let phraseIndex = 0;
+            let charIndex = 0;
+            let isDeleting = false;
+            let typingSpeed = 60;
 
-        function typeEffect() {
-            const currentPhrase = phrases[phraseIndex];
+            const typeEffect = () => {
+                const currentPhrase = phrases[phraseIndex];
 
-            if (isDeleting) {
-                typedElement.textContent = currentPhrase.substring(0, charIndex - 1);
-                charIndex--;
-                typingSpeed = 30;
-            } else {
-                typedElement.textContent = currentPhrase.substring(0, charIndex + 1);
-                charIndex++;
-                typingSpeed = 60;
-            }
+                if (isDeleting) {
+                    typedElement.textContent = currentPhrase.substring(0, charIndex - 1);
+                    charIndex--;
+                    typingSpeed = 30;
+                } else {
+                    typedElement.textContent = currentPhrase.substring(0, charIndex + 1);
+                    charIndex++;
+                    typingSpeed = 60;
+                }
 
-            if (!isDeleting && charIndex === currentPhrase.length) {
-                typingSpeed = 2000; // Pause at end
-                isDeleting = true;
-            } else if (isDeleting && charIndex === 0) {
-                isDeleting = false;
-                phraseIndex = (phraseIndex + 1) % phrases.length;
-                typingSpeed = 400; // Pause before next phrase
-            }
+                if (!isDeleting && charIndex === currentPhrase.length) {
+                    typingSpeed = 2000; // Pause at end
+                    isDeleting = true;
+                } else if (isDeleting && charIndex === 0) {
+                    isDeleting = false;
+                    phraseIndex = (phraseIndex + 1) % phrases.length;
+                    typingSpeed = 400; // Pause before next phrase
+                }
 
-            setTimeout(typeEffect, typingSpeed);
+                setTimeout(typeEffect, typingSpeed);
+            };
+
+            setTimeout(typeEffect, 1000);
         }
-
-        setTimeout(typeEffect, 1000);
     }
 
 
@@ -429,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const target = document.querySelector(this.getAttribute('href'));
             if (target) {
                 target.scrollIntoView({
-                    behavior: 'smooth',
+                    behavior: prefersReducedMotion ? 'auto' : 'smooth',
                     block: 'start'
                 });
             }
@@ -522,6 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startAutoplay() {
+        if (prefersReducedMotion) return;
         stopAutoplay();
         autoplayTimer = setInterval(nextSlide, 5000);
     }
@@ -618,7 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
             imgEl.addEventListener('click', () => {
                 const img = slide.querySelector('img');
                 const title = slide.querySelector('h3').textContent;
-                openLightbox(img.src, img.alt, title);
+                openLightbox(img.currentSrc || img.src, img.alt, title);
             });
         }
     });

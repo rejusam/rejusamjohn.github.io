@@ -15,7 +15,7 @@
 
     --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+    --text-muted: #8190a5;
 
     --accent-cyan: #06b6d4;
     --accent-violet: #8b5cf6;
@@ -72,6 +72,13 @@ a {
 
 a:hover {
     color: #22d3ee;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 3px;
 }
 
 ::selection {
@@ -292,6 +299,7 @@ img {
     border-radius: 100px;
     margin-bottom: 32px;
     letter-spacing: 0.02em;
+    text-wrap: balance;
 }
 
 .hero-title {
@@ -1023,6 +1031,11 @@ img {
     flex-wrap: wrap;
 }
 
+.timeline-header > div:first-child {
+    flex: 1 1 20rem;
+    min-width: 0;
+}
+
 .timeline-header h3 {
     font-size: 1.15rem;
     font-weight: 700;
@@ -1069,12 +1082,6 @@ img {
 .badge-current {
     background: var(--gradient);
     color: var(--bg-primary);
-}
-
-.badge-probono {
-    background: rgba(100, 116, 139, 0.15);
-    color: var(--text-secondary);
-    border: 1px solid rgba(100, 116, 139, 0.3);
 }
 
 .timeline-details {
@@ -1385,6 +1392,11 @@ img {
     margin-bottom: 16px;
 }
 
+.project-card p code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+}
+
 .project-tags {
     display: flex;
     flex-wrap: wrap;
@@ -1641,6 +1653,19 @@ img {
     color: var(--text-muted);
 }
 
+.footer-coffee {
+    display: inline-block;
+    margin-top: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.footer-coffee:hover,
+.footer-coffee:focus-visible {
+    color: var(--accent-cyan);
+}
+
 /* --- Scroll Reveal Animations --- */
 .reveal {
     opacity: 0;
@@ -1723,6 +1748,10 @@ img {
 
     .hero-chat {
         max-width: 100%;
+    }
+
+    .scroll-indicator {
+        display: none;
     }
 
     .carousel-btn {
@@ -1810,6 +1839,10 @@ img {
         gap: 8px;
     }
 
+    .timeline-header > div:first-child {
+        flex-basis: auto;
+    }
+
     .timeline-date {
         align-items: flex-start;
         flex-direction: row;
@@ -1826,6 +1859,10 @@ img {
 @media (max-width: 480px) {
     .hero {
         padding: 100px 16px 60px;
+    }
+
+    .hero-badge {
+        border-radius: 16px;
     }
 
     .hero-actions {
@@ -1927,6 +1964,12 @@ img {
     overflow: hidden;
     cursor: pointer;
     background: var(--bg-primary);
+}
+
+.slide-image picture {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 .slide-image img {
@@ -2164,5 +2207,29 @@ img {
 
     .gradient-text {
         -webkit-text-fill-color: #06b6d4;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .wakeup-progress-fill {
+        animation-duration: 65s !important;
+    }
+
+    .reveal {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    #particleCanvas {
+        display: none;
     }
 }

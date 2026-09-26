@@ -1,0 +1,34 @@
+name: Site check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  html:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate HTML
+        run: npx --yes html-validate@9 "index.html" "404.html" "*/index.html"
+
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --max-retries 3
+            --accept 200,206,403,429
+            --root-dir ${{ github.workspace }}
+            --exclude-path Selected_Research_Outline
+            "./**/*.html"
+          fail: true

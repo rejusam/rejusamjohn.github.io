@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-NZ">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,13 +12,19 @@
     <meta property="og:description" content="A four-gate ETL pipeline, Power BI star-schema model, and a five-module Streamlit dashboard built over 34,000+ ICU vital-sign measurements.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://rejusamjohn.pages.dev/ClinicalDataAnalysis/">
+    <link rel="canonical" href="https://rejusamjohn.pages.dev/ClinicalDataAnalysis/">
+    <meta property="og:image" content="https://rejusamjohn.pages.dev/assets/og-card.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="icon" type="image/png" href="../reju_favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 
     <style>
         :root {
@@ -30,7 +36,7 @@
             --border-soft: rgba(148,163,184,0.15);
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
-            --text-muted: #64748b;
+            --text-muted: #8190a5;
             --accent-cyan: #06b6d4;
             --accent-violet: #8b5cf6;
             --accent-teal: #22d3ee;
@@ -58,6 +64,7 @@
 
         a { color: var(--accent-cyan); text-decoration: none; transition: color var(--transition); }
         a:hover { color: #22d3ee; }
+        a:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 3px; }
         ::selection { background: rgba(6,182,212,0.3); color: var(--text-primary); }
 
         /* --- Top bar --- */
@@ -259,7 +266,7 @@
             margin-bottom: 0.5rem;
             letter-spacing: 0.1em;
         }
-        .gate h4 {
+        .gate h3 {
             font-size: 0.95rem;
             font-weight: 700;
             color: var(--text-primary);
@@ -377,7 +384,7 @@
             display: flex; align-items: center; justify-content: center;
             margin-bottom: 0.75rem;
         }
-        .mod h4 {
+        .mod h3 {
             font-size: 0.92rem;
             font-weight: 600;
             color: var(--text-primary);
@@ -412,7 +419,7 @@
             flex-shrink: 0;
             letter-spacing: 0.05em;
         }
-        .step .sb h4 {
+        .step .sb h3 {
             font-size: 0.95rem;
             font-weight: 600;
             color: var(--text-primary);
@@ -438,7 +445,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
         }
-        .pi h4 {
+        .pi h3 {
             font-size: 0.92rem;
             font-weight: 600;
             color: var(--text-primary);
@@ -522,11 +529,25 @@
         .article-footer a:hover { color: var(--accent-cyan); }
         .article-footer .flinks { display: flex; gap: 1.25rem; flex-wrap: wrap; }
 
+        .coffee-line { margin-top: 1rem; color: var(--text-muted); font-size: 0.85rem; }
+        .article-footer .coffee-line { flex-basis: 100%; }
+
         @media (max-width: 640px) {
             .article-container { padding: 5rem 1rem 3rem; }
             .topbar { padding: 0.6rem 1rem; }
             .schema, .dax, .proof { grid-template-columns: 1fr; }
             .stbl.fact { grid-column: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
         }
     </style>
 </head>
@@ -719,22 +740,22 @@
                 <div class="gates">
                     <div class="gate">
                         <div class="gn">GATE 01</div>
-                        <h4>Source Validation</h4>
+                        <h3>Source Validation</h3>
                         <p>Verify raw data directories exist and are non-empty before anything else runs. Fast-fail before wasting compute on a missing source.</p>
                     </div>
                     <div class="gate">
                         <div class="gn">GATE 02</div>
-                        <h4>ETL Processing</h4>
+                        <h3>ETL Processing</h3>
                         <p>Extract minute-level vital signs via WFDB, standardise inconsistent monitor naming (<code>SpO2</code>&rarr;<code>spo2</code>), engineer clinical features, apply quality flags.</p>
                     </div>
                     <div class="gate">
                         <div class="gn">GATE 03</div>
-                        <h4>Quality Validation</h4>
+                        <h3>Quality Validation</h3>
                         <p>Completeness checks per field, range validation against clinical thresholds, duplicate detection, Z-score outlier flagging with structured output.</p>
                     </div>
                     <div class="gate">
                         <div class="gn">GATE 04</div>
-                        <h4>Power BI Export</h4>
+                        <h3>Power BI Export</h3>
                         <p>Generate star-schema CSVs, pre-authored DAX measures JSON, data model documentation. Fires only on clean, fully-validated data.</p>
                     </div>
                 </div>
@@ -841,35 +862,35 @@ performance at scale.</pre></div>
                         <div class="mi">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="7" width="3" height="6" rx="1" fill="#06b6d4"/><rect x="5.5" y="4.5" width="3" height="8.5" rx="1" fill="#06b6d4" opacity=".7"/><rect x="10" y="1" width="3" height="12" rx="1" fill="#06b6d4" opacity=".4"/></svg>
                         </div>
-                        <h4>Overview &amp; Demographics</h4>
+                        <h3>Overview &amp; Demographics</h3>
                         <p>Cohort KPIs, severity gauges, monitoring duration stats across the full patient set.</p>
                     </div>
                     <div class="mod">
                         <div class="mi">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 11L4 6L7 8L10 3L13 5" stroke="#06b6d4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
                         </div>
-                        <h4>Respiratory Biometrics</h4>
+                        <h3>Respiratory Biometrics</h3>
                         <p>SpO&#8322; and respiratory rate distributions, patient-level comparisons with clinical threshold overlays.</p>
                     </div>
                     <div class="mod">
                         <div class="mi">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#06b6d4" stroke-width="1.4" fill="none"/><path d="M7 4.5V7l1.8 1.8" stroke="#06b6d4" stroke-width="1.4" stroke-linecap="round"/></svg>
                         </div>
-                        <h4>Temporal Analysis</h4>
+                        <h3>Temporal Analysis</h3>
                         <p>Per-patient time-series trajectories, hypoxemia episode detection, shift-period breakdowns.</p>
                     </div>
                     <div class="mod">
                         <div class="mi">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2v10" stroke="#06b6d4" stroke-width="1.4" stroke-linecap="round"/><circle cx="7" cy="7" r="2" fill="#06b6d4"/></svg>
                         </div>
-                        <h4>Data Quality Report</h4>
+                        <h3>Data Quality Report</h3>
                         <p>Completeness rates per field, quality flag summaries, outlier counts &mdash; the audit trail made visible in the UI.</p>
                     </div>
                     <div class="mod">
                         <div class="mi">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 12L5.5 6.5L8 9L10 5L13 2" stroke="#06b6d4" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>
                         </div>
-                        <h4>Statistical Analysis</h4>
+                        <h3>Statistical Analysis</h3>
                         <p>t-tests, Cohen's d effect sizes, Pearson correlation heatmap, outcome analysis &mdash; for the analyst who wants to go deeper.</p>
                     </div>
                 </div>
@@ -893,35 +914,35 @@ performance at scale.</pre></div>
                     <div class="step">
                         <div class="slab">CI/CD</div>
                         <div class="sb">
-                            <h4>GitHub Actions on every push and pull request</h4>
+                            <h3>GitHub Actions on every push and pull request</h3>
                             <p>Three automated stages: flake8 lint, pytest unit tests, and data validation schema checks. The CI badge is a live signal of system health &mdash; not an afterthought.</p>
                         </div>
                     </div>
                     <div class="step">
                         <div class="slab">CONFIG</div>
                         <div class="sb">
-                            <h4>Centralised configuration management</h4>
+                            <h3>Centralised configuration management</h3>
                             <p><code>config.py</code> holds all clinical thresholds, file paths, and pipeline parameters. Change a threshold once &mdash; it propagates everywhere. No scattered magic numbers.</p>
                         </div>
                     </div>
                     <div class="step">
                         <div class="slab">TESTS</div>
                         <div class="sb">
-                            <h4>pytest unit test suite</h4>
+                            <h3>pytest unit test suite</h3>
                             <p>Tests cover standardisation logic, metric computation, and summary generation. A breaking code change is caught before it reaches the data model.</p>
                         </div>
                     </div>
                     <div class="step">
                         <div class="slab">AUDIT</div>
                         <div class="sb">
-                            <h4>Structured JSON audit logs per run</h4>
+                            <h3>Structured JSON audit logs per run</h3>
                             <p>Every execution writes a machine-readable log to <code>data/logs/</code>. Complete traceability: what ran, what passed, what was flagged, and when.</p>
                         </div>
                     </div>
                     <div class="step">
                         <div class="slab">DEV ENV</div>
                         <div class="sb">
-                            <h4>VS Code Dev Container configuration</h4>
+                            <h3>VS Code Dev Container configuration</h3>
                             <p>The <code>.devcontainer/</code> setup guarantees a reproducible environment across machines. New contributor, same environment &mdash; no "works on my machine" surprises.</p>
                         </div>
                     </div>
@@ -934,27 +955,27 @@ performance at scale.</pre></div>
                 <h2>What This Project Shows</h2>
                 <div class="proof">
                     <div class="pi">
-                        <h4>End-to-end BI delivery</h4>
+                        <h3>End-to-end BI delivery</h3>
                         <p>Raw data &rarr; validated pipeline &rarr; star-schema model &rarr; Power BI exports with pre-authored DAX. The complete chain, not just a segment of it.</p>
                     </div>
                     <div class="pi">
-                        <h4>Power BI fluency</h4>
+                        <h3>Power BI fluency</h3>
                         <p>Not just connecting a CSV. Proper star-schema design, surrogate keys, dimension tables, and authored DAX measures &mdash; the architecture a BI team operates within.</p>
                     </div>
                     <div class="pi">
-                        <h4>Analytics engineering craft</h4>
+                        <h3>Analytics engineering craft</h3>
                         <p>CI/CD, pytest, structured logging, configuration management, Dev Container. The infrastructure that makes data products maintainable at team scale.</p>
                     </div>
                     <div class="pi">
-                        <h4>Multi-audience design</h4>
+                        <h3>Multi-audience design</h3>
                         <p>Five dashboard modules calibrated for different analytical depths &mdash; from executive KPIs to statistical hypothesis testing &mdash; in a single coherent application.</p>
                     </div>
                     <div class="pi">
-                        <h4>Clinical domain depth</h4>
+                        <h3>Clinical domain depth</h3>
                         <p>Hypoxemia detection logic, clinical threshold validation, ventilation type classification. Domain knowledge embedded in the pipeline, not bolted on afterward.</p>
                     </div>
                     <div class="pi">
-                        <h4>Reproducible by design</h4>
+                        <h3>Reproducible by design</h3>
                         <p>Any analyst with the repo and PhysioNet credentials can reproduce the full pipeline from scratch &mdash; no handover session required.</p>
                     </div>
                 </div>
@@ -994,9 +1015,10 @@ performance at scale.</pre></div>
                 <div class="flinks">
                     <a href="../">Portfolio</a>
                     <a href="https://github.com/rejusam" target="_blank" rel="noopener">GitHub</a>
-                    <a href="https://www.linkedin.com/in/dr-reju-sam-john-14b00774" target="_blank" rel="noopener">LinkedIn</a>
+                    <a href="https://www.linkedin.com/in/drrejusamjohn/" target="_blank" rel="noopener">LinkedIn</a>
                     <a href="https://orcid.org/0000-0002-5024-3700" target="_blank" rel="noopener">ORCID</a>
                 </div>
+                <p class="coffee-line">Found this useful? You can <a href="https://ko-fi.com/rejusamjohn" target="_blank" rel="noopener">buy me a coffee</a>.</p>
             </footer>
 
         </div>

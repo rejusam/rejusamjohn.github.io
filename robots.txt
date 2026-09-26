@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rejusamjohn.pages.dev/sitemap.xml

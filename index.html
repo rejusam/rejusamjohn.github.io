@@ -1,18 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-NZ">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dr Reju Sam John — Data Scientist &amp; AI/ML Engineer</title>
-    <meta name="description" content="Data scientist and AI/ML engineer with 7+ years building predictive models, data products, and ML pipelines. PhD-qualified, 169+ citations, published in Nature Communications. Auckland, NZ.">
-    <meta name="keywords" content="data scientist, AI engineer, machine learning, ML pipelines, ETL, predictive analytics, data products, Python, health data science, New Zealand, Auckland">
+    <title>Dr Reju Sam John — Data Scientist &amp; Computational Epidemiologist</title>
+    <meta name="description" content="Data scientist and computational epidemiologist in Auckland with a PhD in Physics and 7+ years in epidemiological modelling, health data management and machine learning. Co-author of 11 peer-reviewed papers, including in Nature Communications.">
     <meta name="author" content="Dr Reju Sam John">
+    <link rel="canonical" href="https://rejusamjohn.pages.dev/">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Dr Reju Sam John — Data Scientist & AI/ML Engineer">
-    <meta property="og:description" content="PhD-qualified data scientist building ML pipelines, data products, and predictive models. 169+ citations, published in Nature Communications and J. Royal Society Interface.">
+    <meta property="og:title" content="Dr Reju Sam John — Data Scientist &amp; Computational Epidemiologist">
+    <meta property="og:description" content="Epidemiological modelling, health data management and machine learning. Co-author of 11 peer-reviewed papers. Auckland, New Zealand.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://rejusamjohn.pages.dev">
+    <meta property="og:url" content="https://rejusamjohn.pages.dev/">
+    <meta property="og:image" content="https://rejusamjohn.pages.dev/assets/og-card.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Dr Reju Sam John — Data Scientist, Computational Epidemiologist, Health Data and Machine Learning">
+    <meta name="twitter:card" content="summary_large_image">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +27,8 @@
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <link rel="icon" type="image/png" href="reju_favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -32,7 +38,7 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="#hero" class="nav-logo">RSJ</a>
-            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+            <button type="button" class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
                 <span></span><span></span><span></span>
             </button>
             <ul class="nav-links" id="navLinks">
@@ -52,7 +58,7 @@
     <section class="hero" id="hero">
         <canvas id="particleCanvas"></canvas>
         <div class="hero-content">
-            <div class="hero-badge animate-in">Research Engineer &bull; Computational Epidemiologist &bull; Clinical Informatician</div>
+            <div class="hero-badge animate-in">Data Scientist &bull; Computational Epidemiologist &bull; Health Data &amp; Machine Learning</div>
             <h1 class="hero-title animate-in">
                 Dr Reju Sam <span class="gradient-text">John</span>
             </h1>
@@ -89,10 +95,10 @@
                     <div class="chat-messages" id="chatMessages"></div>
                 </div>
                 <div class="chat-suggestions" id="chatSuggestions">
-                    <button class="suggestion-pill" data-q="What topics does your research cover?">What do you study?</button>
-                    <button class="suggestion-pill" data-q="How does human movement affect pandemic spread?">Pandemics &amp; travel</button>
-                    <button class="suggestion-pill" data-q="How does Lassa virus transmit from rodents to humans?">Lassa virus</button>
-                    <button class="suggestion-pill" data-q="What did you find about Ebola persistence in primates?">Ebola in primates</button>
+                    <button type="button" class="suggestion-pill" data-q="What topics does your research cover?">What do you study?</button>
+                    <button type="button" class="suggestion-pill" data-q="How does human movement affect pandemic spread?">Pandemics &amp; travel</button>
+                    <button type="button" class="suggestion-pill" data-q="How does Lassa virus transmit from rodents to humans?">Lassa virus</button>
+                    <button type="button" class="suggestion-pill" data-q="What did you find about Ebola persistence in primates?">Ebola in primates</button>
                 </div>
                 <form class="chat-input-row" id="chatForm">
                     <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question about my research..." autocomplete="off" maxlength="500">
@@ -104,7 +110,7 @@
             <div class="hero-links animate-in">
                 <a href="https://github.com/rejusam" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
                 <a href="https://scholar.google.com/citations?user=EeZSlzsAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><i class="fas fa-graduation-cap"></i></a>
-                <a href="https://www.linkedin.com/in/dr-reju-sam-john-14b00774" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                <a href="https://www.linkedin.com/in/drrejusamjohn/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
                 <a href="https://orcid.org/0000-0002-5024-3700" target="_blank" rel="noopener" aria-label="ORCID"><i class="fab fa-orcid"></i></a>
             </div>
         </div>
@@ -125,7 +131,7 @@
                     I am a computational epidemiologist turned engineer, based in Auckland. My journey began in high-performance computing &mdash; simulating galaxy clusters on supercomputers &mdash; and has evolved through infectious disease modelling and peer-reviewed research into the cloud engineering and applied ML work I do today. The throughline is the same: rigorous thinking about complex systems, whether the system is a galaxy, an epidemic, or a production ML pipeline.
                 </p>
                 <p>
-                    I am most engaged when the problem is genuinely hard and the stakes are real &mdash; health tech, clinical informatics, any domain where the distance between data and a critical decision matters most. Whether I am building infrastructure, deploying scalable solutions, or shaping strategy, I try to bring the same standard: reproducible, honest, and built to last.
+                    These days that work sits in three places: managing registry and biobank data for the neurogenetics service at Auckland City Hospital, leading engineering for a digital mental-health platform at Loffty, and teaching a part-time Data Science &amp; AI programme. I am most engaged when the problem is genuinely hard and the stakes are real &mdash; health data, clinical informatics, any domain where the distance between data and a critical decision matters most. Whatever I am building, I try to bring the same standard: reproducible, honest, and built to last.
                 </p>
                 <p>
                     When I am not architecting systems or training models, you can usually find me exploring Auckland's craft beer scene, chasing the perfect cup of specialty coffee, or deep-diving into whatever complex problem has caught my attention that week.
@@ -145,18 +151,42 @@
                     <div class="timeline-content">
                         <div class="timeline-header">
                             <div>
-                                <h3>Head of Engineering<span class="timeline-specialty">Cloud Architecture &amp; Applied Machine Learning</span></h3>
+                                <h3>Study Coordinator<span class="timeline-specialty">Neurogenetics Registry &amp; Biobank</span></h3>
+                                <p class="timeline-org">Health New Zealand | Te Whatu Ora &mdash; Department of Neurology, Auckland City Hospital</p>
+                            </div>
+                            <div class="timeline-date">
+                                <span class="badge badge-current">Current</span>
+                                May 2026 &ndash; Present &middot; part-time
+                            </div>
+                        </div>
+                        <ul class="timeline-details">
+                            <li>Manage the data for the P&#363;naha Io NZ Neurogenetic Registry &amp; Biobank and related disease registries in REDCap: version-controlled data dictionaries, Python validation and migration tooling, and record linkage across projects. Department REDCap Super-User.</li>
+                            <li>Build reproducible research pipelines in Python, including a PubMed/OMIM literature search for a scoping review and signal processing of vestibular (vHIT) recordings.</li>
+                        </ul>
+                        <div class="timeline-tags">
+                            <span class="tag">REDCap</span><span class="tag">Python</span><span class="tag">Clinical Registries</span><span class="tag">Record Linkage</span><span class="tag">Data Validation</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item reveal">
+                    <div class="timeline-marker current"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <div>
+                                <h3>Head of Engineering<span class="timeline-specialty">Cloud Architecture &amp; Machine Learning</span></h3>
                                 <p class="timeline-org">Loffty</p>
                             </div>
                             <div class="timeline-date">
                                 <span class="badge badge-current">Current</span>
-                                Apr 2026 &ndash; Present
+                                Apr 2026 &ndash; Present &middot; part-time
                             </div>
                         </div>
                         <ul class="timeline-details">
-                            <li>Lead full-stack development on a cloud-native mental health SaaS with a serverless AWS backend (Lambda, DynamoDB, API Gateway, Amplify, Cognito); building next-generation features and laying the AI/ML and data science foundations to evolve the platform into an intelligent, data-driven product.</li>
-                            <li>Maintain and stabilise a legacy PHP/MySQL application running in parallel with the modern stack; manage and optimise AWS infrastructure across both products; document systems, architecture decisions, and operational runbooks.</li>
-                            <li>Own the full software development lifecycle from feature scoping to deployment, evolving the platform from demo-ready to production-grade; collaborate directly with founders on technical decisions, near-term planning, and compliance readiness.</li>
+                            <li>Lead engineering for a digital mental-health platform that screens and reports across depression, anxiety, perinatal, trauma and addiction domains. Own the AWS serverless stack (Lambda, DynamoDB, Cognito, API Gateway) and the migration of the legacy PHP/MySQL system to it.</li>
+                            <li>Rebuilt the clinical assessment and scoring engine against DSM-5 criteria. Moved scoring parameters into versioned, immutable templates so every historical score can be reproduced. Found and fixed a result-ordering defect in how scores were combined, and hand-checked scores against clinician-approved reference outputs to the decimal before release.</li>
+                            <li>Built privacy-preserving analytics for workplace wellbeing programmes, with aggregate-only reporting enforced at the data layer. Ran funnel and cohort analyses, such as practitioner activation and registration tracking in GA4, that shaped go-to-market decisions.</li>
+                            <li>Set out a psychometric research roadmap covering item response theory, computerised adaptive testing, and the ethics and consent steps needed before publishing.</li>
                         </ul>
                         <div class="timeline-tags">
                             <span class="tag">React</span><span class="tag">TypeScript</span><span class="tag">AWS Lambda</span><span class="tag">DynamoDB</span><span class="tag">Serverless</span><span class="tag">SQL</span><span class="tag">Python</span><span class="tag">Machine Learning</span>
@@ -174,12 +204,12 @@
                             </div>
                             <div class="timeline-date">
                                 <span class="badge badge-current">Current</span>
-                                Apr 2026 &ndash; Present
+                                Apr 2026 &ndash; Present &middot; part-time
                             </div>
                         </div>
                         <ul class="timeline-details">
-                            <li>Deliver instructor-led training in data science and generative AI, translating advanced technical concepts into accessible, practical learning for professional upskilling cohorts.</li>
-                            <li>Guide students through Python-based ML workflows, model evaluation, and applied AI — including LLMs, prompt engineering, RAG architectures, and production AI systems.</li>
+                            <li>Lead trainer for a 25-week, part-time Data Science &amp; AI programme delivered live online, taking learners from no programming experience to a deployed capstone project; supervise an assistant trainer.</li>
+                            <li>Teach Python, statistics, SQL, machine learning, NLP, deep learning, generative AI and MLOps. Author teaching notebooks and maintain the course&rsquo;s public GitHub repository and delivery plan.</li>
                         </ul>
                         <div class="timeline-tags">
                             <span class="tag">Data Science</span><span class="tag">Generative AI</span><span class="tag">LLMs</span><span class="tag">Python</span><span class="tag">Training</span>
@@ -192,19 +222,18 @@
                     <div class="timeline-content">
                         <div class="timeline-header">
                             <div>
-                                <h3>AI, Machine Learning &amp; Data Science Consultant</h3>
+                                <h3>Machine Learning &amp; Data Science Consultant</h3>
                                 <p class="timeline-org">Molecular Epidemiology and Public Health Laboratory</p>
                             </div>
                             <div class="timeline-date">
                                 <span class="badge badge-current">Current</span>
-                                <span class="badge badge-probono">Pro Bono</span>
-                                Mar 2025 &ndash; Present
+                                Sep 2024 &ndash; Present &middot; remote
                             </div>
                         </div>
                         <ul class="timeline-details">
-                            <li>Design and deploy end-to-end AI/ML pipelines (Python, R) for predictive modelling, risk evaluation, and evidence-based decision support.</li>
-                            <li>Translate analytical outputs into actionable reports and dashboards for technical and non-technical stakeholders; mentor researchers in reproducible workflows.</li>
-                            <li>Define data requirements, quality standards, and governance frameworks; embed data sovereignty and equity principles in product design.</li>
+                            <li>Analyse bat surveillance datasets and develop statistical and machine-learning models to investigate infection dynamics and transmission patterns.</li>
+                            <li>Provide R and Python programming support to a PhD project, translating research questions into reproducible analytical workflows, including data cleaning, transformation and exploratory analysis in a Linux command-line environment.</li>
+                            <li>Designed and deployed a retrieval-augmented generation (RAG) interface over peer-reviewed publications &mdash; the <a href="#hero">Ask My Research</a> chat on this site.</li>
                         </ul>
                         <div class="timeline-tags">
                             <span class="tag">Python</span><span class="tag">R</span><span class="tag">ML Pipelines</span><span class="tag">Data Governance</span><span class="tag">Stakeholder Communication</span>
@@ -314,6 +343,8 @@
                         <span class="skill-tag">Git/GitHub</span>
                         <span class="skill-tag">Linux</span>
                         <span class="skill-tag">LaTeX</span>
+                        <span class="skill-tag">React</span>
+                        <span class="skill-tag">TypeScript</span>
                     </div>
                 </div>
 
@@ -359,14 +390,16 @@
                         <span class="skill-tag">Pandas</span>
                         <span class="skill-tag">NumPy</span>
                         <span class="skill-tag">Airflow</span>
+                        <span class="skill-tag">REDCap (Super-User)</span>
+                        <span class="skill-tag">Record Linkage</span>
                     </div>
                 </div>
 
                 <div class="skill-category reveal">
                     <div class="skill-icon"><i class="fas fa-chart-bar"></i></div>
-                    <h3>Visualization &amp; Applications</h3>
+                    <h3>Visualisation &amp; Applications</h3>
                     <div class="skill-tags">
-                        <span class="skill-tag">Power BI</span>
+                        <span class="skill-tag">Power BI (DAX)</span>
                         <span class="skill-tag">Tableau</span>
                         <span class="skill-tag">Streamlit</span>
                         <span class="skill-tag">Plotly Dash</span>
@@ -380,13 +413,14 @@
                     <div class="skill-icon"><i class="fas fa-cloud"></i></div>
                     <h3>Cloud &amp; DevOps</h3>
                     <div class="skill-tags">
-                        <span class="skill-tag">AWS</span>
+                        <span class="skill-tag">AWS Serverless (Lambda, DynamoDB, Cognito, API Gateway)</span>
                         <span class="skill-tag">Google Cloud</span>
                         <span class="skill-tag">Render</span>
                         <span class="skill-tag">Cloudflare Pages</span>
                         <span class="skill-tag">GitHub Actions</span>
                         <span class="skill-tag">CI/CD</span>
                         <span class="skill-tag">HPC Clusters</span>
+                        <span class="skill-tag">Slurm</span>
                         <span class="skill-tag">Docker</span>
                     </div>
                 </div>
@@ -398,6 +432,7 @@
                         <span class="skill-tag">Epidemiology</span>
                         <span class="skill-tag">Health Informatics</span>
                         <span class="skill-tag">Clinical Trials</span>
+                        <span class="skill-tag">Clinical Registries &amp; Biobanks</span>
                         <span class="skill-tag">ICH GCP R3</span>
                         <span class="skill-tag">Health Equity</span>
                         <span class="skill-tag">Te Tiriti o Waitangi</span>
@@ -448,6 +483,36 @@
                     <div class="project-label">AI Engineering</div>
                 </div>
 
+                <div class="project-card reveal">
+                    <div class="project-header">
+                        <div class="project-icon"><i class="fas fa-cloud-sun"></i></div>
+                        <div class="project-links-top">
+                            <a href="https://wx.rejusamjohn.workers.dev" target="_blank" rel="noopener" aria-label="wx live site"><i class="fas fa-external-link-alt"></i></a>
+                        </div>
+                    </div>
+                    <h3>wx: Eight Weather Models, One Forecast</h3>
+                    <p>Most weather apps show one model. wx asks eight (ECMWF, GFS, ICON, UKMO, JMA, GEM, Météo-France, CMA) for the same place, headlines the median and shows how far they disagree. Works in a terminal via curl or in a browser.</p>
+                    <div class="project-tags">
+                        <span class="tag">TypeScript</span><span class="tag">Cloudflare Workers</span><span class="tag">Ensemble Forecasts</span>
+                    </div>
+                    <div class="project-label">Live Tool</div>
+                </div>
+
+                <div class="project-card reveal">
+                    <div class="project-header">
+                        <div class="project-icon"><i class="fas fa-lock"></i></div>
+                        <div class="project-links-top">
+                            <a href="https://starseal.rejusamjohn.workers.dev/" target="_blank" rel="noopener" aria-label="Starseal live site"><i class="fas fa-external-link-alt"></i></a>
+                        </div>
+                    </div>
+                    <h3>Starseal: Sealed File Drops</h3>
+                    <p>End-to-end encrypted file sharing: files are encrypted in the browser, and the key travels after the <code>#</code> and never reaches the server. Each drop carries a Seal &mdash; the nine stars of Matariki at their real positions, turned by bytes of the key &mdash; so sender and recipient can confirm they hold the same drop.</p>
+                    <div class="project-tags">
+                        <span class="tag">Web Crypto</span><span class="tag">Cloudflare Workers</span><span class="tag">D1</span><span class="tag">TypeScript</span>
+                    </div>
+                    <div class="project-label">Live Tool</div>
+                </div>
+
                 <div class="project-card featured reveal">
                     <div class="project-header">
                         <div class="project-icon"><i class="fas fa-car"></i></div>
@@ -462,6 +527,22 @@
                         <span class="tag">Python</span><span class="tag">scipy</span><span class="tag">Regression</span><span class="tag">Forecasting</span><span class="tag">Data Journalism</span>
                     </div>
                     <div class="project-label">Data Investigation</div>
+                </div>
+
+                <div class="project-card reveal">
+                    <div class="project-header">
+                        <div class="project-icon"><i class="fas fa-dna"></i></div>
+                        <div class="project-links-top">
+                            <a href="https://github.com/rejusam/omim-search-tool" target="_blank" rel="noopener" aria-label="OMIM search tool on GitHub"><i class="fab fa-github"></i></a>
+                            <a href="https://github.com/rejusam/omim-neuropathy-pubmed-search" target="_blank" rel="noopener" aria-label="Reproducibility package on GitHub"><i class="fas fa-book-open"></i></a>
+                        </div>
+                    </div>
+                    <h3>OMIM Search Tool &amp; Reproducibility Package</h3>
+                    <p>A guided command-line tool for searching the OMIM API and exporting to Excel, CSV and JSON, written for clinicians without programming experience; and the auditable OMIM-to-PubMed completeness search behind a scoping review of hereditary neuropathy with auditory and vestibular involvement.</p>
+                    <div class="project-tags">
+                        <span class="tag">Python</span><span class="tag">OMIM API</span><span class="tag">PubMed</span><span class="tag">Reproducible Research</span>
+                    </div>
+                    <div class="project-label">Research Tooling</div>
                 </div>
 
                 <div class="project-card featured reveal">
@@ -537,34 +618,6 @@
                     </div>
                 </div>
 
-                <div class="project-card reveal">
-                    <div class="project-header">
-                        <div class="project-icon"><i class="fas fa-bread-slice"></i></div>
-                        <div class="project-links-top">
-                            <a href="https://github.com/rejusam/bakery-sales-intelligence" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
-                        </div>
-                    </div>
-                    <h3>Sales Intelligence Platform</h3>
-                    <p>Market basket analysis and temporal pattern detection with external data integration (weather API). Business-oriented data product demonstrating customer behaviour insights and revenue optimisation.</p>
-                    <div class="project-tags">
-                        <span class="tag">Python</span><span class="tag">Market Basket</span><span class="tag">Business Analytics</span>
-                    </div>
-                </div>
-
-                <div class="project-card reveal">
-                    <div class="project-header">
-                        <div class="project-icon"><i class="fas fa-snowflake"></i></div>
-                        <div class="project-links-top">
-                            <a href="https://github.com/rejusam/cooling-system-monitor" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
-                        </div>
-                    </div>
-                    <h3>Cooling System Condition Monitor</h3>
-                    <p>ETL pipeline transforming UCI hydraulic sensor data (2,205 cycles, 17 sensors) into a relational SQLite database modelling a 20-unit fleet across 10 NZ sites, with Z-score anomaly detection and an interactive Streamlit dashboard.</p>
-                    <div class="project-tags">
-                        <span class="tag">Python</span><span class="tag">ETL</span><span class="tag">SQL</span><span class="tag">Streamlit</span><span class="tag">Plotly</span>
-                    </div>
-                </div>
-
             </div>
 
             <div class="pub-cta reveal">
@@ -582,6 +635,18 @@
             <p class="section-subtitle reveal">11 peer-reviewed articles &bull; 169+ citations &bull; <a href="https://scholar.google.com/citations?user=EeZSlzsAAAAJ&hl=en" target="_blank" rel="noopener">Google Scholar</a> &bull; <a href="https://orcid.org/0000-0002-5024-3700" target="_blank" rel="noopener">ORCID</a></p>
 
             <div class="publications-list">
+
+                <div class="pub-card reveal">
+                    <div class="pub-year">2025</div>
+                    <div class="pub-content">
+                        <h3 class="pub-title">Land use change and infectious disease emergence</h3>
+                        <p class="pub-authors">Rulli, M.C., &hellip; <strong>John, R.S.</strong> et al.</p>
+                        <p class="pub-journal"><em>Reviews of Geophysics</em>, 63, e2022RG000785</p>
+                        <div class="pub-links">
+                            <a href="https://doi.org/10.1029/2022RG000785" target="_blank" rel="noopener" class="pub-link"><i class="fas fa-external-link-alt"></i> DOI</a>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="pub-card reveal">
                     <div class="pub-year">2024</div>
@@ -653,10 +718,10 @@
             <p class="section-subtitle reveal">Visual summaries of selected research outputs and data products</p>
 
             <div class="showcase-filters reveal">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="epidemiology">Epidemiology &amp; Disease Modelling</button>
-                <button class="filter-btn" data-filter="data-products">Data Products &amp; Analytics</button>
-                <button class="filter-btn" data-filter="astrophysics">Computational Astrophysics</button>
+                <button type="button" class="filter-btn active" data-filter="all">All</button>
+                <button type="button" class="filter-btn" data-filter="epidemiology">Epidemiology &amp; Disease Modelling</button>
+                <button type="button" class="filter-btn" data-filter="data-products">Data Products &amp; Analytics</button>
+                <button type="button" class="filter-btn" data-filter="astrophysics">Computational Astrophysics</button>
             </div>
 
             <div class="carousel reveal" id="showcaseCarousel">
@@ -666,7 +731,10 @@
                         <!-- Lead: 3 strongest -->
                         <div class="carousel-slide" data-category="epidemiology">
                             <div class="slide-image">
-                                <img src="assets/research/Pandemic_Spread_Connectivity_Paradox.png" alt="The Connectivity Paradox: Why Travel Time Limits Fade in Pandemic Spread" loading="lazy">
+                                <picture>
+                                    <source srcset="assets/research/Pandemic_Spread_Connectivity_Paradox.webp" type="image/webp">
+                                    <img src="assets/research/Pandemic_Spread_Connectivity_Paradox.png" alt="The Connectivity Paradox: Why Travel Time Limits Fade in Pandemic Spread" loading="lazy" decoding="async" width="1600" height="893">
+                                </picture>
                             </div>
                             <div class="slide-info">
                                 <h3>The Connectivity Paradox</h3>
@@ -679,7 +747,10 @@
 
                         <div class="carousel-slide" data-category="epidemiology">
                             <div class="slide-image">
-                                <img src="assets/research/Mapping_Sarbecovirus_Host_Distributions.png" alt="Mapping the Future of Sarbecovirus" loading="lazy">
+                                <picture>
+                                    <source srcset="assets/research/Mapping_Sarbecovirus_Host_Distributions.webp" type="image/webp">
+                                    <img src="assets/research/Mapping_Sarbecovirus_Host_Distributions.png" alt="Mapping the Future of Sarbecovirus" loading="lazy" decoding="async" width="1600" height="893">
+                                </picture>
                             </div>
                             <div class="slide-info">
                                 <h3>Sarbecovirus Host Mapping</h3>
@@ -692,7 +763,10 @@
 
                         <div class="carousel-slide" data-category="data-products">
                             <div class="slide-image">
-                                <img src="assets/research/Healthcare_Quality_Dashboard.png" alt="Healthcare Quality &amp; Safety Insights Dashboard" loading="lazy">
+                                <picture>
+                                    <source srcset="assets/research/Healthcare_Quality_Dashboard.webp" type="image/webp">
+                                    <img src="assets/research/Healthcare_Quality_Dashboard.png" alt="Healthcare Quality &amp; Safety Insights Dashboard" loading="lazy" decoding="async" width="1600" height="893">
+                                </picture>
                             </div>
                             <div class="slide-info">
                                 <h3>Healthcare Quality Engineering</h3>
@@ -706,7 +780,10 @@
                         <!-- Supporting: 4 for breadth -->
                         <div class="carousel-slide" data-category="epidemiology">
                             <div class="slide-image">
-                                <img src="assets/research/Lassa_Virus_Computational_Modeling.png" alt="Decoding Lassa Virus Dynamics" loading="lazy">
+                                <picture>
+                                    <source srcset="assets/research/Lassa_Virus_Computational_Modeling.webp" type="image/webp">
+                                    <img src="assets/research/Lassa_Virus_Computational_Modeling.png" alt="Decoding Lassa Virus Dynamics" loading="lazy" decoding="async" width="1600" height="893">
+                                </picture>
                             </div>
                             <div class="slide-info">
                                 <h3>Lassa Virus Dynamics</h3>
@@ -719,7 +796,10 @@
 
                         <div class="carousel-slide" data-category="data-products">
                             <div class="slide-image">
-                                <img src="assets/research/AI_Diagnostic_Evaluation_Framework.png" alt="AI Diagnostic Screening Evaluation Framework" loading="lazy">
+                                <picture>
+                                    <source srcset="assets/research/AI_Diagnostic_Evaluation_Framework.webp" type="image/webp">
+                                    <img src="assets/research/AI_Diagnostic_Evaluation_Framework.png" alt="AI Diagnostic Screening Evaluation Framework" loading="lazy" decoding="async" width="1600" height="893">
+                                </picture>
                             </div>
                             <div class="slide-info">
                                 <h3>Equitable AI Retinal Screening</h3>
@@ -732,7 +812,10 @@
 
                         <div class="carousel-slide" data-category="data-products">
                             <div class="slide-image">
-                                <img src="assets/research/Respiratory_Biometrics_Analytics.png" alt="Respiratory Biometrics Analytics Platform" loading="lazy">
+                                <picture>
+                                    <source srcset="assets/research/Respiratory_Biometrics_Analytics.webp" type="image/webp">
+                                    <img src="assets/research/Respiratory_Biometrics_Analytics.png" alt="Respiratory Biometrics Analytics Platform" loading="lazy" decoding="async" width="1600" height="893">
+                                </picture>
                             </div>
                             <div class="slide-info">
                                 <h3>Clinical Data Pipeline</h3>
@@ -745,7 +828,10 @@
 
                         <div class="carousel-slide" data-category="astrophysics">
                             <div class="slide-image">
-                                <img src="assets/research/Why_Galaxy_Clusters_Are_Quiet.png" alt="Why Galaxy Clusters are Gamma-Ray Quiet" loading="lazy">
+                                <picture>
+                                    <source srcset="assets/research/Why_Galaxy_Clusters_Are_Quiet.webp" type="image/webp">
+                                    <img src="assets/research/Why_Galaxy_Clusters_Are_Quiet.png" alt="Why Galaxy Clusters are Gamma-Ray Quiet" loading="lazy" decoding="async" width="1600" height="893">
+                                </picture>
                             </div>
                             <div class="slide-info">
                                 <h3>Gamma-Ray Quiet Galaxy Clusters</h3>
@@ -759,10 +845,10 @@
                     </div>
                 </div>
 
-                <button class="carousel-btn carousel-prev" id="carouselPrev" aria-label="Previous slide">
+                <button type="button" class="carousel-btn carousel-prev" id="carouselPrev" aria-label="Previous slide">
                     <i class="fas fa-chevron-left"></i>
                 </button>
-                <button class="carousel-btn carousel-next" id="carouselNext" aria-label="Next slide">
+                <button type="button" class="carousel-btn carousel-next" id="carouselNext" aria-label="Next slide">
                     <i class="fas fa-chevron-right"></i>
                 </button>
 
@@ -774,11 +860,11 @@
 
     <!-- Lightbox Modal -->
     <div class="lightbox" id="lightbox">
-        <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
-        <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
-        <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
+        <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+        <button type="button" class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
+        <button type="button" class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
         <div class="lightbox-content">
-            <img id="lightboxImg" src="" alt="">
+            <img id="lightboxImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="">
             <div class="lightbox-caption" id="lightboxCaption"></div>
         </div>
     </div>
@@ -857,7 +943,7 @@
                         <h3>Email</h3>
                         <p>rejusamjohn@gmail.com</p>
                     </a>
-                    <a href="https://www.linkedin.com/in/dr-reju-sam-john-14b00774" target="_blank" rel="noopener" class="contact-card reveal">
+                    <a href="https://www.linkedin.com/in/drrejusamjohn/" target="_blank" rel="noopener" class="contact-card reveal">
                         <div class="contact-icon"><i class="fab fa-linkedin"></i></div>
                         <h3>LinkedIn</h3>
                         <p>Connect with me</p>
@@ -900,21 +986,22 @@
             <div class="footer-content">
                 <div class="footer-brand">
                     <span class="nav-logo">RSJ</span>
-                    <p>Data Scientist &amp; AI/ML Engineer</p>
+                    <p>Data Scientist &amp; Computational Epidemiologist</p>
                 </div>
                 <div class="footer-links">
-                    <a href="https://github.com/rejusam" target="_blank" rel="noopener"><i class="fab fa-github"></i></a>
-                    <a href="https://scholar.google.com/citations?user=EeZSlzsAAAAJ&hl=en" target="_blank" rel="noopener"><i class="fas fa-graduation-cap"></i></a>
-                    <a href="https://www.linkedin.com/in/dr-reju-sam-john-14b00774" target="_blank" rel="noopener"><i class="fab fa-linkedin"></i></a>
-                    <a href="https://orcid.org/0000-0002-5024-3700" target="_blank" rel="noopener"><i class="fab fa-orcid"></i></a>
+                    <a href="https://github.com/rejusam" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                    <a href="https://scholar.google.com/citations?user=EeZSlzsAAAAJ&hl=en" target="_blank" rel="noopener" aria-label="Google Scholar"><i class="fas fa-graduation-cap"></i></a>
+                    <a href="https://www.linkedin.com/in/drrejusamjohn/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://orcid.org/0000-0002-5024-3700" target="_blank" rel="noopener" aria-label="ORCID"><i class="fab fa-orcid"></i></a>
                 </div>
             </div>
             <div class="footer-bottom">
                 <p>&copy; 2026 Dr Reju Sam John. Auckland, New Zealand.</p>
+                <a class="footer-coffee" href="https://ko-fi.com/rejusamjohn" target="_blank" rel="noopener">&#9749; Buy me a coffee</a>
             </div>
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
