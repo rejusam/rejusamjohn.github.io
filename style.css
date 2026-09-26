@@ -1653,17 +1653,36 @@ img {
     color: var(--text-muted);
 }
 
-.footer-coffee {
-    display: inline-block;
-    margin-top: 0.5rem;
-    color: var(--text-muted);
-    font-size: 0.85rem;
+.coffee-float {
+    position: fixed;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    z-index: 900;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    background: var(--accent-cyan);
+    color: #082f38;
+    font-size: 0.88rem;
+    font-weight: 600;
     text-decoration: none;
+    box-shadow: 0 6px 20px rgba(6, 182, 212, 0.25);
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.footer-coffee:hover,
-.footer-coffee:focus-visible {
-    color: var(--accent-cyan);
+.coffee-float:hover,
+.coffee-float:focus-visible {
+    background: #22d3ee;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+    .coffee-float {
+        padding: 0.5rem 0.85rem;
+        font-size: 0.8rem;
+    }
 }
 
 /* --- Scroll Reveal Animations --- */
