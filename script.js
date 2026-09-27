@@ -650,4 +650,79 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'ArrowRight') { nextSlide(); resetAutoplay(); }
     });
 
+
+    // --- Coffee Panel ---
+    // Nothing loads from Ko-fi until the panel is first opened.
+    const coffeeButton = document.querySelector('.coffee-float');
+    if (coffeeButton) {
+        const kofiHandle = new URL(coffeeButton.href).pathname.split('/').filter(Boolean)[0];
+        let coffeePanel = null;
+        let coffeeOpener = null;
+
+        function closeCoffeePanel() {
+            if (!coffeePanel || coffeePanel.hidden) return;
+            coffeePanel.hidden = true;
+            coffeeButton.setAttribute('aria-expanded', 'false');
+            if (coffeeOpener && coffeeOpener.isConnected) coffeeOpener.focus();
+        }
+
+        function openCoffeePanel() {
+            coffeeOpener = coffeeButton;
+            if (!coffeePanel) {
+                coffeePanel = document.createElement('div');
+                coffeePanel.className = 'coffee-panel';
+                coffeePanel.setAttribute('role', 'dialog');
+                coffeePanel.setAttribute('aria-label', 'Support with a coffee');
+                coffeePanel.hidden = true;
+
+                const head = document.createElement('div');
+                head.className = 'coffee-panel-head';
+
+                const headTitle = document.createElement('span');
+                headTitle.textContent = 'Buy me a coffee';
+
+                const closeBtn = document.createElement('button');
+                closeBtn.type = 'button';
+                closeBtn.className = 'coffee-panel-close';
+                closeBtn.setAttribute('aria-label', 'Close');
+                closeBtn.textContent = '✕';
+                closeBtn.addEventListener('click', closeCoffeePanel);
+
+                head.appendChild(headTitle);
+                head.appendChild(closeBtn);
+
+                const iframe = document.createElement('iframe');
+                iframe.title = 'Ko-fi tip panel';
+                iframe.loading = 'lazy';
+                iframe.referrerPolicy = 'no-referrer';
+                iframe.src = 'https://ko-fi.com/' + encodeURIComponent(kofiHandle) + '/?hidefeed=true&widget=true&embed=true&preview=true';
+
+                const note = document.createElement('p');
+                note.className = 'coffee-panel-note';
+                note.textContent = 'Payments are handled by Ko-fi. Nothing loads from Ko-fi until you open this panel.';
+
+                coffeePanel.appendChild(head);
+                coffeePanel.appendChild(iframe);
+                coffeePanel.appendChild(note);
+                document.body.appendChild(coffeePanel);
+            }
+            coffeePanel.hidden = false;
+            coffeeButton.setAttribute('aria-expanded', 'true');
+            coffeePanel.querySelector('.coffee-panel-close').focus();
+        }
+
+        coffeeButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (coffeePanel && !coffeePanel.hidden) {
+                closeCoffeePanel();
+            } else {
+                openCoffeePanel();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeCoffeePanel();
+        });
+    }
+
 });
