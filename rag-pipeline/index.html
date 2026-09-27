@@ -486,6 +486,7 @@
             }
         }
     </style>
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e46c62f910fe4def882feaed064efced"}'></script>
 </head>
 <body>
 
@@ -629,12 +630,12 @@
                 <div class="arch-step">
                     <div class="arch-step-num">1</div>
                     <div class="arch-step-title">Embed</div>
-                    <div class="arch-step-desc">all-MiniLM-L6-v2<br>384 numbers</div>
+                    <div class="arch-step-desc">bge-small-en-v1.5<br>384 numbers</div>
                 </div>
                 <div class="arch-step">
                     <div class="arch-step-num">2</div>
                     <div class="arch-step-title">Search</div>
-                    <div class="arch-step-desc">Chroma<br>nearest chunks</div>
+                    <div class="arch-step-desc">Vectorize<br>nearest chunks</div>
                 </div>
                 <div class="arch-step">
                     <div class="arch-step-num">3</div>
@@ -644,7 +645,7 @@
                 <div class="arch-step">
                     <div class="arch-step-num">4</div>
                     <div class="arch-step-title">Generate</div>
-                    <div class="arch-step-desc">gpt-oss-120b<br>via Groq</div>
+                    <div class="arch-step-desc">gpt-oss-120b<br>via Groq + AI Gateway</div>
                 </div>
             </div>
 
@@ -726,11 +727,12 @@ use change. &hellip;</div>
             </p>
 
             <p>
-                The chat uses <code>all-MiniLM-L6-v2</code>, a small model built for sentence
-                similarity. It turns every chunk into 384 numbers, so each chunk becomes a point
-                in a 384-dimensional space. It runs through a library called
-                <code>fastembed</code>, which uses the ONNX runtime, so no PyTorch or GPU is
-                needed on the server.
+                The chat uses <code>bge-small-en-v1.5</code>, a small model built for sentence
+                similarity, running on Cloudflare's Workers AI. It turns every chunk into 384
+                numbers, so each chunk becomes a point in a 384-dimensional space. The API does
+                not run the model itself; it sends the text to Workers AI and gets the numbers
+                back. Documents and questions must be embedded by the same model, which is why
+                all 779 chunks were embedded again when the chat moved to Cloudflare.
             </p>
 
             <p>
@@ -815,13 +817,16 @@ use change. &hellip;</div>
             </p>
 
             <p>
-                The chat uses Chroma, which runs inside the API process and saves everything to
-                a folder on disk. For every chunk it keeps three things:
+                The chat uses Vectorize, Cloudflare's vector database, with an index called
+                <code>research-chunks</code>. For every chunk it keeps three things:
             </p>
 
             <ul>
                 <li>the <strong>vector</strong>, the 384 numbers;</li>
-                <li>the <strong>text</strong> of the chunk, so it can be handed to the model;</li>
+                <li>
+                    the <strong>text</strong> of the chunk, stored in the vector's metadata, so
+                    it can be handed to the model;
+                </li>
                 <li>
                     the <strong>metadata</strong>, small labels such as which paper the chunk
                     came from (<code>source_file</code>) and which page.
@@ -835,10 +840,13 @@ use change. &hellip;</div>
             </p>
 
             <p>
-                One detail for the curious. Chroma in this setup ranks neighbours by
-                straight-line (Euclidean) distance rather than by cosine similarity. That sounds
-                like a contradiction, but the embeddings are normalised to length 1, and for
-                vectors of length 1 the two measures always put neighbours in the same order.
+                One detail for the curious. The index ranks neighbours by cosine similarity,
+                the same measure worked through in section 4, so the nearest chunks are the
+                ones whose arrows point most nearly the same way as the question's. The
+                earlier version of the chat used Chroma, which ranked by straight-line
+                (Euclidean) distance instead. That sounds like a contradiction, but its
+                embeddings were normalised to length 1, and for vectors of length 1 the two
+                measures always put neighbours in the same order.
             </p>
 
             <!-- 6 -->
@@ -848,7 +856,8 @@ use change. &hellip;</div>
                 When a question arrives, it is embedded with the <em>same</em> model used for
                 the chunks, and the vector store returns the closest chunks. How many it
                 returns is a setting usually called <strong>k</strong>. In this pipeline it is
-                4:
+                4. The Python samples in this guide, including this one, come from the Python
+                prototype; the live Worker ports the same logic line for line to TypeScript.
             </p>
 
             <pre><code><span class="cmt"># rag_api/pipeline.py</span>
@@ -878,7 +887,7 @@ store.as_retriever(
                 breaks here are for reading.)
             </p>
 
-            <pre><code><span class="cmt"># SYSTEM_TEMPLATE in rag_api/pipeline.py</span>
+            <pre><code><span class="cmt"># SYSTEM_TEMPLATE in worker/src/prompt.ts (the Python prototype lacks only the spelling line)</span>
 You are a research assistant for Dr Reju Sam John, a computational
 epidemiologist and data scientist based in Auckland, New Zealand.
 
@@ -896,6 +905,7 @@ headings or bold text. Use short paragraphs separated by a blank
 line if needed.
 - Do not end with a list of sources or quotations; the sources are
 shown to the reader separately.
+- Use British/NZ spelling (for example behaviour, modelling, organisation).
 - Be concise but thorough.
 - Keep answers under 150 words for readability.
 
@@ -941,6 +951,10 @@ ANSWER:</code></pre>
                     prose, because the chat box shows raw text and lists the sources itself.
                 </li>
                 <li>
+                    <strong>&ldquo;Use British/NZ spelling&rdquo;</strong> keeps the answers in
+                    the same spelling as the papers and this site.
+                </li>
+                <li>
                     <strong>&ldquo;under 150 words&rdquo;</strong> keeps answers readable in a
                     small chat window.
                 </li>
@@ -958,8 +972,10 @@ ANSWER:</code></pre>
                 The filled-in prompt goes to the language model. It receives nothing else: no
                 search engine, no memory of earlier questions, just the instructions, four
                 passages and one question. The chat calls <code>openai/gpt-oss-120b</code>
-                hosted by Groq, with <code>openai/gpt-oss-20b</code> as a fallback (more on
-                that in section 11).
+                hosted by Groq. The call goes through Cloudflare's AI Gateway, which sits between
+                the API and the model provider and keeps a log of every request. If Groq fails,
+                the same model running on Workers AI answers instead (more on that in section
+                11).
             </p>
 
             <p>
@@ -970,13 +986,22 @@ ANSWER:</code></pre>
                 stick to its most likely choices. The chat uses 0.1:
             </p>
 
-            <pre><code><span class="cmt"># rag_api/pipeline.py, inside build_pipeline</span>
-ChatGroq(
-    model=model,
-    temperature=<span class="str">0.1</span>,
-    timeout=settings.llm_timeout_s,
-    max_retries=<span class="str">1</span>,
-)</code></pre>
+            <pre><code><span class="cmt">// worker/src/llm.ts, inside groqLlm</span>
+<span class="kw">const</span> base = (<span class="kw">await</span> env.AI.gateway(env.GATEWAY_ID).getUrl(<span class="str">"groq"</span>)).replace(<span class="str">/\/+$/</span>, <span class="str">""</span>);
+<span class="kw">const</span> res = <span class="kw">await</span> fetchFn(<span class="str">`${base}/chat/completions`</span>, {
+  method: <span class="str">"POST"</span>,
+  headers: {
+    Authorization: <span class="str">`Bearer ${env.GROQ_API_KEY}`</span>,
+    <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>,
+  },
+  body: JSON.stringify({
+    model: env.GROQ_MODEL,
+    messages: [{ role: <span class="str">"user"</span>, content: prompt }],
+    temperature: <span class="str">0.1</span>,
+    reasoning_effort: <span class="str">"low"</span>,
+  }),
+  signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
+});</code></pre>
 
             <p>
                 For summarising research we want faithful and consistent rather than
@@ -1164,14 +1189,19 @@ ChatGroq(
 
             <h3>Cold starts</h3>
             <p>
-                The API runs on Render's free tier, which shuts the server down after around
-                15 minutes without traffic. The next request has to wait while it starts again,
-                roughly 30 to 60 seconds. Two things soften this. The API has a
-                <code>/health</code> endpoint that only reports ready once the retrieval
-                pipeline has loaded, and the home page sends a quiet wake-up request to it as
-                soon as it opens, so the server is often warm by the time you have typed your
-                question. If it is still starting, the chat box shows a &ldquo;warming
-                up&rdquo; message instead of failing silently.
+                The API first ran on Render's free tier, which shut the server down after
+                around 15 minutes without traffic. The next question had to wait while it
+                started again, roughly 30 to 60 seconds, and one cold call I timed took 75.
+                The home page sent a quiet wake-up request as soon as it opened, and the chat
+                box showed a &ldquo;warming up&rdquo; message, but anyone who asked straight
+                away still waited.
+            </p>
+            <p>
+                So in September 2026 the chat moved to a Cloudflare Worker. A Worker is a small
+                program that Cloudflare runs when a request arrives. There is no server of mine
+                to go to sleep, so there is nothing to wake. On the same 15 evaluation questions
+                the median answer now takes about 1.5 seconds. The friendly message for a failed
+                request is still there, in case the network lets a question down.
             </p>
 
             <h3>Secrets</h3>
@@ -1191,16 +1221,24 @@ ChatGroq(
                 </li>
                 <li>
                     <strong>Rate limit:</strong> 10 requests per minute per client, so one
-                    visitor (or one script) cannot use up the model quota. Clients are
-                    told apart by the address Cloudflare reports for them. I checked that a
-                    request carrying a forged address header is rejected at Cloudflare's edge.
+                    visitor (or one script) cannot use up the model quota. The Worker tells
+                    clients apart by the <code>CF-Connecting-IP</code> header, which Cloudflare's
+                    edge sets itself on every request, so a caller cannot choose it. (On Render,
+                    I checked that a request carrying a forged address header was rejected at
+                    Cloudflare's edge.)
                 </li>
                 <li>
-                    <strong>Timeout and fallback:</strong> each model call has 20 seconds.
-                    A call that times out or hits a temporary error is retried once. An error
-                    such as &ldquo;model not found&rdquo; is not retried: the request goes
-                    straight to the fallback model, <code>openai/gpt-oss-20b</code>, as it also
-                    does if the retry fails.
+                    <strong>Timeout and fallback:</strong> each model call has 20 seconds. If
+                    the Groq call times out, returns an error or comes back without any answer
+                    text, the request goes to the fallback: <code>gpt-oss-120b</code> running
+                    on Workers AI.
+                </li>
+                <li>
+                    <strong>AI Gateway:</strong> both model calls pass through Cloudflare's AI
+                    Gateway, which logs every request and caches identical requests for a day,
+                    so a repeated question does not spend the model quota twice. It also
+                    applies its own limit of 60 requests a minute across all visitors, a second
+                    fence behind the per-visitor one.
                 </li>
                 <li>
                     <strong>Error messages:</strong> when something does go wrong, the browser
@@ -1211,11 +1249,16 @@ ChatGroq(
 
             <h3>Repeatable builds and checks</h3>
             <p>
-                Every dependency is pinned to an exact version, so rebuilding the server
-                cannot quietly pull in a new release that behaves differently. Each push to
-                the repository runs continuous integration: a linter, the offline test suite,
+                Every dependency is fixed to an exact version, so rebuilding cannot quietly pull
+                in a new release that behaves differently. The Python API's dependencies are
+                pinned in its requirements files; the Worker's exact versions are recorded in
+                its <code>package-lock.json</code>, which continuous integration installs with
+                <code>npm ci</code>. Each push to the repository runs continuous integration:
+                a linter, the offline test suite,
                 and a secret scan with gitleaks that fails the build if anything resembling a
-                key has been committed. A separate set of live tests calls the real model and
+                key has been committed. It also type-checks the Worker with
+                <code>tsc</code> and runs its tests with <code>vitest</code>, alongside the
+                Python checks. A separate set of live tests calls the real model and
                 is run by hand.
             </p>
 
@@ -1232,34 +1275,34 @@ ChatGroq(
                         <tr>
                             <th>Component</th>
                             <th>Local (Streamlit)</th>
-                            <th>Deployed (FastAPI)</th>
+                            <th>Deployed (Cloudflare Worker)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>Embeddings</td>
                             <td>nomic-embed-text via Ollama</td>
-                            <td>all-MiniLM-L6-v2 via fastembed (ONNX)</td>
+                            <td>bge-small-en-v1.5 via Workers AI</td>
                         </tr>
                         <tr>
                             <td>LLM</td>
                             <td>llama3.2 via Ollama</td>
-                            <td>openai/gpt-oss-120b via Groq, fallback openai/gpt-oss-20b</td>
+                            <td>openai/gpt-oss-120b via Groq through AI Gateway, fallback gpt-oss-120b on Workers AI</td>
                         </tr>
                         <tr>
                             <td>Vector store</td>
                             <td>chroma_db/</td>
-                            <td>chroma_db_deploy/</td>
+                            <td>Vectorize index research-chunks</td>
                         </tr>
                         <tr>
                             <td>Interface</td>
                             <td>Streamlit chat UI</td>
-                            <td>FastAPI &rarr; chat box on this site</td>
+                            <td>Worker &rarr; chat box on this site</td>
                         </tr>
                         <tr>
                             <td>Hosting</td>
                             <td>localhost</td>
-                            <td>Render (free tier)</td>
+                            <td>Cloudflare Workers (free tier)</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1357,10 +1400,13 @@ ChatGroq(
                 model. If you build the store with one model and embed questions with another,
                 the question lands in a completely different space from the chunks. The
                 similarity scores become noise, and retrieval returns rubbish without any error
-                message. That is why this project keeps two separate stores,
-                <code>chroma_db/</code> for the local <code>nomic-embed-text</code> variant and
-                <code>chroma_db_deploy/</code> for the deployed <code>all-MiniLM-L6-v2</code>
-                version. If you change the embedding model, re-embed everything.
+                message. That is why this project keeps its stores apart. The local Python
+                prototype has <code>chroma_db/</code> for its <code>nomic-embed-text</code>
+                variant and <code>chroma_db_deploy/</code> for its
+                <code>all-MiniLM-L6-v2</code> variant; the live chat's vectors, made with
+                <code>bge-small-en-v1.5</code>, live in the Vectorize index
+                <code>research-chunks</code>. If you change the embedding model, re-embed
+                everything.
             </p>
 
             <h3>Questions about the documents rather than in them</h3>
@@ -1483,10 +1529,11 @@ ChatGroq(
             </div>
 
             <div class="method-note">
-                <strong>Stack.</strong> LangChain for the pipeline, Chroma for vector storage,
-                <code>all-MiniLM-L6-v2</code> through fastembed for embeddings, Groq for
-                generation (<code>openai/gpt-oss-120b</code>, falling back to
-                <code>openai/gpt-oss-20b</code>), FastAPI for the API and Render for hosting.
+                <strong>Stack.</strong> Cloudflare Workers for the API, Vectorize for vector
+                storage, <code>bge-small-en-v1.5</code> on Workers AI for embeddings, and Groq
+                for generation (<code>openai/gpt-oss-120b</code> through AI Gateway, falling
+                back to the same model on Workers AI). The first version, built with LangChain
+                and Chroma, stays in the repository as the local prototype.
                 Full code and the list of papers are on
                 <a href="https://github.com/rejusam/rag-publications" target="_blank" rel="noopener">GitHub</a>.
             </div>

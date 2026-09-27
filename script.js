@@ -159,13 +159,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Hero Chat Widget ---
-    // Production: live FastAPI backend on Render (free tier — first call after
-    // ~15min idle is slow due to instance spin-down).
-    // For local dev, swap to: 'http://127.0.0.1:8000'
-    const RAG_API_URL = 'https://rag-publications-api.onrender.com';
+    // Production: Cloudflare Worker (Workers AI + Vectorize, Groq through AI
+    // Gateway). No cold start, but the fetch-error "waking up" message below
+    // stays as a fallback for network blips.
+    // For local dev, run `npx wrangler dev` in rag-publications/worker and
+    // swap to: 'http://127.0.0.1:8787'
+    const RAG_API_URL = 'https://ask-my-research.rejusamjohn.workers.dev';
 
-    // Start waking the Render instance as soon as the page loads, so it is
-    // more likely to be warm by the time someone asks a question.
+    // Ping the API on load so a network problem shows up before the first question.
     if (document.getElementById('chatForm')) {
         fetch(RAG_API_URL + '/health').catch(() => {});
     }
@@ -244,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
         div.innerHTML =
             '<div class="wakeup-progress"><div class="wakeup-progress-fill"></div></div>' +
             '<p class="wakeup-text"><i class="fas fa-circle-notch fa-spin"></i>' +
-            'Research server warming up — first requests can take up to a minute.</p>';
+            'Still working on it — this can take a few seconds.</p>';
         chatMessages.appendChild(div);
         chatBody.scrollTop = chatBody.scrollHeight;
     }

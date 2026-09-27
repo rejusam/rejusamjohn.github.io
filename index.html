@@ -31,6 +31,7 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
     <link rel="stylesheet" href="style.css">
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e46c62f910fe4def882feaed064efced"}'></script>
 </head>
 <body>
 
@@ -75,16 +76,16 @@
                 </div>
                 <div class="chat-howto" id="chatHowto" hidden>
                     <ol class="howto-steps">
-                        <li><span class="step-num">1</span><div><strong>Embed</strong> your question as a 384-dim vector (<code>all-MiniLM-L6-v2</code>)</div></li>
-                        <li><span class="step-num">2</span><div><strong>Search</strong> ChromaDB across ~780 chunks from 6 peer-reviewed papers</div></li>
+                        <li><span class="step-num">1</span><div><strong>Embed</strong> your question as a 384-dim vector (<code>bge-small-en-v1.5</code> on Workers AI)</div></li>
+                        <li><span class="step-num">2</span><div><strong>Search</strong> Cloudflare Vectorize across ~780 chunks from 6 peer-reviewed papers</div></li>
                         <li><span class="step-num">3</span><div><strong>Retrieve</strong> the top-4 most similar chunks as context</div></li>
-                        <li><span class="step-num">4</span><div><strong>Generate</strong> an answer with gpt-oss-120b (via Groq), linking the papers it drew on</div></li>
+                        <li><span class="step-num">4</span><div><strong>Generate</strong> an answer with gpt-oss-120b (Groq, through AI Gateway), linking the papers it drew on</div></li>
                     </ol>
                     <div class="howto-stack">
-                        <span class="stack-pill">LangChain</span>
-                        <span class="stack-pill">ChromaDB</span>
-                        <span class="stack-pill">FastAPI</span>
-                        <span class="stack-pill">fastembed (ONNX)</span>
+                        <span class="stack-pill">Cloudflare Workers</span>
+                        <span class="stack-pill">Vectorize</span>
+                        <span class="stack-pill">Workers AI</span>
+                        <span class="stack-pill">AI Gateway</span>
                         <span class="stack-pill">Groq</span>
                     </div>
                 </div>
@@ -414,6 +415,7 @@
                         <span class="skill-tag">Google Cloud</span>
                         <span class="skill-tag">Render</span>
                         <span class="skill-tag">Cloudflare Pages</span>
+                        <span class="skill-tag">Cloudflare Workers</span>
                         <span class="skill-tag">GitHub Actions</span>
                         <span class="skill-tag">CI/CD</span>
                         <span class="skill-tag">HPC Clusters</span>
@@ -473,9 +475,9 @@
                         </div>
                     </div>
                     <h3>Ask My Research: RAG Over My Publications</h3>
-                    <p>Retrieval-augmented generation pipeline over my peer-reviewed papers — 779 chunks from 6 publications, embedded with all-MiniLM-L6-v2, stored in ChromaDB, and answered by gpt-oss-120b via Groq, with an automatic fallback model. Every answer links the papers it was retrieved from. Deployed as a tested FastAPI backend powering the live chat widget on this site.</p>
+                    <p>Retrieval-augmented generation pipeline over my peer-reviewed papers — 779 chunks from 6 publications, embedded with bge-small-en-v1.5 on Workers AI, stored in Cloudflare Vectorize, and answered by gpt-oss-120b via Groq through AI Gateway, with the same model on Workers AI as fallback. Every answer links the papers it was retrieved from. Runs as a tested Cloudflare Worker powering the live chat widget on this site.</p>
                     <div class="project-tags">
-                        <span class="tag">LangChain</span><span class="tag">ChromaDB</span><span class="tag">FastAPI</span><span class="tag">Groq</span><span class="tag">RAG</span>
+                        <span class="tag">Cloudflare Workers</span><span class="tag">Vectorize</span><span class="tag">Workers AI</span><span class="tag">Groq</span><span class="tag">RAG</span>
                     </div>
                     <div class="project-label">AI Engineering</div>
                 </div>
