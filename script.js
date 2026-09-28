@@ -216,6 +216,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 title.textContent = s.title;
                 li.appendChild(title);
             }
+            const pages = Array.isArray(s.pages)
+                ? [...new Set(s.pages.filter((p) => Number.isInteger(p) && p > 0))].sort((a, b) => a - b)
+                : [];
+            if (pages.length) {
+                const pg = document.createElement('span');
+                pg.className = 'chat-source-pages';
+                pg.textContent = (pages.length === 1 ? 'PDF p. ' : 'PDF pp. ') + pages.join(', ');
+                li.appendChild(pg);
+            }
             list.appendChild(li);
         });
         if (list.children.length === 0) return;
