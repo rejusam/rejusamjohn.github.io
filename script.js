@@ -543,15 +543,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Escape') closeCoffeePanel();
         });
 
-        // The floating buttons appear once the hero chat has scrolled out of view.
-        const heroAsk = document.querySelector('.hero-ask');
-        if (heroAsk && 'IntersectionObserver' in window) {
-            new IntersectionObserver(([entry]) => {
-                document.body.classList.toggle('dock-away', entry.isIntersecting);
-                if (entry.isIntersecting) closeCoffeePanel();
-            }, { threshold: 0.2 }).observe(heroAsk);
-        }
-
         // Opening the "Ask my research" panel (Tasman's floating button) puts the coffee panel away.
         document.addEventListener('click', (e) => {
             if (e.target instanceof Element && e.target.closest('tasman-ask')) closeCoffeePanel();
