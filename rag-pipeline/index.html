@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>How Ask My Papers Works</title>
-    <meta name="description" content="How Ask My Papers turns a researcher's papers into an assistant that answers only from them and cites the PDF page: queue-driven reading with arXiv LaTeX and Docling, hybrid search with reranking, a frontier answer model with open-weight fallbacks, spend guards and evaluation.">
+    <meta name="description" content="How Ask My Papers works, in plain terms: an assistant that answers only from a researcher's own papers, says so when they don't cover a question, and cites the paper and PDF page for every answer.">
     <meta name="author" content="Dr Reju Sam John">
 
     <!-- Open Graph -->
     <meta property="og:title" content="How Ask My Papers Works">
-    <meta property="og:description" content="Reading papers precisely, hybrid search with reranking, grounded answers that cite the PDF page, and the guards and tests around them. The engineering behind Ask My Papers.">
+    <meta property="og:description" content="An assistant that answers only from a researcher's own papers, keeps their maths and tables, cites the PDF page and says plainly when the papers don't cover a question.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://rejusamjohn.pages.dev/rag-pipeline/">
     <link rel="canonical" href="https://rejusamjohn.pages.dev/rag-pipeline/">
@@ -442,11 +442,10 @@
 
         <header class="article-header">
             <div class="article-kicker">How it works</div>
-            <h1 class="article-title">Ask My Papers, from PDF to cited answer</h1>
+            <h1 class="article-title">How Ask My Papers works</h1>
             <p class="article-subtitle">
-                The engineering behind the research assistant on my home page: how it reads
-                papers, finds the right passages, writes an answer it can back up, and how I
-                check that it keeps doing so.
+                What the research assistant on my home page does with a paper, how it decides
+                what to say, and how I check that it keeps getting it right.
             </p>
             <div class="article-meta">
                 <span><a href="../">Reju Sam John</a></span>
@@ -458,32 +457,17 @@
 
         <div class="article-body">
 
-            <p>
-                The chat on my home page is not a demo built for this site. It is the embed of
-                <strong>Ask My Papers</strong>, a product I build at Tasman Lab. A researcher adds
-                their papers and gets an assistant that answers questions from those papers
-                only, and points to the page of the PDF each claim came from. When the papers
-                don't cover a question, it says so instead of guessing.
-            </p>
-
-            <p>
-                This page describes how it works. It is written for people who build or hire for
-                this kind of system, so it goes into the design decisions and the failure modes,
-                but it leaves out the exact tuning values, which are the part that took longest
-                to get right.
-            </p>
-
             <nav class="toc" aria-label="Contents">
                 <div class="toc-title">Contents</div>
                 <ol>
                     <li><a href="#what">What it is</a></li>
                     <li><a href="#reading">Reading papers properly</a></li>
-                    <li><a href="#retrieval">Finding the right passages</a></li>
-                    <li><a href="#answering">Writing the answer</a></li>
+                    <li><a href="#finding">Finding the right passages</a></li>
+                    <li><a href="#answering">Answering only from the papers</a></li>
+                    <li><a href="#follow-ups">Follow-up questions</a></li>
                     <li><a href="#citations">Citations you can check</a></li>
-                    <li><a href="#cost-safety">Cost, abuse and privacy</a></li>
-                    <li><a href="#evaluation">How I know it works</a></li>
-                    <li><a href="#earlier">The earlier version</a></li>
+                    <li><a href="#privacy">Privacy</a></li>
+                    <li><a href="#testing">Testing before release</a></li>
                     <li><a href="#try-it">Try it</a></li>
                 </ol>
             </nav>
@@ -492,468 +476,155 @@
             <h2 id="what">1. What it is</h2>
 
             <p>
-                A researcher signs up with an email address and adds papers in whichever form
-                they have them: a DOI, an arXiv identifier, or a PDF upload. A few minutes later
-                they have an assistant with its own public page. Visitors ask questions in plain
-                language and get a short answer with a list of the papers it drew on, each with
-                the PDF page number.
-            </p>
-
-            <p>The same assistant can then be placed wherever people meet the researcher's work:</p>
-
-            <ul>
-                <li>an <strong>inline chat</strong> in an iframe, which is what sits in the hero of my home page;</li>
-                <li>a <strong>floating button</strong> that opens the chat in a panel, also on my home page;</li>
-                <li>a <strong>badge</strong> and a <strong>QR code</strong> for profiles, slides and posters;</li>
-                <li>an <strong>email signature</strong> line.</li>
-            </ul>
-
-            <p>
-                Each researcher gets a private kit page with these snippets ready to copy. The
-                embeds set no cookies, and the button script is versioned and frozen once
-                published, so a site that pins it with a subresource integrity hash never breaks.
+                The chat at the top of my home page is <strong>Ask My Papers</strong>, which I
+                build at Tasman Lab. A researcher adds their papers and gets an assistant that
+                answers questions from those papers and nothing else. Each answer points to the
+                paper and the PDF page it came from.
             </p>
 
             <p>
-                There is also a <strong>private library</strong>: a second, separate collection
-                for the papers a researcher reads rather than writes. Only they can see it or ask
-                it. They can search their reading, their own papers, or both together, and a
-                citation opens the stored PDF at the cited page. It is in early use with a small
-                group of researchers before it opens to every Pro account.
-            </p>
-
-            <p>
-                Everything runs on Cloudflare: one Worker for the pages, the API and the embeds,
-                D1 for records, R2 for files, Queues for background work, Vectorize for vectors,
-                a Container for heavy PDF reading, and AI Gateway in front of every model call.
-                Each assistant's passages live in their own Vectorize namespace, and every search
-                result is checked against the assistant's ID prefix before it can reach a prompt,
-                so one researcher's papers can never answer another's visitors.
+                I wanted it because people ask me about my work in places where I can't hand them
+                a PDF: after a talk, in an email, on my website. Most of them want one finding or
+                one number, not the whole paper. An assistant that can find that passage and show
+                where it sits saves both of us time, as long as it never makes things up.
             </p>
 
             <!-- 2 -->
             <h2 id="reading">2. Reading papers properly</h2>
 
             <p>
-                Retrieval can only be as good as the text it searches. The first version of this
-                system pulled plain text out of PDFs, and for my epidemiology papers that was
-                mostly fine. Then a mathematician tried it. Plain PDF text turns equations into
-                scattered symbols, flattens tables into runs of numbers and loses which heading a
-                paragraph sits under. Questions about a theorem or a model's parameters came back
-                vague or wrong. So reading became its own pipeline.
+                Everything depends on reading the paper well in the first place. My first attempt
+                treated a paper as plain text. That was mostly fine for my epidemiology papers,
+                then a mathematician tried it. Equations came out as scattered symbols, tables
+                became runs of numbers, and nobody could tell which section a paragraph belonged
+                to. Questions about a theorem or a model's parameters got vague answers.
             </p>
 
-            <figure class="arch-figure">
-                <ol class="arch-diagram">
-                <li class="arch-step">
-                    <div class="arch-step-num">1</div>
-                    <div class="arch-step-title">Add</div>
-                    <div class="arch-step-desc">DOI, arXiv id<br>or PDF upload</div>
-                </li>
-                <li class="arch-step">
-                    <div class="arch-step-num">2</div>
-                    <div class="arch-step-title">Queue</div>
-                    <div class="arch-step-desc">PDF in R2<br>job on a Queue</div>
-                </li>
-                <li class="arch-step">
-                    <div class="arch-step-num">3</div>
-                    <div class="arch-step-title">Read</div>
-                    <div class="arch-step-desc">arXiv LaTeX, Docling<br>or plain text</div>
-                </li>
-                <li class="arch-step">
-                    <div class="arch-step-num">4</div>
-                    <div class="arch-step-title">Index</div>
-                    <div class="arch-step-desc">bge-m3 in Vectorize<br>+ keyword index in D1</div>
-                </li>
-            </ol>
-                <figcaption>How a paper is read, step by step.</figcaption>
-            </figure>
-
-            <h3>A queue, not a request</h3>
             <p>
-                Reading a long paper precisely can take minutes, far longer than a web request
-                should wait. When a paper is added, the Worker fetches it if needed (arXiv
-                directly, a DOI through an open-access lookup), stores the PDF in R2 and puts a
-                job on a Queue. A consumer takes papers one at a time, with a little parallelism,
-                and moves each job through <code>queued</code>, <code>reading</code>,
-                <code>indexing</code> and <code>ready</code>. The sign-up page polls those states,
-                so the researcher watches each paper go through, with a plain reason if one is
-                refused (a scanned PDF with no text layer, for example, or one over the page
-                limit).
-            </p>
-            <p>
-                Failed jobs are retried with growing delays, and a job that still fails cleans up
-                any passages it wrote. An hourly sweep catches jobs whose queue messages were lost.
-                After a paper attaches, a follow-up check asks Vectorize whether the paper's first
-                passage is actually searchable yet, because a vector index is eventually
-                consistent and "written" is not the same as "findable".
-            </p>
-
-            <h3>Three ways to read, best first</h3>
-            <ul>
-                <li>
-                    <strong>The author's LaTeX source from arXiv</strong>, when there is one.
-                    Headings, theorems and equations arrive exactly as written. A small LaTeX
-                    reader of my own pulls out sections, paragraphs, display maths and
-                    theorem-like blocks. The source is only trusted if its text maps back onto
-                    most of the PDF, which is also how each block gets its PDF page number.
-                </li>
-                <li>
-                    <strong>Docling in a Cloudflare Container</strong>, for everything else.
-                    Docling is an open-source document converter that keeps layout, tables,
-                    headings and formulas. It needs more memory and time than a Worker has, so it
-                    runs in a container that sleeps when idle and wakes when a paper arrives.
-                </li>
-                <li>
-                    <strong>Plain text</strong> as the fallback. If the container is busy, slow or
-                    down, the paper is read plain so the researcher is never stuck waiting, and it
-                    is marked as such. An hourly job later re-reads those papers precisely and
-                    swaps the passages in place.
-                </li>
-            </ul>
-            <p>
-                The text is then cut into overlapping passages that never cross a page boundary,
-                so every passage keeps an exact page number. Each passage is embedded with
-                <code>bge-m3</code> on Workers AI into Vectorize, and also written to a SQLite
-                full-text index in a separate D1 database for keyword search.
+                Ask My Papers now keeps that structure. Equations stay equations, tables keep
+                their rows and columns, and every passage remembers its section and its page. When
+                an answer needs maths, the maths is shown properly rather than as a string of
+                symbols.
             </p>
 
             <!-- 3 -->
-            <h2 id="retrieval">3. Finding the right passages</h2>
+            <h2 id="finding">3. Finding the right passages</h2>
 
             <p>
-                When a question arrives, the job is to hand the answer model a small set of
-                passages that contain the answer, and as little else as possible. One embedding
-                search is not enough for that, so the pipeline has several stages.
+                A question rarely uses the same words as the paper that answers it. A visitor
+                might ask how a virus survives between outbreaks when the paper talks about
+                chronic infection. Another might type the exact name of a gene or a method, and
+                expect that precise term to be found. The assistant handles both kinds of
+                question.
             </p>
 
-            <figure class="arch-figure">
-                <ol class="arch-diagram">
-                <li class="arch-step">
-                    <div class="arch-step-num">1</div>
-                    <div class="arch-step-title">Condense</div>
-                    <div class="arch-step-desc">follow-up &rarr;<br>standalone question</div>
-                </li>
-                <li class="arch-step">
-                    <div class="arch-step-num">2</div>
-                    <div class="arch-step-title">Rewrite</div>
-                    <div class="arch-step-desc">extra search queries<br>(Thorough only)</div>
-                </li>
-                <li class="arch-step">
-                    <div class="arch-step-num">3</div>
-                    <div class="arch-step-title">Search</div>
-                    <div class="arch-step-desc">dense + keyword<br>for each query</div>
-                </li>
-                <li class="arch-step">
-                    <div class="arch-step-num">4</div>
-                    <div class="arch-step-title">Fuse</div>
-                    <div class="arch-step-desc">reciprocal<br>rank fusion</div>
-                </li>
-                <li class="arch-step">
-                    <div class="arch-step-num">5</div>
-                    <div class="arch-step-title">Rerank</div>
-                    <div class="arch-step-desc">cross-encoder<br>scores each passage</div>
-                </li>
-                <li class="arch-step">
-                    <div class="arch-step-num">6</div>
-                    <div class="arch-step-title">Spread</div>
-                    <div class="arch-step-desc">a few passages<br>per relevant paper</div>
-                </li>
-                <li class="arch-step">
-                    <div class="arch-step-num">7</div>
-                    <div class="arch-step-title">Answer</div>
-                    <div class="arch-step-desc">frontier model<br>with fallbacks</div>
-                </li>
-                <li class="arch-step">
-                    <div class="arch-step-num">8</div>
-                    <div class="arch-step-title">Check</div>
-                    <div class="arch-step-desc">status line,<br>citation filter</div>
-                </li>
-            </ol>
-                <figcaption>What happens to a question, step by step. Thorough mode adds step 2.</figcaption>
-            </figure>
-
-            <h3>Hybrid search</h3>
             <p>
-                Dense vectors are good at meaning: "how does the virus persist between
-                outbreaks" finds a passage about chronic infection even with no shared words. They
-                are poor at exact terms: a gene name, a species, a named estimator, a symbol.
-                Keyword search is the opposite. So every query runs both, in parallel: a
-                <code>bge-m3</code> search in the assistant's Vectorize namespace and a BM25 search
-                over the full-text index. The visitor's text is reduced to quoted words before it
-                reaches the full-text engine, so no search operator can be injected.
-            </p>
-            <p>
-                The ranked lists are merged with <strong>reciprocal rank fusion</strong>, which
-                rewards a passage for ranking well in any list without needing the two kinds of
-                score to be on the same scale.
-            </p>
-
-            <h3>Reranking</h3>
-            <p>
-                Embeddings compare a question and a passage that were each turned into numbers
-                separately. A cross-encoder reads the two together and scores how well the passage
-                answers the question, which is slower but much sharper. The top of the fused list
-                goes to <code>bge-reranker-base</code> on Workers AI. If the reranker fails or
-                times out, the fused order is used instead, so a slow component degrades the
-                answer rather than breaking it.
-            </p>
-
-            <h3>Spreading across papers</h3>
-            <p>
-                Questions such as "how do these papers differ in their approach to X?" need
-                passages from each paper involved. Left alone, the top of a ranked list is often
-                filled by one paper. The final pick takes at most a few passages from any one
-                paper and keeps some room for papers not yet represented. A relevance gate stops
-                that rule from padding the context with papers that only share the topic: a
-                passage competes for a slot only if its reranker score is close enough to the best
-                one. Reranker scores bunch up near the top of their range when every paper is on
-                a similar subject, so the gate compares them on a log-odds scale, where those
-                differences are visible again. I calibrated it on a mathematician's real questions
-                and checked it against the evaluation set described below.
-            </p>
-
-            <h3>Quick and Thorough</h3>
-            <p>
-                Visitors choose between two modes, on plans that include both. <strong>Quick</strong> searches with the
-                question as asked. <strong>Thorough</strong> first asks a small, fast model on Groq
-                to rewrite the question into extra search queries: one using the technical terms a
-                paper would use, and one for any part of a multi-part question the first misses.
-                The original question is always searched too, so a poor rewrite can add noise but
-                never lose the visitor's own wording. The rewrite has a short time limit, and if it
-                fails the search simply goes ahead with the question alone.
-            </p>
-
-            <h3>Follow-up questions</h3>
-            <p>
-                A follow-up such as "and what did the other paper find?" means nothing to a search
-                index. When a question comes with earlier turns, the same small model condenses
-                the conversation into one standalone question, which is what gets searched. The
-                answer model still sees the conversation, so its reply reads naturally. A "New
-                topic" button clears the thread.
+                Many good questions need more than one paper. &ldquo;How do these two studies
+                differ in their approach?&rdquo; is only useful if both studies are heard from.
+                The assistant can draw on several papers at once for a single answer, and it
+                tries not to pull in papers that merely share the topic.
             </p>
 
             <!-- 4 -->
-            <h2 id="answering">4. Writing the answer</h2>
+            <h2 id="answering">4. Answering only from the papers</h2>
 
             <p>
-                The chosen passages are grouped by paper, labelled with the paper and page, and
-                placed in a prompt that tells the model to answer from them alone, to say when they
-                don't cover the question, to cite only the labelled papers, and to keep notation
-                consistent with the papers. Maths in the answer is rendered with a self-hosted copy
-                of KaTeX, so the page's strict script policy still holds.
+                The answer is written from the passages it found in the researcher's own papers.
+                It does not fill gaps from general knowledge, and it does not guess.
             </p>
 
-            <h3>A frontier model, with two fallbacks</h3>
             <p>
-                The answer is written by a frontier model. If that call fails, times out, comes
-                back empty or declines to answer, the same prompt goes to the next model in the
-                chain: <code>gpt-oss-120b</code>, an open-weight model, on Groq, and then the same
-                model on Workers AI. All three calls go through Cloudflare's AI Gateway, which
-                gives one place for logs, caching and provider keys, and lets me compare models on
-                real traffic. Which chain an assistant gets is configuration, not code: every new
-                assistant starts on the frontier model, and older ones are moving across after
-                testing. Every answer is logged with the model that wrote it and any model that
-                failed before it, so fallbacks are visible rather than silent.
-            </p>
-            <p>
-                I learnt to plan for this the hard way. In September 2026 the provider retired the
-                model the original chat was hard-coded to, and every question returned an error
-                until I fixed it. Since then no model name lives in code, there is always more than
-                one model behind an answer, and a live end-to-end check asks real questions after every deploy.
-            </p>
-
-            <h3>Showing progress</h3>
-            <p>
-                A good answer from a strong model takes a few seconds, and a blank box for that
-                long feels broken. The ask endpoint can reply as a stream of progress lines: first
-                "searching the papers", then "writing from N papers" once the passages are chosen,
-                then the finished answer. The widget shows these as a live status line. Clients
-                that don't ask for the stream get a single JSON reply as before.
-            </p>
-
-            <h3>When the papers don't cover it</h3>
-            <p>
-                The model starts every reply with a status line saying whether the papers
-                answered the question fully, partly or not at all. Code strips that line before
-                the visitor sees anything. When the status is "not covered", the answer is the
-                plain sentence <em>&ldquo;These papers don&rsquo;t cover that.&rdquo;</em> and the
-                retrieved passages are folded away, so a visitor isn't misled into reading
-                loosely related passages as support. An earlier wording apologised at length and
-                still listed the passages; people read that as a partial answer.
+                When the papers don't cover a question, it says so plainly:
+                <em>&ldquo;These papers don&rsquo;t cover that.&rdquo;</em> I care about this more
+                than anything else in the product. A researcher's name sits next to these answers,
+                and a confident wrong answer does them real harm. A clear &ldquo;not
+                covered&rdquo; is a good outcome.
             </p>
 
             <!-- 5 -->
-            <h2 id="citations">5. Citations you can check</h2>
+            <h2 id="follow-ups">5. Follow-up questions</h2>
 
             <p>
-                A language model is very good at producing text that looks like a citation. That
-                is not the same as a true one. Two rules keep citations honest.
-            </p>
-            <ul>
-                <li>
-                    <strong>The source list never passes through the model.</strong> The
-                    "Retrieved from" list under each answer is built in code from the metadata of
-                    the passages that were actually used, with the paper's title, year and the PDF
-                    page. The model cannot add a paper to it.
-                </li>
-                <li>
-                    <strong>In-text citations are filtered.</strong> Papers cite other papers, so
-                    retrieved passages are full of author&ndash;year references to work that is not
-                    in the collection. After generation, a deterministic filter removes any
-                    bracketed citation that doesn't match one of the retrieved papers. An instruction
-                    in the prompt alone did not stop this; a check in code did.
-                </li>
-            </ul>
-            <p>
-                Page numbers come from reading, not from the model: passages never cross a page,
-                and LaTeX blocks are matched back to the PDF page they appear on. On the private
-                library the page number is a link that opens the PDF at that page.
+                People rarely stop at one question. After an answer you can ask &ldquo;and what
+                did the other paper find?&rdquo; or &ldquo;what was the sample size?&rdquo; and the
+                assistant reads it in the light of the earlier answer. When you want to change
+                subject, a <strong>New topic</strong> option starts afresh, so an old thread doesn't
+                colour the next question.
             </p>
 
             <!-- 6 -->
-            <h2 id="cost-safety">6. Cost, abuse and privacy</h2>
+            <h2 id="citations">6. Citations you can check</h2>
 
-            <h3>A spend ledger and guard</h3>
             <p>
-                A frontier model costs real money per answer, and a free plan invites traffic I
-                don't control. Every answer that a paid model writes is costed from its token
-                counts and added to a monthly ledger in D1, kept per assistant, for the free plan
-                as a whole, and overall. Before each answer the guard reads the ledger. Free
-                assistants move to the cheaper open-weight chain well before any limit is reached,
-                individually or as a group; past an overall ceiling, everyone does, and I get an
-                email before that happens. The ledger is off the critical path: a failed read
-                answers on the usual model, a failed write is logged and dropped, and no visitor
-                ever waits on it.
+                Each answer lists the papers it drew on, with the PDF page for each one. That
+                list comes from the passages that were actually used, so it can only name papers
+                in the researcher's own collection, and the page is the real page.
             </p>
 
-            <h3>Limits and bot checks</h3>
             <p>
-                Questions are length-checked before anything else runs. Each client is rate
-                limited per minute, keyed on the address Cloudflare's edge sets itself, so a caller
-                can't choose it. Each plan has a monthly question allowance. Embeds also watch
-                their daily traffic: a sudden spike, or a day over the assistant's ceiling, makes
-                the widget ask for a Cloudflare Turnstile check before it answers, so a script
-                hammering someone's embedded chat can't spend their allowance. Errors return a
-                short fixed message and a request ID, never internal detail.
-            </p>
-
-            <h3>Private means private</h3>
-            <p>
-                Private library questions are sent to every model with AI Gateway's no-log and
-                no-cache settings, and the Worker's own log line for them holds timings only: no
-                question, no answer, no paper titles. Private papers live in their own namespace
-                and are never searched for anyone else; the public side has no path into them.
-                Stored PDFs are visible only to their owner and are deleted soon after the paper
-                is removed.
+                I think of the citations as the point of the whole thing. You shouldn't have to
+                trust the answer. You should be able to open the paper at that page and read it
+                for yourself.
             </p>
 
             <!-- 7 -->
-            <h2 id="evaluation">7. How I know it works</h2>
+            <h2 id="privacy">7. Privacy</h2>
 
             <p>
-                "It gave a good answer when I tried it" is not evidence. Each change to retrieval
-                or answering is run against fixed question sets before it ships.
-            </p>
-            <ul>
-                <li>
-                    <strong>Expected facts.</strong> Each answerable question lists short facts
-                    that are stated on a known page of a known paper, checked against the stored
-                    passages rather than from memory. A judge model grades whether the answer
-                    contains them, and the run also checks the right paper and page were cited.
-                </li>
-                <li>
-                    <strong>Trap questions.</strong> Each set includes plausible questions on a
-                    neighbouring topic the papers don't cover. The only correct reply is "not
-                    covered". A system that answers these confidently is worse than one that
-                    misses a hard question.
-                </li>
-                <li>
-                    <strong>Multi-paper questions.</strong> Some questions are marked as needing
-                    several papers, and the run flags any answer whose sources leave one out. This
-                    is what the spread step above was tuned against.
-                </li>
-                <li>
-                    <strong>Latency per mode.</strong> Quick and Thorough are timed separately.
-                    The bar is a 95th-percentile answer time under about ten seconds; with the
-                    current frontier model both modes sit around eight seconds at the 95th
-                    percentile on a maths-heavy test set, with every trap question correctly declined.
-                </li>
-            </ul>
-            <p>
-                Switching answer model is a decision, not a hunch. Before the change in October
-                2026 I ran a bake-off: the same saved contexts sent to each candidate model and
-                effort level, graded by the same judge, timed, and costed per month at expected
-                volume. The model that now answers was the best one that met the latency bar.
-            </p>
-            <p>
-                These sets are small, and I don't quote an accuracy percentage from them. What
-                they reliably catch is regressions: a retrieval change that drops a paper, a
-                prompt change that makes the model guess, a model that has become slow.
+                A researcher can also keep a private collection, for the papers they read rather
+                than write. Only they can see it or ask it, and it is never searched for anyone
+                else. Papers, public or private, are never used to train a model.
             </p>
 
             <!-- 8 -->
-            <h2 id="earlier">8. The earlier version</h2>
+            <h2 id="testing">8. Testing before release</h2>
 
             <p>
-                Ask My Papers grew out of a much smaller chat, <em>Ask My Research</em>, that I
-                built for this site alone. It held six of my papers, about 780 plain-text chunks,
-                embedded with <code>bge-small-en-v1.5</code> on Workers AI and stored in
-                Vectorize. Each question was embedded, the four nearest chunks were retrieved, and
-                <code>gpt-oss-120b</code> on Groq, through AI Gateway, wrote an answer from them,
-                with the same model on Workers AI as the fallback. It began life as a
-                LangChain and Chroma prototype on a free host that slept when idle, then moved to a
-                Cloudflare Worker with a median answer time of about a second and a half.
+                &ldquo;It gave a good answer when I tried it&rdquo; is not evidence. Before any
+                change is released, the assistant is run against a fixed set of test questions
+                and the answers are checked.
             </p>
-            <p>
-                It worked for its purpose, and it taught me where the simple version stops:
-            </p>
+
             <ul>
-                <li>plain text extraction broke maths, tables and section structure;</li>
                 <li>
-                    pure embedding search missed exact terms, and a fixed top four meant a question
-                    spanning several papers usually heard from one;
+                    <strong>Questions with known answers.</strong> Each one has facts stated on a
+                    known page of a known paper. The answer has to contain them and cite the right
+                    paper and page.
                 </li>
-                <li>there was no way to say "not covered" cleanly, or to follow up on an answer;</li>
                 <li>
-                    and it was built for one person's papers. Other researchers asked for one of
-                    their own.
+                    <strong>Questions the papers don't cover.</strong> These sit close to the
+                    topic and sound reasonable. The only correct reply is that the papers don't
+                    cover them.
+                </li>
+                <li>
+                    <strong>Questions that need several papers.</strong> An answer that leaves
+                    one of them out counts as a miss.
                 </li>
             </ul>
+
             <p>
-                Ask My Papers is the answer to that list. The original code is still public on
-                <a href="https://github.com/rejusam/rag-publications" target="_blank" rel="noopener">GitHub</a>
-                as a compact, readable example of a basic retrieval-augmented pipeline.
+                The sets are small, so I don't quote an accuracy figure from them. What they do
+                well is catch a change that makes things worse before a visitor sees it.
             </p>
 
             <!-- 9 -->
             <h2 id="try-it">9. Try it</h2>
 
             <p>
-                Ask my assistant something my papers cover, then something they don't, and compare
-                the answers and the page numbers. If you are a researcher, you can make one for
-                your own papers in a few minutes.
+                Ask my assistant something my papers cover, then something they don't, and
+                compare the two answers. Check a page number or two while you are there. If you
+                are a researcher, you can set one up for your own papers.
             </p>
 
             <div class="cta-box">
-                <p>See it on my papers, or set one up for yours.</p>
+                <p>See it on my papers, or find out more about Ask My Papers.</p>
                 <a href="../#hero" class="cta-btn">
                     <i class="fas fa-comments"></i>&nbsp; Try it on my papers
                 </a>
-                <a href="https://papers.tasmanlab.com/start"
+                <a href="https://tasmanlab.com/"
                    target="_blank" rel="noopener" class="cta-btn outline">
                     <i class="fas fa-arrow-right"></i>&nbsp; Get one for your papers
                 </a>
-            </div>
-
-            <div class="method-note">
-                <strong>Stack.</strong> Cloudflare Workers, D1, R2, Queues, Vectorize, Containers
-                and AI Gateway. <code>bge-m3</code> embeddings and
-                <code>bge-reranker-base</code> reranking on Workers AI, SQLite full-text search in
-                D1, Docling for PDF reading, a frontier model for answers with
-                <code>gpt-oss-120b</code> on Groq and on Workers AI as fallbacks, KaTeX for maths,
-                Turnstile for bot checks. Written in TypeScript, with type checks and tests on every
-                change.
             </div>
 
         </div>
