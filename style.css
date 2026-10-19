@@ -1571,34 +1571,30 @@ img {
 /* --- Ask My Papers Section --- */
 .amp-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
 }
 
 .amp-card {
     background: var(--bg-card);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
-    padding: 24px;
+    padding: 16px;
 }
 
 .amp-card h3 {
-    font-size: 1.05rem;
-    margin-bottom: 8px;
+    font-size: 1rem;
+    margin-bottom: 6px;
 }
 
 .amp-card p {
     color: var(--text-secondary);
-    font-size: 0.92rem;
-    margin-bottom: 14px;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
 }
 
 .amp-card p:last-child {
     margin-bottom: 0;
-}
-
-.amp-wide {
-    grid-column: 1 / -1;
 }
 
 .amp-link {
@@ -1612,6 +1608,11 @@ img {
     text-decoration: underline;
 }
 
+.amp-card img {
+    max-width: 100%;
+    height: auto;
+}
+
 .amp-qr {
     display: block;
     background: #fff;
@@ -1623,11 +1624,11 @@ img {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 14px 16px;
+    padding: 8px 10px;
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
 }
 
@@ -1642,7 +1643,19 @@ img {
     flex-wrap: wrap;
 }
 
+@media (max-width: 1000px) {
+    .amp-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 @media (max-width: 640px) {
+    .amp-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 420px) {
     .amp-grid {
         grid-template-columns: 1fr;
     }
