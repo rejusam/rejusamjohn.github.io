@@ -67,46 +67,8 @@
                 Transforming complex data into evidence that drives decisions through
                 <span class="typed-text" id="typedText"></span><span class="cursor">|</span>
             </p>
-            <div class="hero-chat animate-in" id="heroChat">
-                <div class="chat-header">
-                    <span class="chat-title"><i class="fas fa-microscope"></i> Ask My Research</span>
-                    <button type="button" class="chat-badge chat-badge-btn" id="howtoToggle" aria-expanded="false" aria-controls="chatHowto">
-                        RAG-powered <i class="fas fa-chevron-down chevron"></i>
-                    </button>
-                </div>
-                <div class="chat-howto" id="chatHowto" hidden>
-                    <ol class="howto-steps">
-                        <li><span class="step-num">1</span><div><strong>Embed</strong> your question as a 384-dim vector (<code>bge-small-en-v1.5</code> on Workers AI)</div></li>
-                        <li><span class="step-num">2</span><div><strong>Search</strong> Cloudflare Vectorize across ~780 chunks from 6 peer-reviewed papers</div></li>
-                        <li><span class="step-num">3</span><div><strong>Retrieve</strong> the top-4 most similar chunks as context</div></li>
-                        <li><span class="step-num">4</span><div><strong>Generate</strong> an answer with gpt-oss-120b (Groq, through AI Gateway), linking the papers it drew on</div></li>
-                    </ol>
-                    <div class="howto-stack">
-                        <span class="stack-pill">Cloudflare Workers</span>
-                        <span class="stack-pill">Vectorize</span>
-                        <span class="stack-pill">Workers AI</span>
-                        <span class="stack-pill">AI Gateway</span>
-                        <span class="stack-pill">Groq</span>
-                    </div>
-                </div>
-                <div class="chat-body" id="chatBody">
-                    <div class="chat-welcome" id="chatWelcome">
-                        <p>I study how infectious diseases spread — from pandemic connectivity patterns to zoonotic spillover of viruses like Ebola, Lassa, and SARS-CoV-2. Ask anything and get answers grounded in my peer-reviewed papers.</p>
-                    </div>
-                    <div class="chat-messages" id="chatMessages"></div>
-                </div>
-                <div class="chat-suggestions" id="chatSuggestions">
-                    <button type="button" class="suggestion-pill" data-q="What topics does your research cover?">What&rsquo;s your research about?</button>
-                    <button type="button" class="suggestion-pill" data-q="How does human movement affect pandemic spread?">Pandemics &amp; travel</button>
-                    <button type="button" class="suggestion-pill" data-q="How does Lassa virus transmit from rodents to humans?">Lassa virus</button>
-                    <button type="button" class="suggestion-pill" data-q="What did you find about Ebola persistence in primates?">Ebola in primates</button>
-                </div>
-                <form class="chat-input-row" id="chatForm">
-                    <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question about my research..." autocomplete="off" maxlength="500">
-                    <button type="submit" class="chat-send" id="chatSend" aria-label="Send">
-                        <i class="fas fa-arrow-up"></i>
-                    </button>
-                </form>
+            <div class="hero-ask animate-in">
+                <iframe src="https://embed.tasmanlab.com/reju-john-37oq/frame?theme=dark" title="Ask my research" height="560" referrerpolicy="strict-origin"></iframe>
             </div>
             <div class="hero-links animate-in">
                 <a href="https://github.com/rejusam" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
@@ -114,12 +76,6 @@
                 <a href="https://www.linkedin.com/in/drrejusamjohn/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
                 <a href="https://orcid.org/0000-0002-5024-3700" target="_blank" rel="noopener" aria-label="ORCID"><i class="fab fa-orcid"></i></a>
             </div>
-        </div>
-        <div class="scroll-indicator">
-            <div class="mouse">
-                <div class="wheel"></div>
-            </div>
-            <span>Scroll to explore</span>
         </div>
     </section>
 
@@ -469,17 +425,17 @@
                     <div class="project-header">
                         <div class="project-icon"><i class="fas fa-microscope"></i></div>
                         <div class="project-links-top">
-                            <a href="https://github.com/rejusam/rag-publications" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                            <a href="https://papers.tasmanlab.com" target="_blank" rel="noopener" aria-label="Ask My Papers live site"><i class="fas fa-globe"></i></a>
                             <a href="rag-pipeline/" target="_blank" rel="noopener" aria-label="Article"><i class="fas fa-external-link-alt"></i></a>
                             <a href="#hero" aria-label="Live demo"><i class="fas fa-comments"></i></a>
                         </div>
                     </div>
-                    <h3>Ask My Research: RAG Over My Publications</h3>
-                    <p>Retrieval-augmented generation pipeline over my peer-reviewed papers — 779 chunks from 6 publications, embedded with bge-small-en-v1.5 on Workers AI, stored in Cloudflare Vectorize, and answered by gpt-oss-120b via Groq through AI Gateway, with the same model on Workers AI as fallback. Every answer links the papers it was retrieved from. Runs as a tested Cloudflare Worker powering the live chat widget on this site.</p>
+                    <h3>Ask My Papers: A Research Assistant for Every Researcher</h3>
+                    <p>The product I build at Tasman Lab. A researcher adds their papers and gets an assistant that answers from them alone, citing the PDF page each answer came from. Papers are read with their maths and tables intact, searched by keyword and meaning together, reranked, and answered by a frontier model with two fallbacks behind a monthly spend guard. Runs on Cloudflare Workers, D1, Vectorize, R2 and Queues. The chat at the top of this page is my own assistant.</p>
                     <div class="project-tags">
-                        <span class="tag">Cloudflare Workers</span><span class="tag">Vectorize</span><span class="tag">Workers AI</span><span class="tag">Groq</span><span class="tag">RAG</span>
+                        <span class="tag">Cloudflare Workers</span><span class="tag">Hybrid Search</span><span class="tag">Reranking</span><span class="tag">D1 &amp; Queues</span><span class="tag">RAG</span>
                     </div>
-                    <div class="project-label">AI Engineering</div>
+                    <div class="project-label">Live Product</div>
                 </div>
 
                 <div class="project-card reveal">
@@ -623,6 +579,49 @@
                 <a href="https://github.com/rejusam?tab=repositories" target="_blank" rel="noopener" class="btn btn-secondary">
                     <i class="fab fa-github"></i> View All Repositories on GitHub
                 </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ask My Papers Section -->
+    <section class="section section-alt" id="ask-my-papers">
+        <div class="container">
+            <h2 class="section-title reveal">Ask My <span class="gradient-text">Papers</span></h2>
+            <p class="section-subtitle reveal">The research assistant I build at Tasman Lab. Every way a researcher can share theirs is working on this page.</p>
+
+            <div class="amp-grid">
+                <div class="amp-card reveal">
+                    <h3>Inline chat</h3>
+                    <p>The chat at the top of this page. One line on a lab or personal site.</p>
+                    <a class="amp-link" href="#hero">Try it <i class="fas fa-arrow-up"></i></a>
+                </div>
+                <div class="amp-card reveal">
+                    <h3>Floating button</h3>
+                    <p>Bottom right, on every page of a site. Opens the same assistant in a panel.</p>
+                </div>
+                <div class="amp-card reveal">
+                    <h3>Badge</h3>
+                    <p>For a university profile or anywhere that takes a linked image.</p>
+                    <a href="https://papers.tasmanlab.com/reju-john-37oq?src=badge" target="_blank" rel="noopener"><img src="https://embed.tasmanlab.com/badge/ask-my-research-dark.svg" alt="Ask my research" width="180" height="40" loading="lazy"></a>
+                </div>
+                <div class="amp-card reveal">
+                    <h3>QR code</h3>
+                    <p>For posters, slides and conference talks.</p>
+                    <img class="amp-qr" src="https://embed.tasmanlab.com/reju-john-37oq/qr.svg" alt="QR code that opens my research assistant" width="120" height="120" loading="lazy">
+                </div>
+                <div class="amp-card amp-wide reveal">
+                    <h3>Email signature</h3>
+                    <div class="amp-signature">
+                        <span>Dr Reju Sam John</span>
+                        <span>Computational epidemiologist, Auckland</span>
+                        <a href="https://papers.tasmanlab.com/reju-john-37oq?src=sig" target="_blank" rel="noopener">Ask my research &rarr;</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pub-cta reveal">
+                <a href="https://papers.tasmanlab.com/start" target="_blank" rel="noopener" class="btn btn-primary">Get one for your papers</a>
+                <a href="rag-pipeline/" class="btn btn-secondary">How it works</a>
             </div>
         </div>
     </section>
@@ -998,7 +997,8 @@
         </div>
     </footer>
 
-    <a class="coffee-float" href="https://ko-fi.com/rejusamjohn" target="_blank" rel="noopener" aria-haspopup="dialog" aria-expanded="false"><img src="assets/kofi-cup.png" alt="" width="26" height="21"><span>Buy me a coffee</span></a>
+    <a class="coffee-float" href="https://ko-fi.com/rejusamjohn" target="_blank" rel="noopener" aria-haspopup="dialog" aria-expanded="false"><img src="assets/kofi-cup.png" alt="" width="26" height="21"><span class="coffee-label">Buy me a coffee</span></a>
+    <script src="https://embed.tasmanlab.com/v2/button.js" data-assistant="reju-john-37oq" data-theme="dark" integrity="sha384-o1w4urJF/g1OZvBjcW2wqs0h707ZfjNSAbXn+G6zWBzTTSEHFOW6JhAV86yVl8Tv" crossorigin="anonymous" defer></script>
 
     <script src="script.js" defer></script>
 </body>

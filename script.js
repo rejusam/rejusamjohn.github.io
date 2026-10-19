@@ -158,196 +158,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- Hero Chat Widget ---
-    // Production: Cloudflare Worker (Workers AI + Vectorize, Groq through AI
-    // Gateway). No cold start, but the fetch-error "waking up" message below
-    // stays as a fallback for network blips.
-    // For local dev, run `npx wrangler dev` in rag-publications/worker and
-    // swap to: 'http://127.0.0.1:8787'
-    const RAG_API_URL = 'https://ask-my-research.rejusamjohn.workers.dev';
-
-    // Ping the API on load so a network problem shows up before the first question.
-    if (document.getElementById('chatForm')) {
-        fetch(RAG_API_URL + '/health').catch(() => {});
-    }
-
-    const chatForm = document.getElementById('chatForm');
-    const chatInput = document.getElementById('chatInput');
-    const chatSend = document.getElementById('chatSend');
-    const chatBody = document.getElementById('chatBody');
-    const chatMessages = document.getElementById('chatMessages');
-    const chatWelcome = document.getElementById('chatWelcome');
-    const chatSuggestions = document.getElementById('chatSuggestions');
-
-    function appendMessage(role, text) {
-        chatWelcome.style.display = 'none';
-        const div = document.createElement('div');
-        div.className = 'chat-msg ' + role;
-        div.textContent = text;
-        chatMessages.appendChild(div);
-        chatBody.scrollTop = chatBody.scrollHeight;
-        return div;
-    }
-
-    function appendSources(parent, sources) {
-        if (!Array.isArray(sources) || sources.length === 0) return;
-        const label = document.createElement('p');
-        label.className = 'chat-sources-label';
-        label.textContent = 'Retrieved from';
-        const list = document.createElement('ul');
-        list.className = 'chat-sources';
-        sources.forEach((s) => {
-            if (!s || typeof s.title !== 'string') return;
-            const li = document.createElement('li');
-            const cite = s.authors_short && s.year ? s.authors_short + ' (' + s.year + ')' : '';
-            const hasDoi = typeof s.doi === 'string' && /^10\.\d{4,9}\/\S+$/.test(s.doi);
-            const tag = document.createElement(hasDoi ? 'a' : 'span');
-            tag.className = 'chat-source';
-            tag.textContent = cite || s.title;
-            if (hasDoi) {
-                tag.href = 'https://doi.org/' + s.doi;
-                tag.target = '_blank';
-                tag.rel = 'noopener';
-            }
-            li.appendChild(tag);
-            if (cite) {
-                const title = document.createElement('span');
-                title.className = 'chat-source-title';
-                title.textContent = s.title;
-                li.appendChild(title);
-            }
-            const pages = Array.isArray(s.pages)
-                ? [...new Set(s.pages.filter((p) => Number.isInteger(p) && p > 0))].sort((a, b) => a - b)
-                : [];
-            if (pages.length) {
-                const pg = document.createElement('span');
-                pg.className = 'chat-source-pages';
-                pg.textContent = (pages.length === 1 ? 'PDF p. ' : 'PDF pp. ') + pages.join(', ');
-                li.appendChild(pg);
-            }
-            list.appendChild(li);
-        });
-        if (list.children.length === 0) return;
-        parent.appendChild(label);
-        parent.appendChild(list);
-    }
-
-    function showTyping() {
-        const div = document.createElement('div');
-        div.className = 'chat-typing';
-        div.id = 'chatTyping';
-        div.innerHTML = '<span></span><span></span><span></span>';
-        chatMessages.appendChild(div);
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }
-
-    function removeTyping() {
-        const el = document.getElementById('chatTyping');
-        if (el) el.remove();
-    }
-
-    function showWakeupNotice() {
-        if (document.getElementById('chatWakeupNotice')) return;
-        const div = document.createElement('div');
-        div.className = 'chat-wakeup';
-        div.id = 'chatWakeupNotice';
-        div.innerHTML =
-            '<div class="wakeup-progress"><div class="wakeup-progress-fill"></div></div>' +
-            '<p class="wakeup-text"><i class="fas fa-circle-notch fa-spin"></i>' +
-            'Still working on it — this can take a few seconds.</p>';
-        chatMessages.appendChild(div);
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }
-
-    function removeWakeupNotice() {
-        const el = document.getElementById('chatWakeupNotice');
-        if (el) el.remove();
-    }
-
-    async function askQuestion(question) {
-        appendMessage('user', question);
-        chatSuggestions.style.display = 'none';
-        chatSend.disabled = true;
-        chatInput.value = '';
-        showTyping();
-
-        const wakeupTimer = setTimeout(showWakeupNotice, 4000);
-        const controller = new AbortController();
-        const abortTimer = setTimeout(() => controller.abort(), 90000);
-
-        try {
-            const res = await fetch(RAG_API_URL + '/ask', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: question }),
-                signal: controller.signal,
-            });
-
-            removeTyping();
-            removeWakeupNotice();
-
-            if (!res.ok) {
-                const httpErr = new Error('API returned ' + res.status);
-                httpErr.status = res.status;
-                throw httpErr;
-            }
-
-            const data = await res.json();
-            const answerDiv = appendMessage('assistant', data.answer);
-            appendSources(answerDiv, data.sources);
-        } catch (err) {
-            removeTyping();
-            removeWakeupNotice();
-            const errDiv = document.createElement('div');
-            errDiv.className = 'chat-error';
-            if (err.name === 'AbortError') {
-                errDiv.textContent = 'The server took too long to respond — please try your question again.';
-            } else if (err.status === 429) {
-                errDiv.textContent = 'Too many questions in a short time. Try again in a minute.';
-            } else if (err.status === 422) {
-                errDiv.textContent = 'Please ask a question between 3 and 500 characters.';
-            } else if (err.status) {
-                errDiv.textContent = 'The research assistant is unavailable right now. Please try again shortly.';
-            } else {
-                errDiv.textContent = 'Service is waking up — please try again in 30s.';
-            }
-            chatMessages.appendChild(errDiv);
-            chatBody.scrollTop = chatBody.scrollHeight;
-        } finally {
-            clearTimeout(wakeupTimer);
-            clearTimeout(abortTimer);
-            chatSend.disabled = false;
-            chatInput.focus();
-        }
-    }
-
-    if (chatForm) {
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const q = chatInput.value.trim();
-            if (q) askQuestion(q);
-        });
-    }
-
-    // Suggestion pills
-    document.querySelectorAll('.suggestion-pill').forEach(btn => {
-        btn.addEventListener('click', () => {
-            askQuestion(btn.getAttribute('data-q'));
-        });
-    });
-
-    // How-it-works toggle
-    const howtoToggle = document.getElementById('howtoToggle');
-    const chatHowto = document.getElementById('chatHowto');
-    if (howtoToggle && chatHowto) {
-        howtoToggle.addEventListener('click', () => {
-            const isOpen = howtoToggle.getAttribute('aria-expanded') === 'true';
-            howtoToggle.setAttribute('aria-expanded', String(!isOpen));
-            chatHowto.hidden = isOpen;
-        });
-    }
-
-
     // --- Scroll Reveal ---
     const revealElements = document.querySelectorAll('.reveal');
 
@@ -731,6 +541,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeCoffeePanel();
+        });
+
+        // The floating buttons appear once the hero chat has scrolled out of view.
+        const heroAsk = document.querySelector('.hero-ask');
+        if (heroAsk && 'IntersectionObserver' in window) {
+            new IntersectionObserver(([entry]) => {
+                document.body.classList.toggle('dock-away', entry.isIntersecting);
+                if (entry.isIntersecting) closeCoffeePanel();
+            }, { threshold: 0.2 }).observe(heroAsk);
+        }
+
+        // Opening the "Ask my research" panel (Tasman's floating button) puts the coffee panel away.
+        document.addEventListener('click', (e) => {
+            if (e.target instanceof Element && e.target.closest('tasman-ask')) closeCoffeePanel();
         });
     }
 

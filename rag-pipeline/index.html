@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Look It Up, Then Answer: How Retrieval-Augmented Generation Works</title>
-    <meta name="description" content="A step-by-step guide to retrieval-augmented generation for learners, using the live Ask My Research chat over my peer-reviewed papers as the worked example: chunking, embeddings, retrieval, grounded prompts, citations, evaluation and running it in production.">
+    <title>How Ask My Papers Works</title>
+    <meta name="description" content="How Ask My Papers turns a researcher's papers into an assistant that answers only from them and cites the PDF page: queue-driven reading with arXiv LaTeX and Docling, hybrid search with reranking, a frontier answer model with open-weight fallbacks, spend guards and evaluation.">
     <meta name="author" content="Dr Reju Sam John">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Look It Up, Then Answer: How Retrieval-Augmented Generation Works">
-    <meta property="og:description" content="Retrieval-augmented generation explained from first principles, one step at a time, using a live research chat as the worked example.">
+    <meta property="og:title" content="How Ask My Papers Works">
+    <meta property="og:description" content="Reading papers precisely, hybrid search with reranking, grounded answers that cite the PDF page, and the guards and tests around them. The engineering behind Ask My Papers.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://rejusamjohn.pages.dev/rag-pipeline/">
     <link rel="canonical" href="https://rejusamjohn.pages.dev/rag-pipeline/">
@@ -250,6 +250,10 @@
             color: var(--text-muted);
             font-family: var(--font-mono);
         }
+        .arch-figure { margin: 2rem 0; }
+        .arch-figure figcaption { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.6rem; }
+        .article-body .arch-diagram { list-style: none; margin: 0; }
+        .article-body .arch-diagram li { margin-bottom: 0; }
         @media (max-width: 640px) {
             .arch-diagram { grid-template-columns: 1fr 1fr; }
         }
@@ -345,71 +349,6 @@
         .article-body .toc ol { margin: 0 0 0 1.25rem; font-size: 0.92rem; }
         .article-body .toc li { margin-bottom: 0.2rem; }
 
-        /* --- Chunk illustration --- */
-        .chunk {
-            background: #0b1220;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 0.9rem 1.1rem;
-            margin: 0.75rem 0;
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            line-height: 1.65;
-            color: #e2e8f0;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-        }
-        .chunk-label {
-            display: block;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.4rem;
-        }
-        mark {
-            background: rgba(139,92,246,0.3);
-            color: var(--text-primary);
-            border-radius: 3px;
-            padding: 0 0.1em;
-        }
-
-        /* --- Vector figure --- */
-        .figure { margin: 2rem 0; text-align: center; }
-        .figure svg { width: 100%; max-width: 380px; height: auto; }
-        .figure figcaption {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 0.5rem;
-            text-align: left;
-        }
-        .fig-axis { stroke: var(--text-muted); stroke-width: 1; }
-        .fig-grid { stroke: var(--border); stroke-width: 0.5; }
-        .fig-a { stroke: var(--accent-cyan); stroke-width: 2.5; }
-        .fig-b { stroke: var(--accent-violet); stroke-width: 2.5; }
-        .fig-c { stroke: var(--accent-red); stroke-width: 2.5; }
-        .fig-head-a { fill: var(--accent-cyan); }
-        .fig-head-b { fill: var(--accent-violet); }
-        .fig-head-c { fill: var(--accent-red); }
-        .fig-text { fill: var(--text-secondary); font-family: var(--font-mono); font-size: 12px; }
-
-        /* --- Quiz --- */
-        details {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 0.9rem 1.2rem;
-            margin: 0.75rem 0;
-        }
-        summary {
-            cursor: pointer;
-            color: var(--text-primary);
-            font-weight: 500;
-            font-size: 1rem;
-        }
-        details[open] summary { margin-bottom: 0.6rem; }
-        details p:last-child { margin-bottom: 0; }
-
         /* --- Footer --- */
         .article-footer {
             margin-top: 4rem;
@@ -495,1047 +434,526 @@
         <div class="topbar-links">
             <a href="../#projects">Projects</a>
             <a href="../#hero">Live Demo</a>
-            <a href="https://github.com/rejusam/rag-publications" target="_blank" rel="noopener"><i class="fab fa-github"></i> Code</a>
+            <a href="https://papers.tasmanlab.com" target="_blank" rel="noopener"><i class="fas fa-globe"></i> Ask My Papers</a>
         </div>
     </div>
 
     <article class="article-container">
 
         <header class="article-header">
-            <div class="article-kicker">Teaching Notes</div>
-            <h1 class="article-title">Look It Up, Then Answer</h1>
+            <div class="article-kicker">How it works</div>
+            <h1 class="article-title">Ask My Papers, from PDF to cited answer</h1>
             <p class="article-subtitle">
-                How retrieval-augmented generation works, explained one step at a time,
-                using the live research chat on this site as the worked example.
+                The engineering behind the research assistant on my home page: how it reads
+                papers, finds the right passages, writes an answer it can back up, and how I
+                check that it keeps doing so.
             </p>
             <div class="article-meta">
                 <span><a href="../">Reju Sam John</a></span>
                 <span>Auckland, New Zealand</span>
-                <span>September 2026</span>
-                <span><a href="../#hero">Try the live chat &rarr;</a></span>
+                <span>October 2026</span>
+                <span><a href="../#hero">Try it on my papers &rarr;</a></span>
             </div>
         </header>
 
         <div class="article-body">
 
             <p>
-                The home page of this site has a small chat box called <em>Ask My Research</em>.
-                You type a question about my published papers and it answers in plain English,
-                with a list of the papers it drew on. Behind it sits a technique called
-                retrieval-augmented generation, usually shortened to RAG.
+                The chat on my home page is not a demo built for this site. It is the embed of
+                <strong>Ask My Papers</strong>, a product I build at Tasman Lab. A researcher adds
+                their papers and gets an assistant that answers questions from those papers
+                only, and points to the page of the PDF each claim came from. When the papers
+                don't cover a question, it says so instead of guessing.
             </p>
 
             <p>
-                I teach on a Data Science &amp; AI programme, and RAG is one of the ideas my
-                learners ask about most. It is also one of the easiest to learn badly, because
-                most tutorials jump straight to a library call. In this guide I take the
-                opposite route. Each step is explained in plain words first, then given its
-                proper name, then shown in the real code that runs the chat.
+                This page describes how it works. It is written for people who build or hire for
+                this kind of system, so it goes into the design decisions and the failure modes,
+                but it leaves out the exact tuning values, which are the part that took longest
+                to get right.
             </p>
-
-            <p>
-                The corpus currently holds six of my peer-reviewed papers, split into 779
-                chunks. Those figures are as of September 2026; I am adding more publications,
-                so they will grow.
-            </p>
-
-            <div class="stat-row">
-                <div class="stat-card">
-                    <div class="stat-number">6</div>
-                    <div class="stat-label">Peer-reviewed papers</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">779</div>
-                    <div class="stat-label">Text chunks indexed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">384</div>
-                    <div class="stat-label">Numbers per embedding</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">4</div>
-                    <div class="stat-label">Chunks retrieved per question</div>
-                </div>
-            </div>
 
             <nav class="toc" aria-label="Contents">
                 <div class="toc-title">Contents</div>
                 <ol>
-                    <li><a href="#why">Why a language model on its own isn't enough</a></li>
-                    <li><a href="#big-idea">The big idea: look it up, then answer</a></li>
-                    <li><a href="#chunking">Step 1: Splitting documents into chunks</a></li>
-                    <li><a href="#embeddings">Step 2: Turning text into numbers</a></li>
-                    <li><a href="#vector-store">Step 3: The vector store</a></li>
-                    <li><a href="#retrieval">Step 4: Retrieval</a></li>
-                    <li><a href="#prompt">Step 5: The grounded prompt</a></li>
-                    <li><a href="#generation">Step 6: Generation</a></li>
-                    <li><a href="#citations">Citations you can trust</a></li>
-                    <li><a href="#evaluation">How do we know it works?</a></li>
-                    <li><a href="#production">Taking it to production</a></li>
-                    <li><a href="#case-study">Case study: the day the model disappeared</a></li>
-                    <li><a href="#failures">Common ways RAG goes wrong</a></li>
-                    <li><a href="#quiz">Check your understanding</a></li>
-                    <li><a href="#try-it">Try it yourself</a></li>
+                    <li><a href="#what">What it is</a></li>
+                    <li><a href="#reading">Reading papers properly</a></li>
+                    <li><a href="#retrieval">Finding the right passages</a></li>
+                    <li><a href="#answering">Writing the answer</a></li>
+                    <li><a href="#citations">Citations you can check</a></li>
+                    <li><a href="#cost-safety">Cost, abuse and privacy</a></li>
+                    <li><a href="#evaluation">How I know it works</a></li>
+                    <li><a href="#earlier">The earlier version</a></li>
+                    <li><a href="#try-it">Try it</a></li>
                 </ol>
             </nav>
 
             <!-- 1 -->
-            <h2 id="why">1. Why a language model on its own isn't enough</h2>
+            <h2 id="what">1. What it is</h2>
 
             <p>
-                A large language model learns from a huge snapshot of text, and then the
-                snapshot stops. Anything written after that date, or never included in it, is
-                simply not in the model. That date is called the <strong>training cut-off</strong>.
+                A researcher signs up with an email address and adds papers in whichever form
+                they have them: a DOI, an arXiv identifier, or a PDF upload. A few minutes later
+                they have an assistant with its own public page. Visitors ask questions in plain
+                language and get a short answer with a list of the papers it drew on, each with
+                the PDF page number.
+            </p>
+
+            <p>The same assistant can then be placed wherever people meet the researcher's work:</p>
+
+            <ul>
+                <li>an <strong>inline chat</strong> in an iframe, which is what sits in the hero of my home page;</li>
+                <li>a <strong>floating button</strong> that opens the chat in a panel, also on my home page;</li>
+                <li>a <strong>badge</strong> and a <strong>QR code</strong> for profiles, slides and posters;</li>
+                <li>an <strong>email signature</strong> line.</li>
+            </ul>
+
+            <p>
+                Each researcher gets a private kit page with these snippets ready to copy. The
+                embeds set no cookies, and the button script is versioned and frozen once
+                published, so a site that pins it with a subresource integrity hash never breaks.
             </p>
 
             <p>
-                Suppose you ask a general chat model about one of my papers on Lassa virus in
-                West African rodents. Three things can go wrong. The paper may be newer than
-                the cut-off. Even if the model saw it, it cannot show you where its answer came
-                from, because it has no citations to give. And when it doesn't know, it rarely
-                says so. It produces fluent, confident text that fills the gap with whatever
-                sounds plausible.
+                There is also a <strong>private library</strong>: a second, separate collection
+                for the papers a researcher reads rather than writes. Only they can see it or ask
+                it. They can search their reading, their own papers, or both together, and a
+                citation opens the stored PDF at the cited page. It is in early use with a small
+                group of researchers before it opens to every Pro account.
             </p>
 
             <p>
-                For research questions that last habit is the dangerous one. A wrong answer
-                that sounds right is worse than no answer at all.
+                Everything runs on Cloudflare: one Worker for the pages, the API and the embeds,
+                D1 for records, R2 for files, Queues for background work, Vectorize for vectors,
+                a Container for heavy PDF reading, and AI Gateway in front of every model call.
+                Each assistant's passages live in their own Vectorize namespace, and every search
+                result is checked against the assistant's ID prefix before it can reach a prompt,
+                so one researcher's papers can never answer another's visitors.
             </p>
 
             <!-- 2 -->
-            <h2 id="big-idea">2. The big idea: look it up, then answer</h2>
+            <h2 id="reading">2. Reading papers properly</h2>
 
             <p>
-                Think of the difference between a closed-book and an open-book exam. In a
-                closed-book exam you answer from memory. In an open-book exam you first find
-                the relevant pages, then write your answer from them, and you can point to the
-                page you used.
+                Retrieval can only be as good as the text it searches. The first version of this
+                system pulled plain text out of PDFs, and for my epidemiology papers that was
+                mostly fine. Then a mathematician tried it. Plain PDF text turns equations into
+                scattered symbols, flattens tables into runs of numbers and loses which heading a
+                paragraph sits under. Questions about a theorem or a model's parameters came back
+                vague or wrong. So reading became its own pipeline.
             </p>
 
-            <p>
-                Retrieval-augmented generation turns a language model into an open-book
-                student. In one sentence: <strong>before the model answers, the system searches
-                your own documents for the passages most relevant to the question and gives
-                those passages to the model, with an instruction to answer from them
-                alone.</strong>
-            </p>
-
-            <p>
-                There are two phases. The first happens once, ahead of time: the papers are cut
-                into pieces, each piece is turned into numbers, and the results are stored.
-                The second happens every time someone asks a question:
-            </p>
-
-            <div class="arch-diagram">
-                <div class="arch-step">
+            <figure class="arch-figure">
+                <ol class="arch-diagram">
+                <li class="arch-step">
                     <div class="arch-step-num">1</div>
-                    <div class="arch-step-title">Embed</div>
-                    <div class="arch-step-desc">bge-small-en-v1.5<br>384 numbers</div>
-                </div>
-                <div class="arch-step">
+                    <div class="arch-step-title">Add</div>
+                    <div class="arch-step-desc">DOI, arXiv id<br>or PDF upload</div>
+                </li>
+                <li class="arch-step">
                     <div class="arch-step-num">2</div>
-                    <div class="arch-step-title">Search</div>
-                    <div class="arch-step-desc">Vectorize<br>nearest chunks</div>
-                </div>
-                <div class="arch-step">
+                    <div class="arch-step-title">Queue</div>
+                    <div class="arch-step-desc">PDF in R2<br>job on a Queue</div>
+                </li>
+                <li class="arch-step">
                     <div class="arch-step-num">3</div>
-                    <div class="arch-step-title">Retrieve</div>
-                    <div class="arch-step-desc">top 4 chunks<br>with source tags</div>
-                </div>
-                <div class="arch-step">
+                    <div class="arch-step-title">Read</div>
+                    <div class="arch-step-desc">arXiv LaTeX, Docling<br>or plain text</div>
+                </li>
+                <li class="arch-step">
                     <div class="arch-step-num">4</div>
-                    <div class="arch-step-title">Generate</div>
-                    <div class="arch-step-desc">gpt-oss-120b<br>via Groq + AI Gateway</div>
-                </div>
-            </div>
+                    <div class="arch-step-title">Index</div>
+                    <div class="arch-step-desc">bge-m3 in Vectorize<br>+ keyword index in D1</div>
+                </li>
+            </ol>
+                <figcaption>How a paper is read, step by step.</figcaption>
+            </figure>
 
+            <h3>A queue, not a request</h3>
             <p>
-                The rest of this guide walks through those steps in order.
+                Reading a long paper precisely can take minutes, far longer than a web request
+                should wait. When a paper is added, the Worker fetches it if needed (arXiv
+                directly, a DOI through an open-access lookup), stores the PDF in R2 and puts a
+                job on a Queue. A consumer takes papers one at a time, with a little parallelism,
+                and moves each job through <code>queued</code>, <code>reading</code>,
+                <code>indexing</code> and <code>ready</code>. The sign-up page polls those states,
+                so the researcher watches each paper go through, with a plain reason if one is
+                refused (a scanned PDF with no text layer, for example, or one over the page
+                limit).
+            </p>
+            <p>
+                Failed jobs are retried with growing delays, and a job that still fails cleans up
+                any passages it wrote. An hourly sweep catches jobs whose queue messages were lost.
+                After a paper attaches, a follow-up check asks Vectorize whether the paper's first
+                passage is actually searchable yet, because a vector index is eventually
+                consistent and "written" is not the same as "findable".
+            </p>
+
+            <h3>Three ways to read, best first</h3>
+            <ul>
+                <li>
+                    <strong>The author's LaTeX source from arXiv</strong>, when there is one.
+                    Headings, theorems and equations arrive exactly as written. A small LaTeX
+                    reader of my own pulls out sections, paragraphs, display maths and
+                    theorem-like blocks. The source is only trusted if its text maps back onto
+                    most of the PDF, which is also how each block gets its PDF page number.
+                </li>
+                <li>
+                    <strong>Docling in a Cloudflare Container</strong>, for everything else.
+                    Docling is an open-source document converter that keeps layout, tables,
+                    headings and formulas. It needs more memory and time than a Worker has, so it
+                    runs in a container that sleeps when idle and wakes when a paper arrives.
+                </li>
+                <li>
+                    <strong>Plain text</strong> as the fallback. If the container is busy, slow or
+                    down, the paper is read plain so the researcher is never stuck waiting, and it
+                    is marked as such. An hourly job later re-reads those papers precisely and
+                    swaps the passages in place.
+                </li>
+            </ul>
+            <p>
+                The text is then cut into overlapping passages that never cross a page boundary,
+                so every passage keeps an exact page number. Each passage is embedded with
+                <code>bge-m3</code> on Workers AI into Vectorize, and also written to a SQLite
+                full-text index in a separate D1 database for keyword search.
             </p>
 
             <!-- 3 -->
-            <h2 id="chunking">3. Step 1: Splitting documents into chunks</h2>
+            <h2 id="retrieval">3. Finding the right passages</h2>
 
             <p>
-                A research paper is too long to search as a single block. If you boil a whole
-                paper down to one summary, a question about one small detail has to compete
-                with everything else the paper says. So the first job is to cut each paper into
-                short passages. Each passage is called a <strong>chunk</strong>.
+                When a question arrives, the job is to hand the answer model a small set of
+                passages that contain the answer, and as little else as possible. One embedding
+                search is not enough for that, so the pipeline has several stages.
             </p>
 
+            <figure class="arch-figure">
+                <ol class="arch-diagram">
+                <li class="arch-step">
+                    <div class="arch-step-num">1</div>
+                    <div class="arch-step-title">Condense</div>
+                    <div class="arch-step-desc">follow-up &rarr;<br>standalone question</div>
+                </li>
+                <li class="arch-step">
+                    <div class="arch-step-num">2</div>
+                    <div class="arch-step-title">Rewrite</div>
+                    <div class="arch-step-desc">extra search queries<br>(Thorough only)</div>
+                </li>
+                <li class="arch-step">
+                    <div class="arch-step-num">3</div>
+                    <div class="arch-step-title">Search</div>
+                    <div class="arch-step-desc">dense + keyword<br>for each query</div>
+                </li>
+                <li class="arch-step">
+                    <div class="arch-step-num">4</div>
+                    <div class="arch-step-title">Fuse</div>
+                    <div class="arch-step-desc">reciprocal<br>rank fusion</div>
+                </li>
+                <li class="arch-step">
+                    <div class="arch-step-num">5</div>
+                    <div class="arch-step-title">Rerank</div>
+                    <div class="arch-step-desc">cross-encoder<br>scores each passage</div>
+                </li>
+                <li class="arch-step">
+                    <div class="arch-step-num">6</div>
+                    <div class="arch-step-title">Spread</div>
+                    <div class="arch-step-desc">a few passages<br>per relevant paper</div>
+                </li>
+                <li class="arch-step">
+                    <div class="arch-step-num">7</div>
+                    <div class="arch-step-title">Answer</div>
+                    <div class="arch-step-desc">frontier model<br>with fallbacks</div>
+                </li>
+                <li class="arch-step">
+                    <div class="arch-step-num">8</div>
+                    <div class="arch-step-title">Check</div>
+                    <div class="arch-step-desc">status line,<br>citation filter</div>
+                </li>
+            </ol>
+                <figcaption>What happens to a question, step by step. Thorough mode adds step 2.</figcaption>
+            </figure>
+
+            <h3>Hybrid search</h3>
             <p>
-                The pipeline makes chunks of at most 1000 characters, roughly a long paragraph.
-                It tries to cut at natural boundaries: blank lines first, then line breaks,
-                then sentence ends, then spaces. Only if none of those work does it cut
-                mid-word. The tool that does this is LangChain's
-                <code>RecursiveCharacterTextSplitter</code>:
+                Dense vectors are good at meaning: "how does the virus persist between
+                outbreaks" finds a passage about chronic infection even with no shared words. They
+                are poor at exact terms: a gene name, a species, a named estimator, a symbol.
+                Keyword search is the opposite. So every query runs both, in parallel: a
+                <code>bge-m3</code> search in the assistant's Vectorize namespace and a BM25 search
+                over the full-text index. The visitor's text is reduced to quoted words before it
+                reaches the full-text engine, so no search operator can be injected.
+            </p>
+            <p>
+                The ranked lists are merged with <strong>reciprocal rank fusion</strong>, which
+                rewards a passage for ranking well in any list without needing the two kinds of
+                score to be on the same scale.
             </p>
 
-            <pre><code><span class="cmt"># scripts/ingest_deploy.py</span>
-CHUNK_SIZE = <span class="str">1000</span>
-CHUNK_OVERLAP = <span class="str">200</span>
-
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=CHUNK_SIZE,
-    chunk_overlap=CHUNK_OVERLAP,
-    separators=[<span class="str">"\n\n"</span>, <span class="str">"\n"</span>, <span class="str">". "</span>, <span class="str">" "</span>, <span class="str">""</span>],
-)
-chunks = splitter.split_documents(docs)</code></pre>
-
+            <h3>Reranking</h3>
             <p>
-                The second setting, <strong>overlap</strong>, matters just as much. Each new
-                chunk starts by repeating up to 200 characters from the end of the previous
-                one. Why? Because an idea can straddle the cut. Without overlap, the first
-                half of a sentence would sit in one chunk and the second half in the next, and
-                neither would make sense on its own.
+                Embeddings compare a question and a passage that were each turned into numbers
+                separately. A cross-encoder reads the two together and scores how well the passage
+                answers the question, which is slower but much sharper. The top of the fused list
+                goes to <code>bge-reranker-base</code> on Workers AI. If the reranker fails or
+                times out, the fused order is used instead, so a slow component degrades the
+                answer rather than breaking it.
             </p>
 
+            <h3>Spreading across papers</h3>
             <p>
-                Here are two consecutive chunks from the vector store, taken from the start of
-                my Lassa virus paper. I have quoted only the end of the first chunk and the
-                start of the second. The highlighted text appears in both.
+                Questions such as "how do these papers differ in their approach to X?" need
+                passages from each paper involved. Left alone, the top of a ranked list is often
+                filled by one paper. The final pick takes at most a few passages from any one
+                paper and keeps some room for papers not yet represented. A relevance gate stops
+                that rule from padding the context with papers that only share the topic: a
+                passage competes for a slot only if its reranker score is close enough to the best
+                one. Reranker scores bunch up near the top of their range when every paper is on
+                a similar subject, so the gate compares them on a log-odds scale, where those
+                differences are visible again. I calibrated it on a mathematician's real questions
+                and checked it against the evaluation set described below.
             </p>
 
-            <div class="chunk"><span class="chunk-label">End of chunk A</span>&hellip; Here, we developed a susceptible-infected-recovered
-<mark>(SIR)-based model of LASV dynamics in its rodent host, M. natalensis ,
-with a persistently infected class and seasonal birthing to test the impact</mark></div>
-
-            <div class="chunk"><span class="chunk-label">Start of chunk B</span><mark>(SIR)-based model of LASV dynamics in its rodent host, M. natalensis ,
-with a persistently infected class and seasonal birthing to test the impact</mark>
-of changes to seasonal birthing in the future owing to climate and land
-use change. &hellip;</div>
-
+            <h3>Quick and Thorough</h3>
             <p>
-                Notice two things. First, the sentence that is cut at the end of chunk A is
-                complete in chunk B, which is exactly what overlap is for. Second, the overlap
-                here is 146 characters, not 200. The splitter only carries over whole pieces
-                (in this case, whole lines), so 200 is a ceiling, not an exact amount. The
-                stray space before the comma and the line breaks are left over from reading
-                the PDF. Real chunks are messier than textbook examples.
+                Visitors choose between two modes, on plans that include both. <strong>Quick</strong> searches with the
+                question as asked. <strong>Thorough</strong> first asks a small, fast model on Groq
+                to rewrite the question into extra search queries: one using the technical terms a
+                paper would use, and one for any part of a multi-part question the first misses.
+                The original question is always searched too, so a poor rewrite can add noise but
+                never lose the visitor's own wording. The rewrite has a short time limit, and if it
+                fails the search simply goes ahead with the question alone.
+            </p>
+
+            <h3>Follow-up questions</h3>
+            <p>
+                A follow-up such as "and what did the other paper find?" means nothing to a search
+                index. When a question comes with earlier turns, the same small model condenses
+                the conversation into one standalone question, which is what gets searched. The
+                answer model still sees the conversation, so its reply reads naturally. A "New
+                topic" button clears the thread.
             </p>
 
             <!-- 4 -->
-            <h2 id="embeddings">4. Step 2: Turning text into numbers (embeddings)</h2>
+            <h2 id="answering">4. Writing the answer</h2>
 
             <p>
-                Computers cannot compare meanings directly, but they can compare numbers. So
-                each chunk is converted into a list of numbers chosen so that passages with
-                similar meaning get similar lists. You can picture each list as the
-                coordinates of a point: similar meaning ends up at nearby points. That list of
-                numbers is called an <strong>embedding</strong>, and the model that produces it
-                is an <strong>embedding model</strong>.
+                The chosen passages are grouped by paper, labelled with the paper and page, and
+                placed in a prompt that tells the model to answer from them alone, to say when they
+                don't cover the question, to cite only the labelled papers, and to keep notation
+                consistent with the papers. Maths in the answer is rendered with a self-hosted copy
+                of KaTeX, so the page's strict script policy still holds.
             </p>
 
+            <h3>A frontier model, with two fallbacks</h3>
             <p>
-                The chat uses <code>bge-small-en-v1.5</code>, a small model built for sentence
-                similarity, running on Cloudflare's Workers AI. It turns every chunk into 384
-                numbers, so each chunk becomes a point in a 384-dimensional space. The API does
-                not run the model itself; it sends the text to Workers AI and gets the numbers
-                back. Documents and questions must be embedded by the same model, which is why
-                all 779 chunks were embedded again when the chat moved to Cloudflare.
+                The answer is written by a frontier model. If that call fails, times out, comes
+                back empty or declines to answer, the same prompt goes to the next model in the
+                chain: <code>gpt-oss-120b</code>, an open-weight model, on Groq, and then the same
+                model on Workers AI. All three calls go through Cloudflare's AI Gateway, which
+                gives one place for logs, caching and provider keys, and lets me compare models on
+                real traffic. Which chain an assistant gets is configuration, not code: every new
+                assistant starts on the frontier model, and older ones are moving across after
+                testing. Every answer is logged with the model that wrote it and any model that
+                failed before it, so fallbacks are visible rather than silent.
             </p>
-
             <p>
-                Nobody can picture 384 dimensions, but the maths is the same in two, so let's
-                use two. How do we measure whether two arrows point the same way? We use
-                <strong>cosine similarity</strong>: multiply matching coordinates and add them
-                up (the dot product), then divide by the lengths of the two arrows. The answer
-                is 1 when they point the same way, 0 when they are at right angles, and &minus;1
-                when they point in opposite directions.
+                I learnt to plan for this the hard way. In September 2026 the provider retired the
+                model the original chat was hard-coded to, and every question returned an error
+                until I fixed it. Since then no model name lives in code, there is always more than
+                one model behind an answer, and a live end-to-end check asks real questions after every deploy.
             </p>
 
-            <figure class="figure">
-                <svg viewBox="0 0 340 215" role="img" aria-labelledby="vecTitle vecDesc">
-                    <title id="vecTitle">Three vectors from the origin</title>
-                    <desc id="vecDesc">Vector a at (3, 4) and vector b at (4, 3) point in nearly the same direction. Vector c at (minus 4, 3) is at a right angle to a.</desc>
-                    <defs>
-                        <marker id="headA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M0,0 L10,5 L0,10 z" class="fig-head-a"/>
-                        </marker>
-                        <marker id="headB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M0,0 L10,5 L0,10 z" class="fig-head-b"/>
-                        </marker>
-                        <marker id="headC" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M0,0 L10,5 L0,10 z" class="fig-head-c"/>
-                        </marker>
-                    </defs>
-                    <!-- grid: 30 px per unit, origin at (170, 190) -->
-                    <line class="fig-grid" x1="20" y1="160" x2="320" y2="160"/>
-                    <line class="fig-grid" x1="20" y1="130" x2="320" y2="130"/>
-                    <line class="fig-grid" x1="20" y1="100" x2="320" y2="100"/>
-                    <line class="fig-grid" x1="20" y1="70" x2="320" y2="70"/>
-                    <line class="fig-grid" x1="20" y1="40" x2="320" y2="40"/>
-                    <line class="fig-axis" x1="20" y1="190" x2="320" y2="190"/>
-                    <line class="fig-axis" x1="170" y1="20" x2="170" y2="200"/>
-                    <line class="fig-a" x1="170" y1="190" x2="260" y2="70" marker-end="url(#headA)"/>
-                    <line class="fig-b" x1="170" y1="190" x2="290" y2="100" marker-end="url(#headB)"/>
-                    <line class="fig-c" x1="170" y1="190" x2="50" y2="100" marker-end="url(#headC)"/>
-                    <text class="fig-text" x="222" y="58">a = (3, 4)</text>
-                    <text class="fig-text" x="335" y="132" text-anchor="end">b = (4, 3)</text>
-                    <text class="fig-text" x="30" y="88">c = (&minus;4, 3)</text>
-                </svg>
-                <figcaption>
-                    Each arrow has length 5. a and b point almost the same way; c is at a right
-                    angle to a.
-                </figcaption>
-            </figure>
-
-            <p>Working through it:</p>
-
-            <ul>
-                <li>
-                    <strong>a and b.</strong> Dot product = 3&times;4 + 4&times;3 = 24. Both
-                    arrows have length 5, so cos(a, b) = 24 / 25 = <strong>0.96</strong>. Very
-                    similar.
-                </li>
-                <li>
-                    <strong>a and c.</strong> Dot product = 3&times;(&minus;4) + 4&times;3 = 0,
-                    so cos(a, c) = 0 / 25 = <strong>0</strong>. Unrelated.
-                </li>
-            </ul>
-
+            <h3>Showing progress</h3>
             <p>
-                In the real system the arrows have 384 coordinates instead of two, but the
-                calculation is identical. A question about Lassa virus and a chunk about Lassa
-                virus should end up like a and b.
+                A good answer from a strong model takes a few seconds, and a blank box for that
+                long feels broken. The ask endpoint can reply as a stream of progress lines: first
+                "searching the papers", then "writing from N papers" once the passages are chosen,
+                then the finished answer. The widget shows these as a live status line. Clients
+                that don't ask for the stream get a single JSON reply as before.
             </p>
 
-            <div class="pullquote">
-                Everything downstream assumes that similar text ends up close together in the
-                vector space. If the embedding model breaks that promise for your subject, no
-                amount of prompt writing will save you.
-            </div>
+            <h3>When the papers don't cover it</h3>
+            <p>
+                The model starts every reply with a status line saying whether the papers
+                answered the question fully, partly or not at all. Code strips that line before
+                the visitor sees anything. When the status is "not covered", the answer is the
+                plain sentence <em>&ldquo;These papers don&rsquo;t cover that.&rdquo;</em> and the
+                retrieved passages are folded away, so a visitor isn't misled into reading
+                loosely related passages as support. An earlier wording apologised at length and
+                still listed the passages; people read that as a partial answer.
+            </p>
 
             <!-- 5 -->
-            <h2 id="vector-store">5. Step 3: The vector store</h2>
+            <h2 id="citations">5. Citations you can check</h2>
 
             <p>
-                Once every chunk has an embedding, we need somewhere to keep them that can
-                answer the question &ldquo;which stored points are closest to this new
-                point?&rdquo; That is a <strong>vector store</strong>, and finding the closest
-                points is called <strong>nearest-neighbour search</strong>.
+                A language model is very good at producing text that looks like a citation. That
+                is not the same as a true one. Two rules keep citations honest.
             </p>
-
-            <p>
-                The chat uses Vectorize, Cloudflare's vector database, with an index called
-                <code>research-chunks</code>. For every chunk it keeps three things:
-            </p>
-
             <ul>
-                <li>the <strong>vector</strong>, the 384 numbers;</li>
                 <li>
-                    the <strong>text</strong> of the chunk, stored in the vector's metadata, so
-                    it can be handed to the model;
+                    <strong>The source list never passes through the model.</strong> The
+                    "Retrieved from" list under each answer is built in code from the metadata of
+                    the passages that were actually used, with the paper's title, year and the PDF
+                    page. The model cannot add a paper to it.
                 </li>
                 <li>
-                    the <strong>metadata</strong>, small labels such as which paper the chunk
-                    came from (<code>source_file</code>) and which page.
+                    <strong>In-text citations are filtered.</strong> Papers cite other papers, so
+                    retrieved passages are full of author&ndash;year references to work that is not
+                    in the collection. After generation, a deterministic filter removes any
+                    bracketed citation that doesn't match one of the retrieved papers. An instruction
+                    in the prompt alone did not stop this; a check in code did.
                 </li>
             </ul>
-
             <p>
-                Today the store holds 779 chunks from 6 papers. That metadata turns out to be
-                the most important part of the whole system for citations, as we will see in
-                section 9.
-            </p>
-
-            <p>
-                One detail for the curious. The index ranks neighbours by cosine similarity,
-                the same measure worked through in section 4, so the nearest chunks are the
-                ones whose arrows point most nearly the same way as the question's. The
-                earlier version of the chat used Chroma, which ranked by straight-line
-                (Euclidean) distance instead. That sounds like a contradiction, but its
-                embeddings were normalised to length 1, and for vectors of length 1 the two
-                measures always put neighbours in the same order.
+                Page numbers come from reading, not from the model: passages never cross a page,
+                and LaTeX blocks are matched back to the PDF page they appear on. On the private
+                library the page number is a link that opens the PDF at that page.
             </p>
 
             <!-- 6 -->
-            <h2 id="retrieval">6. Step 4: Retrieval</h2>
+            <h2 id="cost-safety">6. Cost, abuse and privacy</h2>
 
+            <h3>A spend ledger and guard</h3>
             <p>
-                When a question arrives, it is embedded with the <em>same</em> model used for
-                the chunks, and the vector store returns the closest chunks. How many it
-                returns is a setting usually called <strong>k</strong>. In this pipeline it is
-                4. The Python samples in this guide, including this one, come from the Python
-                prototype; the live Worker ports the same logic line for line to TypeScript.
+                A frontier model costs real money per answer, and a free plan invites traffic I
+                don't control. Every answer that a paid model writes is costed from its token
+                counts and added to a monthly ledger in D1, kept per assistant, for the free plan
+                as a whole, and overall. Before each answer the guard reads the ledger. Free
+                assistants move to the cheaper open-weight chain well before any limit is reached,
+                individually or as a group; past an overall ceiling, everyone does, and I get an
+                email before that happens. The ledger is off the critical path: a failed read
+                answers on the usual model, a failed write is logged and dropped, and no visitor
+                ever waits on it.
             </p>
 
-            <pre><code><span class="cmt"># rag_api/pipeline.py</span>
-RETRIEVER_K = <span class="str">4</span>
-
-store.as_retriever(
-    search_type=<span class="str">"similarity"</span>, search_kwargs={<span class="str">"k"</span>: RETRIEVER_K}
-)</code></pre>
-
+            <h3>Limits and bot checks</h3>
             <p>
-                Choosing k is a trade-off. If k is too small, the one passage that holds the
-                answer may sit just outside the cut, and the model never sees it. If k is too
-                large, the relevant passages are buried among loosely related ones, the prompt
-                gets longer and slower, and the model has more chances to be distracted. Four
-                chunks of up to 1000 characters gives the model a few paragraphs of reading,
-                which suits short answers.
+                Questions are length-checked before anything else runs. Each client is rate
+                limited per minute, keyed on the address Cloudflare's edge sets itself, so a caller
+                can't choose it. Each plan has a monthly question allowance. Embeds also watch
+                their daily traffic: a sudden spike, or a day over the assistant's ceiling, makes
+                the widget ask for a Cloudflare Turnstile check before it answers, so a script
+                hammering someone's embedded chat can't spend their allowance. Errors return a
+                short fixed message and a request ID, never internal detail.
+            </p>
+
+            <h3>Private means private</h3>
+            <p>
+                Private library questions are sent to every model with AI Gateway's no-log and
+                no-cache settings, and the Worker's own log line for them holds timings only: no
+                question, no answer, no paper titles. Private papers live in their own namespace
+                and are never searched for anyone else; the public side has no path into them.
+                Stored PDFs are visible only to their owner and are deleted soon after the paper
+                is removed.
             </p>
 
             <!-- 7 -->
-            <h2 id="prompt">7. Step 5: The grounded prompt</h2>
+            <h2 id="evaluation">7. How I know it works</h2>
 
             <p>
-                Now we have a question and four passages. The next step is to write the
-                instructions the model will follow. A prompt is <strong>grounded</strong> when
-                it tells the model to answer only from supplied material. This is the actual
-                template the chat uses. (In the code, some long lines are joined; the line
-                breaks here are for reading.)
+                "It gave a good answer when I tried it" is not evidence. Each change to retrieval
+                or answering is run against fixed question sets before it ships.
             </p>
-
-            <pre><code><span class="cmt"># SYSTEM_TEMPLATE in worker/src/prompt.ts (the Python prototype lacks only the spelling line)</span>
-You are a research assistant for Dr Reju Sam John, a computational
-epidemiologist and data scientist based in Auckland, New Zealand.
-
-INSTRUCTIONS:
-- Answer the question using ONLY the provided context from his
-published peer-reviewed papers.
-- If the context does not contain enough information to answer,
-say so honestly — do not hallucinate.
-- Cite only the papers named in the [Source: ...] tags, using that
-label in brackets, e.g. (John et al., 2024).
-- Never cite references that appear inside the context text (for
-example other authors the papers themselves cite).
-- Write in plain prose without Markdown: no asterisks, bullet lists,
-headings or bold text. Use short paragraphs separated by a blank
-line if needed.
-- Do not end with a list of sources or quotations; the sources are
-shown to the reader separately.
-- Use British/NZ spelling (for example behaviour, modelling, organisation).
-- Be concise but thorough.
-- Keep answers under 150 words for readability.
-
-CONTEXT:
-{context}
-
-QUESTION:
-{question}
-
-ANSWER:</code></pre>
-
-            <p>Line by line:</p>
-
             <ul>
                 <li>
-                    <strong>&ldquo;You are a research assistant&hellip;&rdquo;</strong> sets the
-                    role and tells the model whose work it is discussing.
+                    <strong>Expected facts.</strong> Each answerable question lists short facts
+                    that are stated on a known page of a known paper, checked against the stored
+                    passages rather than from memory. A judge model grades whether the answer
+                    contains them, and the run also checks the right paper and page were cited.
                 </li>
                 <li>
-                    <strong>&ldquo;Answer &hellip; using ONLY the provided context&rdquo;</strong>
-                    is the fence. It asks the model to ignore what it half-remembers from
-                    training.
+                    <strong>Trap questions.</strong> Each set includes plausible questions on a
+                    neighbouring topic the papers don't cover. The only correct reply is "not
+                    covered". A system that answers these confidently is worse than one that
+                    misses a hard question.
                 </li>
                 <li>
-                    <strong>&ldquo;If the context does not contain enough information&hellip;
-                    say so honestly&rdquo;</strong> is the escape route. Without it, a model
-                    that finds nothing useful tends to invent something rather than admit a gap.
+                    <strong>Multi-paper questions.</strong> Some questions are marked as needing
+                    several papers, and the run flags any answer whose sources leave one out. This
+                    is what the spread step above was tuned against.
                 </li>
                 <li>
-                    <strong>&ldquo;Cite only the papers named in the [Source: ...]
-                    tags&rdquo;</strong> ties citations to labels the code controls. Each
-                    retrieved chunk is placed in the context under a tag such as
-                    <code>[Source: Hayman et al., 2022]</code>. Two of my papers are both
-                    &ldquo;John et al., 2024&rdquo;, so for those the code adds the first few
-                    words of the title to tell them apart.
-                </li>
-                <li>
-                    <strong>&ldquo;Never cite references that appear inside the context
-                    text&rdquo;</strong> was added after a real problem, described in section 12.
-                </li>
-                <li>
-                    <strong>The Markdown and source-list lines</strong> keep the answer as plain
-                    prose, because the chat box shows raw text and lists the sources itself.
-                </li>
-                <li>
-                    <strong>&ldquo;Use British/NZ spelling&rdquo;</strong> keeps the answers in
-                    the same spelling as the papers and this site.
-                </li>
-                <li>
-                    <strong>&ldquo;under 150 words&rdquo;</strong> keeps answers readable in a
-                    small chat window.
-                </li>
-                <li>
-                    <strong><code>{context}</code> and <code>{question}</code></strong> are
-                    placeholders. At run time the four tagged chunks and the user's question are
-                    pasted in.
+                    <strong>Latency per mode.</strong> Quick and Thorough are timed separately.
+                    The bar is a 95th-percentile answer time under about ten seconds; with the
+                    current frontier model both modes sit around eight seconds at the 95th
+                    percentile on a maths-heavy test set, with every trap question correctly declined.
                 </li>
             </ul>
+            <p>
+                Switching answer model is a decision, not a hunch. Before the change in October
+                2026 I ran a bake-off: the same saved contexts sent to each candidate model and
+                effort level, graded by the same judge, timed, and costed per month at expected
+                volume. The model that now answers was the best one that met the latency bar.
+            </p>
+            <p>
+                These sets are small, and I don't quote an accuracy percentage from them. What
+                they reliably catch is regressions: a retrieval change that drops a paper, a
+                prompt change that makes the model guess, a model that has become slow.
+            </p>
 
             <!-- 8 -->
-            <h2 id="generation">8. Step 6: Generation</h2>
+            <h2 id="earlier">8. The earlier version</h2>
 
             <p>
-                The filled-in prompt goes to the language model. It receives nothing else: no
-                search engine, no memory of earlier questions, just the instructions, four
-                passages and one question. The chat calls <code>openai/gpt-oss-120b</code>
-                hosted by Groq. The call goes through Cloudflare's AI Gateway, which sits between
-                the API and the model provider and keeps a log of every request. If Groq fails,
-                the same model running on Workers AI answers instead (more on that in section
-                11).
+                Ask My Papers grew out of a much smaller chat, <em>Ask My Research</em>, that I
+                built for this site alone. It held six of my papers, about 780 plain-text chunks,
+                embedded with <code>bge-small-en-v1.5</code> on Workers AI and stored in
+                Vectorize. Each question was embedded, the four nearest chunks were retrieved, and
+                <code>gpt-oss-120b</code> on Groq, through AI Gateway, wrote an answer from them,
+                with the same model on Workers AI as the fallback. It began life as a
+                LangChain and Chroma prototype on a free host that slept when idle, then moved to a
+                Cloudflare Worker with a median answer time of about a second and a half.
             </p>
-
             <p>
-                One setting deserves an explanation: <strong>temperature</strong>. A language
-                model writes by repeatedly choosing the next word from a list of likely
-                candidates. Temperature controls how adventurous that choice is. High values
-                encourage variety, which suits creative writing. Low values make the model
-                stick to its most likely choices. The chat uses 0.1:
+                It worked for its purpose, and it taught me where the simple version stops:
             </p>
-
-            <pre><code><span class="cmt">// worker/src/llm.ts, inside groqLlm</span>
-<span class="kw">const</span> base = (<span class="kw">await</span> env.AI.gateway(env.GATEWAY_ID).getUrl(<span class="str">"groq"</span>)).replace(<span class="str">/\/+$/</span>, <span class="str">""</span>);
-<span class="kw">const</span> res = <span class="kw">await</span> fetchFn(<span class="str">`${base}/chat/completions`</span>, {
-  method: <span class="str">"POST"</span>,
-  headers: {
-    Authorization: <span class="str">`Bearer ${env.GROQ_API_KEY}`</span>,
-    <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>,
-  },
-  body: JSON.stringify({
-    model: env.GROQ_MODEL,
-    messages: [{ role: <span class="str">"user"</span>, content: prompt }],
-    temperature: <span class="str">0.1</span>,
-    reasoning_effort: <span class="str">"low"</span>,
-  }),
-  signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
-});</code></pre>
-
+            <ul>
+                <li>plain text extraction broke maths, tables and section structure;</li>
+                <li>
+                    pure embedding search missed exact terms, and a fixed top four meant a question
+                    spanning several papers usually heard from one;
+                </li>
+                <li>there was no way to say "not covered" cleanly, or to follow up on an answer;</li>
+                <li>
+                    and it was built for one person's papers. Other researchers asked for one of
+                    their own.
+                </li>
+            </ul>
             <p>
-                For summarising research we want faithful and consistent rather than
-                inventive, so a low temperature is the right choice. Here are two answers from
-                the live chat:
-            </p>
-
-            <div class="qa-block">
-                <div class="qa-label">From the live chat, September 2026</div>
-                <div class="qa-q">Q: How do human activities affect Lassa virus dynamics in Mastomys natalensis?</div>
-                <div class="qa-a">
-                    The 2024 study incorporated human activities—principally climate change and land‑use change—into a seasonal SIR model of Lassa virus in Mastomys natalensis. By altering the timing and magnitude of rodent births and the rates at which rodents and humans come into contact, these activities shift the basic reproductive number (R p) and can create asynchrony between peak rodent infection and peak human risk. The model was explicitly built to test how such anthropogenic changes modify virus persistence and transmission dynamics in the reservoir (John et al., 2024).
-                </div>
-                <div class="qa-cite">Retrieved from: John et al. (2024), Journal of The Royal Society Interface</div>
-            </div>
-
-            <div class="qa-block">
-                <div class="qa-label">From the live chat, September 2026</div>
-                <div class="qa-q">Q: Does travel time between places matter for how fast an epidemic spreads when a network is highly connected?</div>
-                <div class="qa-a">
-                    In a highly connected network, travel time between locations has little effect on the speed of epidemic spread. The analysis shows that infection arrival is largely insensitive to travel‑time differences unless human movement is dramatically curtailed; only very severe restrictions on flow begin to slow transmission (John et al., 2024).
-                </div>
-                <div class="qa-cite">Retrieved from: John et al. (2024), Journal of The Royal Society Interface; Muylaert et al. (2023), Nature Communications</div>
-            </div>
-
-            <p>
-                These are the chat's own words, copied without editing. The second answer also
-                shows retrieval at work: a chunk from a second paper was among the four
-                retrieved, but only the paper that answered the question was cited.
+                Ask My Papers is the answer to that list. The original code is still public on
+                <a href="https://github.com/rejusam/rag-publications" target="_blank" rel="noopener">GitHub</a>
+                as a compact, readable example of a basic retrieval-augmented pipeline.
             </p>
 
             <!-- 9 -->
-            <h2 id="citations">9. Citations you can trust</h2>
+            <h2 id="try-it">9. Try it</h2>
 
             <p>
-                A citation is only useful if it is true. Language models are good at producing
-                text that looks like a citation, which is not the same thing.
-            </p>
-
-            <p>
-                Here is a real example from this project. After I switched to the current
-                model, some answers began citing works such as &ldquo;Fichet&#8209;Calvet et
-                al., 2014&rdquo; and &ldquo;Safronetz et al., 2022&rdquo;. Those are real
-                papers, but they are not in my corpus. They appear <em>inside</em> my papers,
-                in the reference lists and in-text citations that were retrieved along with
-                everything else. A reader could easily have taken them for sources the system
-                had actually used.
-            </p>
-
-            <p>
-                So the chat does not trust the model for the list of sources at all. The
-                &ldquo;Retrieved from&rdquo; list under each answer is built in code from the
-                metadata of the chunks that were actually retrieved. Each chunk carries its
-                <code>source_file</code> label, and a small file called
-                <code>papers.json</code> maps that label to the title, authors, year, journal
-                and DOI. The function is short:
-            </p>
-
-            <pre><code><span class="cmt"># rag_api/sources.py</span>
-<span class="kw">def</span> <span class="fn">resolve_sources</span>(
-    docs: Sequence[Document], papers: Mapping[str, Source]
-) -&gt; list[Source]:
-    <span class="str">"""Unique papers behind the retrieved chunks, in retrieval order."""</span>
-    seen: set[str] = set()
-    sources: list[Source] = []
-    <span class="kw">for</span> doc <span class="kw">in</span> docs:
-        key = doc.metadata.get(<span class="str">"source_file"</span>)
-        <span class="kw">if</span> <span class="kw">not</span> key <span class="kw">or</span> key <span class="kw">in</span> seen:
-            <span class="kw">continue</span>
-        seen.add(key)
-        source = papers.get(key)
-        <span class="kw">if</span> source <span class="kw">is</span> None:
-            logger.warning(<span class="str">"No papers.json entry for source_file=%r"</span>, key)
-            source = Source(title=key)
-        sources.append(source)
-    <span class="kw">return</span> sources</code></pre>
-
-            <p>
-                The model cannot add a paper to this list, because the list never passes
-                through the model. A paper appears only if one of its chunks was retrieved.
-            </p>
-
-            <p>
-                The in-text citations in the answer itself are still written by the model, so
-                they get a second check. After generation, a filter removes any bracketed
-                author&ndash;year citation, such as &ldquo;(Smith et al., 2019)&rdquo;, that
-                does not match one of the retrieved papers. Section 12 explains why an
-                instruction in the prompt was not enough on its own, and what the filter does
-                not yet catch.
-            </p>
-
-            <!-- 10 -->
-            <h2 id="evaluation">10. How do we know it works?</h2>
-
-            <p>
-                &ldquo;It gave a good answer when I tried it&rdquo; is not evidence. You need a
-                fixed set of questions, run the same way each time, with the results written
-                down. I wrote 15 test questions: 12 that the papers should be able to answer,
-                and 3 that they should not.
-            </p>
-
-            <p>
-                The first measure is the <strong>retrieval hit rate</strong>: for each
-                answerable question, was the paper I expected among the retrieved chunks? The
-                results, from <code>eval/results.md</code> in the repository:
-            </p>
-
-            <ul>
-                <li>
-                    <strong>Retrieval hit rate:</strong> 12/12 answerable questions, with
-                    k&nbsp;=&nbsp;4.
-                </li>
-                <li>
-                    <strong>Unanswerable questions:</strong> all 3 were declined. They asked
-                    about the adult dose of paracetamol, influenza vaccination rates in New
-                    Zealand schools, and the winner of the 2023 Rugby World Cup.
-                </li>
-            </ul>
-
-            <div class="qa-block">
-                <div class="qa-label">From the live chat, September 2026</div>
-                <div class="qa-q">Q: Who won the 2023 Rugby World Cup?</div>
-                <div class="qa-a">
-                    The provided context does not contain any information about the winner of the 2023 Rugby World Cup.
-                </div>
-                <div class="qa-cite">Retrieved from: Muylaert et al. (2023), Nature Communications; Hayman et al. (2022), Journal of The Royal Society Interface; Rulli et al. (2025), Reviews of Geophysics</div>
-            </div>
-
-            <p>
-                Look closely at that last example. The retriever <em>always</em> returns its
-                four nearest chunks, even when none of them is relevant. It has no notion of
-                &ldquo;nothing found&rdquo;. The refusal comes from the prompt's escape
-                route, not from the search.
-            </p>
-
-            <h3>What these numbers do not tell you</h3>
-
-            <p>
-                A perfect score deserves suspicion, and I want to be honest about this one.
-            </p>
-
-            <ul>
-                <li>
-                    <strong>12/12 flatters the retriever.</strong> Most of my questions reuse
-                    words from the paper titles, which makes them easy to match. Real visitors
-                    phrase things differently.
-                </li>
-                <li>
-                    <strong>A retrieval hit is not a good answer.</strong> In three cases (the
-                    questions labelled l1, b1 and s2) the right paper was retrieved, yet the
-                    answer said the retrieved passages did not contain the specific result
-                    asked for.
-                </li>
-                <li>
-                    <strong>One run is a snapshot.</strong> Question l1 is the Lassa question
-                    shown in section 8. In the evaluation run the chat said the passages lacked
-                    the result; when the same question was asked again on the live site, it
-                    gave the answer shown there. Generation varies between runs, even at
-                    low temperature, which is another reason an evaluation needs repeated runs
-                    and a human review.
-                </li>
-                <li>
-                    <strong>Fifteen questions is a small sample.</strong> It can catch a
-                    serious break, such as retrieval returning the wrong papers or the model
-                    inventing answers to unanswerable questions. It cannot give you a reliable
-                    accuracy figure.
-                </li>
-            </ul>
-
-            <p>
-                A manual review of answer quality is still pending, because I am expanding the
-                corpus with more publications and will re-run and review the evaluation after
-                that. Until then, I am not quoting an accuracy percentage, and you should be
-                wary of anyone who quotes one from a test this small.
-            </p>
-
-            <!-- 11 -->
-            <h2 id="production">11. Taking it to production</h2>
-
-            <p>
-                A notebook that works on your laptop is not a service. The moment strangers can
-                reach it, a new set of questions appears. Here is what the chat does about
-                each.
-            </p>
-
-            <h3>Cold starts</h3>
-            <p>
-                The API first ran on Render's free tier, which shut the server down after
-                around 15 minutes without traffic. The next question had to wait while it
-                started again, roughly 30 to 60 seconds, and one cold call I timed took 75.
-                The home page sent a quiet wake-up request as soon as it opened, and the chat
-                box showed a &ldquo;warming up&rdquo; message, but anyone who asked straight
-                away still waited.
-            </p>
-            <p>
-                So in September 2026 the chat moved to a Cloudflare Worker. A Worker is a small
-                program that Cloudflare runs when a request arrives. There is no server of mine
-                to go to sleep, so there is nothing to wake. On the same 15 evaluation questions
-                the median answer now takes about 1.5 seconds. The friendly message for a failed
-                request is still there, in case the network lets a question down.
-            </p>
-
-            <h3>Secrets</h3>
-            <p>
-                Calling the model needs an API key. That key lives only in the hosting
-                provider's environment settings. It is never in the website, where anyone could
-                read it with the browser's developer tools, and never in the repository, where
-                it would sit in the commit history for good. The browser talks to my API, and
-                only my API talks to the model provider.
-            </p>
-
-            <h3>Limits</h3>
-            <ul>
-                <li>
-                    <strong>Question length:</strong> between 3 and 500 characters. Anything
-                    else is rejected before it reaches the model.
-                </li>
-                <li>
-                    <strong>Rate limit:</strong> 10 requests per minute per client, so one
-                    visitor (or one script) cannot use up the model quota. The Worker tells
-                    clients apart by the <code>CF-Connecting-IP</code> header, which Cloudflare's
-                    edge sets itself on every request, so a caller cannot choose it. (On Render,
-                    I checked that a request carrying a forged address header was rejected at
-                    Cloudflare's edge.)
-                </li>
-                <li>
-                    <strong>Timeout and fallback:</strong> each model call has 20 seconds. If
-                    the Groq call times out, returns an error or comes back without any answer
-                    text, the request goes to the fallback: <code>gpt-oss-120b</code> running
-                    on Workers AI.
-                </li>
-                <li>
-                    <strong>AI Gateway:</strong> both model calls pass through Cloudflare's AI
-                    Gateway, which logs every request and caches identical requests for a day,
-                    so a repeated question does not spend the model quota twice. It also
-                    applies its own limit of 60 requests a minute across all visitors, a second
-                    fence behind the per-visitor one.
-                </li>
-                <li>
-                    <strong>Error messages:</strong> when something does go wrong, the browser
-                    gets a short fixed message and a request ID, never internal detail. The ID
-                    lets me find the full error in the server logs.
-                </li>
-            </ul>
-
-            <h3>Repeatable builds and checks</h3>
-            <p>
-                Every dependency is fixed to an exact version, so rebuilding cannot quietly pull
-                in a new release that behaves differently. The Python API's dependencies are
-                pinned in its requirements files; the Worker's exact versions are recorded in
-                its <code>package-lock.json</code>, which continuous integration installs with
-                <code>npm ci</code>. Each push to the repository runs continuous integration:
-                a linter, the offline test suite,
-                and a secret scan with gitleaks that fails the build if anything resembling a
-                key has been committed. It also type-checks the Worker with
-                <code>tsc</code> and runs its tests with <code>vitest</code>, alongside the
-                Python checks. A separate set of live tests calls the real model and
-                is run by hand.
-            </p>
-
-            <h3>Local and deployed</h3>
-            <p>
-                The project began as a local app and still has a local variant for offline
-                experiments. The two use different models, which matters for the first failure
-                in section 13.
-            </p>
-
-            <div class="table-wrap">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Component</th>
-                            <th>Local (Streamlit)</th>
-                            <th>Deployed (Cloudflare Worker)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Embeddings</td>
-                            <td>nomic-embed-text via Ollama</td>
-                            <td>bge-small-en-v1.5 via Workers AI</td>
-                        </tr>
-                        <tr>
-                            <td>LLM</td>
-                            <td>llama3.2 via Ollama</td>
-                            <td>openai/gpt-oss-120b via Groq through AI Gateway, fallback gpt-oss-120b on Workers AI</td>
-                        </tr>
-                        <tr>
-                            <td>Vector store</td>
-                            <td>chroma_db/</td>
-                            <td>Vectorize index research-chunks</td>
-                        </tr>
-                        <tr>
-                            <td>Interface</td>
-                            <td>Streamlit chat UI</td>
-                            <td>Worker &rarr; chat box on this site</td>
-                        </tr>
-                        <tr>
-                            <td>Hosting</td>
-                            <td>localhost</td>
-                            <td>Cloudflare Workers (free tier)</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- 12 -->
-            <h2 id="case-study">12. Case study: the day the model disappeared (September 2026)</h2>
-
-            <p>
-                This month the chat stopped answering. Every question returned an HTTP 500
-                error, and the message behind it read:
-            </p>
-
-            <pre><code>Error code: 404 - The model `llama-3.3-70b-versatile` does not exist or you do not have access to it. (model_not_found)</code></pre>
-
-            <p>
-                The provider had retired Llama 3.3 70B, the model the chat was built on. The
-                name was written directly into the code, so there was nothing to fall back to.
-                The embeddings, the vector store and the API key were all fine. One line was
-                wrong, and the whole service was down.
-            </p>
-
-            <p>
-                A second problem hid inside the first. That message reached the browser
-                because the old code passed raw error text straight through. This time it only
-                revealed a model name, but internal error text can reveal things you would rather keep
-                private.
-            </p>
-
-            <p>The fix had four parts:</p>
-
-            <ul>
-                <li>
-                    the model name moved out of the code and into configuration, so changing it
-                    no longer needs a code change;
-                </li>
-                <li>
-                    the primary model became <code>openai/gpt-oss-120b</code>, with an
-                    automatic fallback to <code>openai/gpt-oss-20b</code>;
-                </li>
-                <li>
-                    errors now return a short fixed message with a request ID;
-                </li>
-                <li>
-                    a live smoke test calls both real models, so I can confirm they still exist
-                    without waiting for a visitor to find out.
-                </li>
-            </ul>
-
-            <p>
-                <strong>The lesson:</strong> a hosted model is a dependency you do not control.
-                Treat its name as configuration, plan for it to vanish, and test against the
-                real thing.
-            </p>
-
-            <h3>A second incident: citations you didn't ask for</h3>
-
-            <p>
-                After the model switch, the citation problem from section 9 appeared. The new
-                model cited works that appear inside my papers, such as &ldquo;Fichet&#8209;Calvet et
-                al., 2014&rdquo; and &ldquo;Safronetz et al., 2022&rdquo;. My first response
-                was to add a line to the prompt telling it not to. On its own, that did not
-                stop it.
-            </p>
-
-            <p>
-                The real fix was code. After the model answers, a deterministic filter reads
-                every bracketed author&ndash;year citation and removes any that does not match
-                a retrieved paper. The same step strips the Markdown symbols the model
-                sometimes adds despite being asked for plain prose. The filter does not yet
-                handle narrative citations written into the sentence, such as &ldquo;Smith et
-                al. (2019) showed&hellip;&rdquo;; those are on the list for the next version.
-            </p>
-
-            <p>
-                The filter needed more care than I expected, because real names are untidy.
-                Surnames can be hyphenated (and the model sometimes writes a non-standard
-                hyphen character), carry accents, or start with lowercase particles such as
-                &ldquo;van der&rdquo;. Each of those needed handling and a test.
-            </p>
-
-            <p>
-                <strong>The lesson:</strong> an instruction in the prompt shapes behaviour but
-                does not guarantee it. If something must never happen, check for it in code,
-                and be clear about exactly what that check covers.
-            </p>
-
-            <!-- 13 -->
-            <h2 id="failures">13. Common ways RAG goes wrong</h2>
-
-            <h3>The embedding model has to match</h3>
-
-            <p>
-                The vector store is a collection of points made by <em>one</em> embedding
-                model. If you build the store with one model and embed questions with another,
-                the question lands in a completely different space from the chunks. The
-                similarity scores become noise, and retrieval returns rubbish without any error
-                message. That is why this project keeps its stores apart. The local Python
-                prototype has <code>chroma_db/</code> for its <code>nomic-embed-text</code>
-                variant and <code>chroma_db_deploy/</code> for its
-                <code>all-MiniLM-L6-v2</code> variant; the live chat's vectors, made with
-                <code>bge-small-en-v1.5</code>, live in the Vectorize index
-                <code>research-chunks</code>. If you change the embedding model, re-embed
-                everything.
-            </p>
-
-            <h3>Questions about the documents rather than in them</h3>
-
-            <p>
-                Some questions are about the documents themselves: &ldquo;What methods did
-                you use in the sarbecovirus study?&rdquo; The embedding of that question is
-                shaped by generic words such as <em>methods</em> and <em>study</em>, which
-                appear in every paper. Retrieval can drift towards general methods text from
-                several papers rather than the one section you meant.
-            </p>
-
-            <p>
-                The usual remedies are filtering by metadata (search only inside the named
-                paper), rewriting the question with more specific terms before searching, or
-                combining keyword search with embedding search, which is known as hybrid
-                search. The chat does none of these yet.
-            </p>
-
-            <p>
-                The same weakness grows as a corpus spans more subjects. The word
-                &ldquo;network&rdquo; means a contact network in epidemiology and something
-                quite different in, say, physics. A single index gives it one blended meaning.
-                Tagging each chunk with its field and searching within the right field keeps
-                those meanings apart.
-            </p>
-
-            <h3>Prompt injection</h3>
-
-            <p>
-                Everything retrieved is pasted into the prompt, so text inside a document can
-                try to act as an instruction: &ldquo;ignore your previous instructions
-                and&hellip;&rdquo;. The same goes for the question itself. This is called
-                <strong>prompt injection</strong>. A language model cannot reliably tell your
-                instructions apart from instructions hidden in the material it is reading. The
-                defences are to control what goes into the corpus (here, only my own published
-                papers), to keep anything important, such as the source list, out of the
-                model's hands, and to check the output in code, as the citation filter does.
-            </p>
-
-            <!-- 14 -->
-            <h2 id="quiz">14. Check your understanding</h2>
-
-            <details>
-                <summary>1. Why are the papers split into overlapping chunks instead of being embedded whole?</summary>
-                <p>
-                    A single embedding of a whole paper blurs every topic in it together, so a
-                    question about one detail matches poorly. Short chunks each carry one idea.
-                    The overlap means a sentence cut at a chunk boundary still appears complete
-                    in the next chunk.
-                </p>
-            </details>
-
-            <details>
-                <summary>2. Two embeddings have a cosine similarity of 0. What does that tell you?</summary>
-                <p>
-                    The vectors are at right angles, like a and c in section 4. For embeddings,
-                    that means the model sees the two pieces of text as unrelated in meaning.
-                </p>
-            </details>
-
-            <details>
-                <summary>3. You rebuild the vector store with a new embedding model but forget to change the model used for questions. What happens?</summary>
-                <p>
-                    Questions and chunks now live in different vector spaces, so the distances
-                    between them mean nothing. Retrieval returns poorly matched chunks, with no
-                    error to warn you. Answers get worse or turn into refusals.
-                </p>
-            </details>
-
-            <details>
-                <summary>4. Why is the &ldquo;Retrieved from&rdquo; list built in code rather than taken from the model's answer?</summary>
-                <p>
-                    Because the model can produce citations that look right but are wrong,
-                    including real papers that were never retrieved. Building the list from the
-                    retrieved chunks' metadata and <code>papers.json</code> guarantees that every
-                    listed paper was part of the context.
-                </p>
-            </details>
-
-            <details>
-                <summary>5. Retrieval found the right paper for 12 out of 12 questions. Does that mean the answers were correct?</summary>
-                <p>
-                    No. In three cases the right paper was retrieved, yet the answer said the
-                    passages did not contain the specific result asked for. Retrieval hit rate
-                    measures whether the right paper was found, not whether the answer was
-                    right, and 15 questions is too few for an accuracy figure.
-                </p>
-            </details>
-
-            <details>
-                <summary>6. Why does the API key live on the server and not in the website's JavaScript?</summary>
-                <p>
-                    Anything sent to a browser can be read by the person using it. A key in the
-                    page would let anyone use your model account. Keeping it in the server's
-                    environment settings, and out of the repository, means only the API can use
-                    it.
-                </p>
-            </details>
-
-            <!-- 15 -->
-            <h2 id="try-it">15. Try it yourself</h2>
-
-            <p>
-                The best way to understand RAG is to poke at one. Ask the chat something the
-                papers cover, then something they don't, and compare the answers and the
-                &ldquo;Retrieved from&rdquo; lists. Then read the code. It is small enough to
-                follow in an afternoon.
+                Ask my assistant something my papers cover, then something they don't, and compare
+                the answers and the page numbers. If you are a researcher, you can make one for
+                your own papers in a few minutes.
             </p>
 
             <div class="cta-box">
-                <p>Ask the live chat, or read the code behind it.</p>
+                <p>See it on my papers, or set one up for yours.</p>
                 <a href="../#hero" class="cta-btn">
-                    <i class="fas fa-comments"></i>&nbsp; Try the live chat
+                    <i class="fas fa-comments"></i>&nbsp; Try it on my papers
                 </a>
-                <a href="https://github.com/rejusam/rag-publications"
+                <a href="https://papers.tasmanlab.com/start"
                    target="_blank" rel="noopener" class="cta-btn outline">
-                    <i class="fab fa-github"></i>&nbsp; View on GitHub
+                    <i class="fas fa-arrow-right"></i>&nbsp; Get one for your papers
                 </a>
             </div>
 
             <div class="method-note">
-                <strong>Stack.</strong> Cloudflare Workers for the API, Vectorize for vector
-                storage, <code>bge-small-en-v1.5</code> on Workers AI for embeddings, and Groq
-                for generation (<code>openai/gpt-oss-120b</code> through AI Gateway, falling
-                back to the same model on Workers AI). The first version, built with LangChain
-                and Chroma, stays in the repository as the local prototype.
-                Full code and the list of papers are on
-                <a href="https://github.com/rejusam/rag-publications" target="_blank" rel="noopener">GitHub</a>.
+                <strong>Stack.</strong> Cloudflare Workers, D1, R2, Queues, Vectorize, Containers
+                and AI Gateway. <code>bge-m3</code> embeddings and
+                <code>bge-reranker-base</code> reranking on Workers AI, SQLite full-text search in
+                D1, Docling for PDF reading, a frontier model for answers with
+                <code>gpt-oss-120b</code> on Groq and on Workers AI as fallbacks, KaTeX for maths,
+                Turnstile for bot checks. Written in TypeScript, with type checks and tests on every
+                change.
             </div>
 
         </div>
@@ -1543,8 +961,7 @@ ANSWER:</code></pre>
         <footer class="article-footer">
             <p>
                 <strong>Dr Reju Sam John</strong> is a computational epidemiologist and data
-                scientist based in Auckland, New Zealand, and teaches on a Data Science &amp; AI
-                programme.
+                scientist based in Auckland, New Zealand. He builds Ask My Papers at Tasman Lab.
                 <a href="../">rejusamjohn.pages.dev</a>
             </p>
             <p class="coffee-line">Found this useful? You can <a href="https://ko-fi.com/rejusamjohn" target="_blank" rel="noopener">buy me a coffee</a>.</p>
