@@ -566,6 +566,46 @@ img {
     margin-bottom: 0;
 }
 
+.timeline-group {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.timeline-group-past {
+    margin-top: 64px;
+}
+
+.timeline-group::before {
+    content: '';
+    position: absolute;
+    left: -38px;
+    top: 9px;
+    width: 12px;
+    height: 2px;
+    background: var(--accent-cyan);
+}
+
+.timeline-group-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent-cyan);
+}
+
+.timeline-group-title span {
+    margin-left: 8px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.timeline-group p {
+    margin-top: 6px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
 .timeline-marker {
     position: absolute;
     left: -40px;
@@ -645,21 +685,6 @@ img {
     flex-direction: column;
     align-items: flex-end;
     gap: 6px;
-}
-
-.badge {
-    display: inline-block;
-    padding: 3px 12px;
-    border-radius: 100px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.badge-current {
-    background: var(--gradient);
-    color: var(--bg-primary);
 }
 
 .timeline-details {
@@ -1514,6 +1539,10 @@ img {
         left: -30px;
         width: 12px;
         height: 12px;
+    }
+
+    .timeline-group::before {
+        left: -29px;
     }
 
     .timeline-header {
