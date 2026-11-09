@@ -99,7 +99,7 @@ export function stepsToTol(xs, ys, eta) {
   return hi;
 }
 
-// Standardised fit ŷ = a′ + w′z, z = (x − μ)/σ, back in the original units.
+// Standardised fit ŷ = a_z + w_z·z, z = (x − μ)/σ, back in the original units.
 export const mapBack = ([a2, w2], mu, sigma) => ({ a: a2 - (w2 * mu) / sigma, w: w2 / sigma });
 
 // The first K steps of a run, for drawing.
@@ -256,11 +256,11 @@ export function readout(step, state = {}, facts = runFacts(), data = lossData())
     const dat = raw ? xs : standardise(xs).z;
     const p = runPath(dat, ys, f.eta, k)[k];
     const ex = lossAt(dat, ys, p[0], p[1]) - f.lStar;
-    const prime = raw ? '' : '′';
+    const sub = raw ? '' : '_z';
     return [
       `${raw ? 'raw x' : 'standardised'}, η = ${fmtEta(f.eta)}`,
       `step ${k} of ${K}`,
-      `a${prime} = ${fmt(p[0], 2)}, w${prime} = ${fmt(p[1], raw ? 3 : 2)}`,
+      `a${sub} = ${fmt(p[0], raw ? 3 : 1)}, w${sub} = ${fmt(p[1], raw ? 3 : 2)}`,
       `extra loss = ${fmtLoss(ex)}`,
     ];
   };
@@ -312,7 +312,7 @@ export function pageValues() {
 }
 
 // Words for numbers in the live region.
-const say = (s) => s.replace(/−/g, 'minus ');
+const say = (s) => s.replace(/−/g, 'minus ').replace(/_z/g, ' z');
 
 // ---------------------------------------------------------------- the stage
 
@@ -333,6 +333,29 @@ const SY1 = 158;
 const BOX = { x: 398, y: 8, row: 20 };
 const LOG_LO = -4;
 const LOG_HI = 5;
+
+// Writes text into an SVG text node, drawing "a_z" and "w_z" with a lowered,
+// smaller z. dy moves are used because Firefox ignores baseline-shift.
+function subText(node, str) {
+  const doc = node.ownerDocument;
+  node.replaceChildren();
+  const parts = str.split(/_z/);
+  parts.forEach((part, i) => {
+    if (i > 0) {
+      const z = doc.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+      z.setAttribute('dy', '0.3em');
+      z.setAttribute('font-size', '75%');
+      z.textContent = 'z';
+      node.appendChild(z);
+    }
+    if (part) {
+      const t = doc.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+      if (i > 0) t.setAttribute('dy', '-0.3em');
+      t.textContent = part;
+      node.appendChild(t);
+    }
+  });
+}
 
 export function createStage(svg, { controls, reduced = false, announce = () => {} }) {
   const doc = svg.ownerDocument;
@@ -394,7 +417,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   }
 
   const raw = contourPlot(xs, RAW_A, RAW_W, 160, 300, { xLabel: 'intercept a', yLabel: 'slope w' }, 'raw x: axes not to scale');
-  const std = contourPlot(z, SW.A, SW.W, 120, 100, { xLabel: 'intercept a′', yLabel: 'slope w′' }, 'standardised x: equal axes', true);
+  const std = contourPlot(z, SW.A, SW.W, 120, 100, { xLabel: 'intercept a_z', yLabel: 'slope w_z' }, 'standardised x: equal axes', true);
 
   // Start label, on both plots.
   for (const P of [raw, std]) {
@@ -505,6 +528,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const box = el('g', {}, svg);
   const boxRect = el('rect', { rx: 6, fill: SURFACE, 'fill-opacity': 0.92, stroke: LINE_C }, box);
   const rows = [0, 1, 2, 3].map(() => el('text', { class: 'value' }, box));
+  // The standardised axis labels carry a subscript z.
+  for (const t of std.g.querySelectorAll('.axes text')) if (/_z/.test(t.textContent)) subText(t, t.textContent);
 
   // --- Controls.
   const make = (tag, props = {}) => Object.assign(doc.createElement(tag), props);
@@ -559,7 +584,9 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const curPlot = () => (runIsRaw() ? raw : std);
   const curPath = () => (runIsRaw() ? rawPath : stdPath);
 
-  // A hop from p to q, bowed to one side so hops that retrace each other stay apart.
+  // A hop from p to q. On the raw map it is bowed to one side so hops that
+  // retrace each other stay apart; on the round bowl every hop lies on one
+  // line through the start and the bottom, so it is drawn straight.
   const hopD = (P, p, q) => {
     const x0 = P.X(p[0]);
     const y0 = P.Y(p[1]);
@@ -569,7 +596,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     let nx = -(y1 - y0) / len;
     let ny = (x1 - x0) / len;
     if (nx - ny < 0) { nx = -nx; ny = -ny; }
-    const bow = 6 + 0.15 * len;
+    const bow = P === std ? 0 : 6 + 0.15 * len;
     return { x0, y0, x1, y1, qx: (x0 + x1) / 2 + nx * bow, qy: (y0 + y1) / 2 + ny * bow };
   };
 
@@ -666,7 +693,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     // Read-out.
     const texts = readout(step, { a: ha, w: hw, k: kShown, view }, facts, data);
     rows.forEach((r, k) => {
-      r.textContent = texts[k] || '';
+      subText(r, texts[k] || '');
       r.style.display = k < texts.length ? '' : 'none';
     });
     let bw = 186;

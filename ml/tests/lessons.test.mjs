@@ -868,7 +868,7 @@ test('lesson8 closed-form step count matches gdRun for the standardised run', ()
   const ex = run.path.map(([a, w]) => mse8(ys, z.map((v) => a + w * v)) - Ls);
   const first = ex.findIndex((e) => e <= lesson8.TOL * ex[0]);
   assert.ok(first > 0);
-  assert.ok(Math.abs(first - s.std.steps) <= 1, `gdRun ${first} v closed form ${s.std.steps}`);
+  assert.equal(first, s.std.steps, `gdRun ${first} v closed form ${s.std.steps}`);
   // The closed-form extra loss follows gdRun step by step, for both runs.
   for (const [data, eta] of [[z, s.std.eta], [xs, s.raw.eta]]) {
     const o = olsFit8(data, ys);
@@ -930,4 +930,29 @@ test('lesson8 read-out rows and page', () => {
   for (const [, key] of lesson8Html.matchAll(/data-value="([^"]+)"/g)) assert.ok(key in pv, key);
   for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
   assert.equal(pv['std-steps'], '31');
+});
+
+test('lesson8 closed-form count equals gdRun on moderately conditioned data', () => {
+  const counts = [];
+  for (const [lo, hi] of [[1, 6], [5, 15], [10, 30]]) {
+    const rng = rng6(5);
+    const xs = [];
+    const ys = [];
+    for (let i = 0; i < 30; i++) {
+      const x = uniform6(rng, lo, hi);
+      xs.push(x);
+      ys.push(2 + 0.5 * x + randn6(rng));
+    }
+    const eta = lesson8.etaFor(xs);
+    const closed = lesson8.stepsToTol(xs, ys, eta);
+    const o = olsFit8(xs, ys);
+    const Ls = mse8(ys, xs.map((x) => o.intercept + o.slope * x));
+    const run = gdRun8({ grad: grad8(xs, ys), init: lesson8.START, eta, steps: closed + 50, tol: 0 });
+    const ex = run.path.map(([a, w]) => mse8(ys, xs.map((x) => a + w * x)) - Ls);
+    const first = ex.findIndex((e) => e <= lesson8.TOL * ex[0]);
+    assert.equal(first, closed, `x in [${lo}, ${hi}]: gdRun ${first} v closed form ${closed}`);
+    counts.push(closed);
+  }
+  // Wider, further-from-zero x is worse conditioned, so it needs more steps.
+  assert.ok(counts[0] < counts[1] && counts[1] < counts[2], String(counts));
 });
