@@ -169,6 +169,12 @@ test('gb wording claims hold', () => {
   assert.equal(pv['best-test-0'], pv['best-test-1']);
   assert.equal(pv['best-test-2'], pv['best-test-1']);
   assert.notEqual(pv['best-test-3'], pv['best-test-1']);
+  // Misconception: "A smaller η is always better."
+  assert.equal(pv['best-m-0'], '207');
+  assert.equal(pv['best-m-1'], '111');
+  assert.equal(pv['best-test-0'], '0.097');
+  assert.match(html, /best M is <span data-value="best-m-0"><\/span> at η = 0\.05 against <span data-value="best-m-1"><\/span> at η = 0\.1/);
+  assert.match(html, /href="\/ml\/train-test\/"/);
   // Step 5: after its best round, η = 0.1's test MSE has risen by M = 300, while train still falls.
   const r = L.run(0.1);
   assert.ok(r.test[L.M_MAX] > r.test[L.bestM(0.1)]);
