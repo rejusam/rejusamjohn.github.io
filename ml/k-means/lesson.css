@@ -1,0 +1,17 @@
+/* k-means: lesson-only styles, loaded after ml.css. */
+
+/* A centre: its cluster's shape, larger, with a light outline. */
+#stage-svg .mk.km-centre {
+  stroke: var(--ml-strong);
+  stroke-width: 2.2;
+}
+
+/* With K above 3 the cells are drawn as outlines only: no tint per cluster. */
+#stage-svg .km-plain .region rect,
+#stage-svg .region .r-3,
+#stage-svg .region .r-4,
+#stage-svg .region .r-5,
+#stage-svg .region .r-6,
+#stage-svg .region .r-7 {
+  fill: var(--region-base);
+}
