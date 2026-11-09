@@ -1,0 +1,1873 @@
+/* ML Explorer: shared styles for every page under /ml/.
+   Palette and fonts follow the main site. Layout follows mockup A:
+   top bar, then path (250px) / stage / info (310px). */
+
+:root {
+  --ml-bg: #0f172a;
+  --ml-surface: #1e293b;
+  --ml-line: #334155;
+  --ml-ink: #e2e8f0;
+  --ml-strong: #f1f5f9;
+  --ml-muted: #94a3b8;
+  --ml-cyan: #22d3ee;
+  --ml-cyan-2: #06b6d4;
+  --ml-violet: #a78bfa;
+
+  --ml-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ml-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Type scale (rem on a 16px root). */
+  --ml-t-label: 0.6875rem;  /* 11px mono labels */
+  --ml-t-small: 0.8125rem;  /* 13px */
+  --ml-t-info: 0.9375rem;   /* 15px side panels */
+  --ml-t-body: 1rem;        /* 16px */
+  --ml-t-lede: 1.0625rem;   /* 17px */
+  --ml-t-h2: 1.75rem;       /* 28px step title */
+  --ml-t-h1: 2.125rem;      /* 34px lesson title */
+
+  /* Spacing on a 4px rhythm. */
+  --ml-s1: 4px;
+  --ml-s2: 8px;
+  --ml-s3: 12px;
+  --ml-s4: 16px;
+  --ml-s5: 22px;
+  --ml-s6: 28px;
+  --ml-s7: 44px;
+
+  --ml-radius: 12px;
+  --ml-radius-sm: 6px;
+  --ml-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ml-fast: 140ms;
+  --ml-mid: 220ms;
+
+  --controls-h: 0px;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ml-bg);
+  color: var(--ml-ink);
+  font-family: var(--ml-sans);
+  font-size: var(--ml-t-body);
+  line-height: 1.6;
+  padding-bottom: var(--controls-h);
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+}
+
+a {
+  color: var(--ml-cyan);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ml-cyan);
+  outline-offset: 2px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.vh {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ml-skip {
+  position: absolute;
+  left: var(--ml-s4);
+  top: -48px;
+  z-index: 2000;
+  padding: var(--ml-s2) var(--ml-s3);
+  background: var(--ml-cyan);
+  color: var(--ml-bg);
+  border-radius: var(--ml-radius-sm);
+  font-weight: 600;
+}
+
+.ml-skip:focus {
+  top: var(--ml-s2);
+}
+
+/* Small mono labels: the mockup's caps. */
+.ml-cap,
+.step-count,
+.happening::before,
+.lesson-head .crumbs {
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ml-muted);
+}
+
+/* ---------- Top bar ---------- */
+
+.ml-top {
+  display: flex;
+  align-items: center;
+  gap: var(--ml-s5);
+  padding: 14px var(--ml-s6);
+  border-bottom: 1px solid var(--ml-line);
+}
+
+.ml-brand {
+  color: var(--ml-strong);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.ml-site {
+  color: var(--ml-muted);
+  font-size: var(--ml-t-small);
+  text-decoration: none;
+}
+
+.ml-site:hover {
+  color: var(--ml-ink);
+  text-decoration: underline;
+}
+
+.ml-progress {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  color: var(--ml-muted);
+}
+
+.ml-progress-label {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.ml-bar {
+  width: 140px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--ml-line);
+  overflow: hidden;
+}
+
+.ml-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--ml-cyan);
+  transition: width var(--ml-mid) var(--ml-ease);
+}
+
+.ml-progress-count {
+  color: var(--ml-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ml-path-toggle,
+.ml-path-close {
+  display: none;
+}
+
+/* ---------- Page shell ---------- */
+
+.ml-shell {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: var(--ml-s5);
+  align-items: start;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: var(--ml-s5) var(--ml-s6) var(--ml-s7);
+}
+
+/* ---------- The path ---------- */
+
+.ml-path {
+  position: sticky;
+  top: var(--ml-s5);
+  max-height: calc(100vh - 2 * var(--ml-s5));
+  overflow-y: auto;
+  padding: var(--ml-s4);
+  background: var(--ml-surface);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+}
+
+.ml-path .ml-cap {
+  margin-bottom: var(--ml-s2);
+}
+
+.ml-levels {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.ml-level {
+  display: flex;
+  gap: 10px;
+  padding: 9px 6px;
+  border-radius: 8px;
+}
+
+.ml-level.is-here {
+  background: color-mix(in srgb, var(--ml-cyan) 12%, transparent);
+}
+
+.ml-lv {
+  min-width: 22px;
+  padding-top: 2px;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  color: var(--ml-cyan);
+}
+
+.ml-lt {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ml-strong);
+  line-height: 1.35;
+}
+
+.ml-lessons {
+  list-style: none;
+  padding: 0;
+  margin-top: 3px;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.ml-lessons li {
+  display: inline;
+}
+
+.ml-lessons li + li::before {
+  content: ' · ';
+  color: var(--ml-muted);
+}
+
+.ml-lessons a {
+  color: var(--ml-muted);
+  text-decoration: none;
+}
+
+.ml-lessons a:hover {
+  color: var(--ml-ink);
+  text-decoration: underline;
+}
+
+.ml-lessons a.is-done {
+  color: var(--ml-ink);
+}
+
+.ml-lessons a.is-done::after {
+  content: '\2009\2713';
+  color: var(--ml-cyan);
+}
+
+.ml-lessons a[aria-current='page'] {
+  color: var(--ml-cyan);
+  font-weight: 600;
+}
+
+.ml-level.is-soon .ml-lt,
+.ml-level.is-soon .ml-lv {
+  color: var(--ml-muted);
+}
+
+.ml-topics {
+  margin-top: 3px;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--ml-muted);
+}
+
+.ml-soon {
+  margin-top: 2px;
+  font-family: var(--ml-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ml-muted);
+}
+
+/* ---------- Lesson: shared pieces ---------- */
+
+.lesson {
+  min-width: 0;
+}
+
+.lesson-head {
+  max-width: 68ch;
+}
+
+.lesson-head .crumbs {
+  margin-bottom: var(--ml-s2);
+}
+
+.lesson-head .crumbs a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.lesson-head .crumbs a:hover {
+  color: var(--ml-ink);
+  text-decoration: underline;
+}
+
+.lesson-head h1 {
+  font-size: var(--ml-t-h1);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--ml-strong);
+  font-weight: 700;
+}
+
+.promise {
+  margin-top: var(--ml-s2);
+  font-size: var(--ml-t-lede);
+  color: var(--ml-ink);
+}
+
+.meta {
+  margin-top: var(--ml-s2);
+  font-size: var(--ml-t-small);
+  color: var(--ml-muted);
+}
+
+.overview {
+  max-width: 68ch;
+  margin-top: var(--ml-s5);
+  color: var(--ml-ink);
+}
+
+.overview p + p,
+.overview p + ul,
+.overview h2 + p {
+  margin-top: var(--ml-s3);
+}
+
+.overview p + h2,
+.overview ul + h2 {
+  margin-top: var(--ml-s5);
+}
+
+.overview h2,
+.quiz > h2,
+.complete h2,
+.complete h3 {
+  font-size: 1.125rem;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--ml-strong);
+}
+
+.overview ul,
+.complete ul,
+.complete ol {
+  padding-left: 1.25em;
+}
+
+.overview li + li,
+.complete li + li {
+  margin-top: var(--ml-s1);
+}
+
+/* Steps as a plain reading list (no JS, or the visual failed to load). */
+.steps {
+  list-style: none;
+  padding: 0;
+}
+
+.step h2 {
+  font-size: var(--ml-t-h2);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+  color: var(--ml-strong);
+}
+
+.step .lede {
+  margin-top: var(--ml-s2);
+  max-width: 60ch;
+  font-size: var(--ml-t-lede);
+  color: var(--ml-muted);
+}
+
+.happening {
+  font-size: var(--ml-t-info);
+}
+
+.happening::before {
+  content: 'What is happening';
+  display: block;
+  margin-bottom: var(--ml-s2);
+}
+
+.happening p + p {
+  margin-top: var(--ml-s2);
+}
+
+/* While the stage is live it draws the table, so the copy in the side card
+   is kept for screen readers only. Without JS, or if the stage fails, it shows. */
+.lesson.is-live:not(.stage-failed) .data-table {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* A small data table inside a step's side card. */
+.data-table {
+  margin-top: var(--ml-s3);
+  border-collapse: collapse;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table caption {
+  text-align: left;
+  padding-bottom: var(--ml-s1);
+  color: var(--ml-muted);
+}
+
+.data-table th,
+.data-table td {
+  padding: 3px 10px 3px 0;
+  text-align: right;
+  font-weight: 400;
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+  text-align: left;
+}
+
+.data-table thead th {
+  color: var(--ml-muted);
+  border-bottom: 1px solid var(--ml-line);
+}
+
+.data-table tbody th {
+  color: var(--ml-muted);
+}
+
+.maths {
+  font-size: var(--ml-t-info);
+}
+
+.maths > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--ml-s2);
+  font-weight: 600;
+  color: var(--ml-strong);
+  cursor: pointer;
+  list-style: none;
+  border-radius: 4px;
+}
+
+.maths > summary::-webkit-details-marker {
+  display: none;
+}
+
+.maths > summary::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 5px solid currentColor;
+  border-top: 4.5px solid transparent;
+  border-bottom: 4.5px solid transparent;
+  transition: transform var(--ml-fast) var(--ml-ease);
+}
+
+.maths[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.maths[open] > summary {
+  margin-bottom: var(--ml-s3);
+}
+
+.maths p + p,
+.maths .eq + p,
+.maths p + .eq {
+  margin-top: var(--ml-s2);
+}
+
+.maths p {
+  color: var(--ml-muted);
+}
+
+.eq {
+  padding: 10px 12px;
+  border-left: 3px solid var(--ml-cyan);
+  background: color-mix(in srgb, var(--ml-cyan) 8%, transparent);
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-info);
+  color: var(--ml-strong);
+  overflow-x: auto;
+}
+
+/* In the no-JS reading list, each step is a block of its own. */
+html:not(.js) .step,
+.stage-failed .step {
+  padding: var(--ml-s5) 0;
+  border-top: 1px solid var(--ml-line);
+}
+
+html:not(.js) .step .happening,
+html:not(.js) .step .maths,
+.stage-failed .step .happening,
+.stage-failed .step .maths {
+  margin-top: var(--ml-s4);
+  max-width: 68ch;
+}
+
+html:not(.js) .stage,
+.stage-failed .stage {
+  display: none;
+}
+
+html:not(.js) .steps {
+  margin-top: var(--ml-s6);
+}
+
+/* ---------- The stage ---------- */
+
+.stage {
+  padding: 14px;
+  background: var(--ml-surface);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+}
+
+#stage-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 600 / 340;
+  overflow: visible;
+  font-family: var(--ml-mono);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ml-s3) var(--ml-s4);
+  margin-top: var(--ml-s2);
+  padding-top: var(--ml-s3);
+  border-top: 1px solid var(--ml-line);
+  font-family: var(--ml-mono);
+  font-size: 0.75rem;
+  color: var(--ml-muted);
+}
+
+.ml-nav {
+  display: flex;
+  gap: var(--ml-s2);
+}
+
+.ml-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 34px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  background: transparent;
+  color: var(--ml-ink);
+  cursor: pointer;
+  transition: border-color var(--ml-fast) var(--ml-ease), background-color var(--ml-fast) var(--ml-ease);
+}
+
+.ml-nav button:hover:not(:disabled) {
+  border-color: var(--ml-muted);
+  background: color-mix(in srgb, var(--ml-ink) 6%, transparent);
+}
+
+.ml-nav button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ml-nav .ml-play {
+  min-width: 82px;
+  background: var(--ml-cyan);
+  border-color: var(--ml-cyan);
+  color: var(--ml-bg);
+  font-weight: 600;
+}
+
+.ml-nav .ml-play:hover:not(:disabled) {
+  background: var(--ml-cyan-2);
+  border-color: var(--ml-cyan-2);
+}
+
+.ml-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ml-s3) var(--ml-s4);
+  min-width: 0;
+}
+
+.ml-tools:empty {
+  display: none;
+}
+
+/* Lesson controls inside the tools slot: label + range + live value. */
+.ml-tools label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ml-s2);
+}
+
+.ml-tools output,
+.ml-tools b {
+  min-width: 3ch;
+  color: var(--ml-ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.ml-tools input[type='range'] {
+  width: 120px;
+  accent-color: var(--ml-cyan);
+}
+
+.ml-tools button {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  background: transparent;
+  color: var(--ml-ink);
+  cursor: pointer;
+  transition: border-color var(--ml-fast) var(--ml-ease);
+}
+
+.ml-tools button:hover {
+  border-color: var(--ml-muted);
+}
+
+.ml-tools button[aria-pressed='true'] {
+  border-color: var(--ml-cyan);
+  color: var(--ml-cyan);
+}
+
+.ml-tools select {
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  background: var(--ml-bg);
+  color: var(--ml-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ml-tools select:hover {
+  border-color: var(--ml-muted);
+}
+
+.ml-dots {
+  margin-left: auto;
+  display: flex;
+  gap: 0;
+}
+
+.ml-dot {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.ml-dot::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ml-muted);
+  transition: background-color var(--ml-fast) var(--ml-ease), border-color var(--ml-fast) var(--ml-ease);
+}
+
+.ml-dot.is-seen::before {
+  background: var(--ml-muted);
+}
+
+/* The current step is larger and ringed, not only cyan. */
+.ml-dot[aria-current='step']::before {
+  width: 11px;
+  height: 11px;
+  background: var(--ml-cyan);
+  border-color: var(--ml-cyan);
+  box-shadow: 0 0 0 2px var(--ml-surface), 0 0 0 3.5px var(--ml-cyan);
+}
+
+.ml-dot:hover::before {
+  border-color: var(--ml-ink);
+}
+
+.ml-dot:focus-visible {
+  outline-offset: 0;
+}
+
+/* SVG primitives lessons can share. */
+#stage-svg .axis {
+  stroke: var(--ml-muted);
+  stroke-width: 1.2;
+}
+
+#stage-svg .tick,
+#stage-svg .ax,
+#stage-svg text {
+  fill: var(--ml-muted);
+  font-size: 11px;
+}
+
+#stage-svg .grid {
+  stroke: var(--ml-line);
+  stroke-width: 1;
+}
+
+#stage-svg .series-a {
+  stroke: var(--ml-cyan);
+  fill: none;
+  stroke-width: 2.2;
+}
+
+#stage-svg .series-b {
+  stroke: var(--ml-violet);
+  fill: none;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+#stage-svg .curve {
+  stroke: var(--ml-ink);
+  fill: none;
+  stroke-width: 2.2;
+  opacity: 0.8;
+}
+
+#stage-svg .dot {
+  fill: var(--ml-cyan);
+}
+
+#stage-svg .dot-b {
+  fill: var(--ml-violet);
+}
+
+#stage-svg .note {
+  fill: var(--ml-violet);
+  font-size: 12px;
+}
+
+#stage-svg .value {
+  fill: var(--ml-strong);
+  font-size: 12px;
+}
+
+#stage-svg .handle {
+  cursor: grab;
+}
+
+#stage-svg .handle:active {
+  cursor: grabbing;
+}
+
+/* ---------- Lesson layout with JS ----------
+   Three states on main.lesson:
+   - html.js only (js-flag.js ran, ml.js not yet): the grid with the stage box
+     reserved and step 1's title showing, so nothing jumps when the engine starts.
+   - .is-live (the engine is running): one step at a time.
+   - .stage-failed (no stage, or ml.js never went live; js-flag.js sets it at
+     DOMContentLoaded): the plain reading list, every step visible. */
+
+.js .lesson:not(.stage-failed) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  /* A tall side card grows the stage row, not the title row, so the stage
+     stays right under the step title. */
+  grid-template-rows: auto auto 1fr auto auto auto;
+  grid-template-areas:
+    'head  head'
+    'smain side'
+    'stage side'
+    'over  over'
+    'quiz  quiz'
+    'done  done';
+  column-gap: var(--ml-s5);
+  align-items: start;
+}
+
+.js .lesson:not(.stage-failed) > .lesson-head {
+  grid-area: head;
+}
+
+.js .lesson:not(.stage-failed) > .overview {
+  grid-area: over;
+  margin-top: var(--ml-s7);
+}
+
+.js .lesson:not(.stage-failed) > .stage {
+  grid-area: stage;
+}
+
+.js .lesson:not(.stage-failed) > .quiz {
+  grid-area: quiz;
+}
+
+.js .lesson:not(.stage-failed) > .complete {
+  grid-area: done;
+}
+
+/* Before the engine is live: steps sit in the title slot, step 1 only. */
+.js .lesson:not(.is-live):not(.stage-failed) > .steps {
+  grid-area: smain;
+  margin: var(--ml-s5) 0 var(--ml-s4);
+  padding-top: calc(var(--ml-t-label) * 1.6 + var(--ml-s2));
+}
+
+.js .lesson:not(.is-live):not(.stage-failed) .step:not(:first-child),
+.js .lesson:not(.is-live):not(.stage-failed) .step > .happening,
+.js .lesson:not(.is-live):not(.stage-failed) .step > .maths {
+  display: none;
+}
+
+/* Live: only the current step, its parts placed by the grid. */
+.lesson.is-live:not(.stage-failed) .steps {
+  display: contents;
+}
+
+.lesson.is-live:not(.stage-failed) .step {
+  display: none;
+}
+
+.lesson.is-live:not(.stage-failed) .step.is-current {
+  display: contents;
+}
+
+.lesson.is-live:not(.stage-failed) .step-main {
+  grid-area: smain;
+  margin: var(--ml-s5) 0 var(--ml-s4);
+  scroll-margin-top: var(--ml-s4);
+}
+
+.lesson.is-live:not(.stage-failed) .step-count {
+  margin-bottom: var(--ml-s2);
+}
+
+.lesson.is-live:not(.stage-failed) .step-side {
+  grid-area: side;
+  margin-top: var(--ml-s5);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lesson.is-live:not(.stage-failed) .step-side > .happening,
+.lesson.is-live:not(.stage-failed) .step-side > .maths {
+  padding: 14px var(--ml-s4);
+  background: var(--ml-surface);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+}
+
+.lesson.is-live:not(.stage-failed) .step.is-current .step-main,
+.lesson.is-live:not(.stage-failed) .step.is-current .step-side {
+  animation: ml-step-in var(--ml-mid) var(--ml-ease);
+}
+
+@keyframes ml-step-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The reading-list fallback after the engine has shaped the steps. */
+.stage-failed .steps {
+  margin-top: var(--ml-s6);
+}
+
+.stage-failed .step-side {
+  margin-top: var(--ml-s4);
+}
+
+.stage-failed .step-count {
+  display: none;
+}
+
+/* ---------- Quick check ---------- */
+
+.quiz {
+  margin-top: var(--ml-s7);
+  max-width: 68ch;
+}
+
+.quiz > h2 {
+  margin-bottom: var(--ml-s3);
+}
+
+.q + .q {
+  margin-top: var(--ml-s5);
+}
+
+.q fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.q legend {
+  padding: 0;
+  margin-bottom: var(--ml-s3);
+  font-weight: 600;
+  color: var(--ml-strong);
+}
+
+.q label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  background: var(--ml-surface);
+  cursor: pointer;
+  transition: border-color var(--ml-fast) var(--ml-ease);
+}
+
+.q label + label {
+  margin-top: var(--ml-s2);
+}
+
+.q label:hover {
+  border-color: var(--ml-muted);
+}
+
+.q input[type='radio'] {
+  margin: 0;
+  accent-color: var(--ml-cyan);
+  flex: none;
+}
+
+.q label:has(input:focus-visible) {
+  outline: 2px solid var(--ml-cyan);
+  outline-offset: 2px;
+}
+
+.q label:has(input:checked) {
+  border-color: var(--ml-ink);
+}
+
+/* After an answer: the right option is marked in words as well as colour. */
+.q[data-state] label.is-answer {
+  border-color: var(--ml-cyan);
+}
+
+.q[data-state] label.is-answer::after {
+  content: 'Answer';
+  margin-left: auto;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ml-cyan);
+}
+
+.q-verdict {
+  margin-top: var(--ml-s3);
+  font-weight: 600;
+  color: var(--ml-strong);
+}
+
+.q-verdict:empty {
+  display: none;
+}
+
+.q[data-state='right'] .q-verdict {
+  color: var(--ml-cyan);
+}
+
+.why {
+  margin-top: var(--ml-s2);
+  color: var(--ml-ink);
+}
+
+html:not(.js) .why {
+  color: var(--ml-muted);
+  font-size: var(--ml-t-info);
+}
+
+/* ---------- Lesson complete ---------- */
+
+.complete {
+  margin-top: var(--ml-s7);
+  max-width: 68ch;
+  padding: var(--ml-s5);
+  background: var(--ml-surface);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+}
+
+.complete > * + * {
+  margin-top: var(--ml-s4);
+}
+
+.complete h3 {
+  font-size: var(--ml-t-body);
+}
+
+.complete h3 + ul,
+.complete h3 + ol,
+.complete h3 + p {
+  margin-top: var(--ml-s2);
+}
+
+.complete .reading {
+  font-size: var(--ml-t-info);
+}
+
+.complete .data-note {
+  font-size: var(--ml-t-small);
+  color: var(--ml-muted);
+}
+
+.next-lesson {
+  display: inline-block;
+  font-weight: 600;
+}
+
+.coffee-line {
+  padding-top: var(--ml-s4);
+  border-top: 1px solid var(--ml-line);
+  font-size: var(--ml-t-small);
+  color: var(--ml-muted);
+}
+
+.coffee-line button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ml-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+}
+
+.coffee-line button:hover {
+  text-decoration-thickness: 2px;
+}
+
+html:not(.js) .coffee-line {
+  display: none;
+}
+
+/* ---------- Coffee (ported from the home page) ---------- */
+
+.coffee-float {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--ml-surface);
+  text-decoration: none;
+  box-shadow: 0 0 0 1px var(--ml-line), 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.coffee-float:hover,
+.coffee-float:focus-visible {
+  transform: translateY(-1px);
+}
+
+.coffee-float:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ml-bg), 0 0 0 4px var(--ml-cyan);
+}
+
+.coffee-float img {
+  display: block;
+}
+
+.coffee-label {
+  position: absolute;
+  right: 58px;
+  padding: 8px 10px;
+  border-radius: var(--ml-radius-sm);
+  background: var(--ml-surface);
+  color: var(--ml-ink);
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.coffee-float:hover .coffee-label,
+.coffee-float:focus-visible .coffee-label {
+  opacity: 1;
+}
+
+.coffee-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 84px;
+  z-index: 1001;
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100vh - 108px);
+  max-height: calc(100dvh - 108px - var(--controls-h));
+  background: var(--ml-surface);
+  border: 1px solid var(--ml-line);
+  border-radius: 10px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.coffee-panel[hidden] {
+  display: none;
+}
+
+.coffee-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: var(--ml-strong);
+}
+
+.coffee-panel-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--ml-line);
+  background: var(--ml-bg);
+  color: var(--ml-ink);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.coffee-panel-close:hover,
+.coffee-panel-close:focus-visible {
+  color: var(--ml-cyan);
+  border-color: var(--ml-cyan);
+}
+
+.coffee-panel iframe {
+  border: 0;
+  width: 100%;
+  height: 600px;
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: var(--ml-radius-sm);
+  background: #f9f9f9;
+}
+
+.coffee-panel-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ml-muted);
+}
+
+/* ---------- Below 1100px: the info panels stack under the stage ---------- */
+
+@media (max-width: 1100px) {
+  .js .lesson:not(.stage-failed) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas:
+      'head'
+      'smain'
+      'stage'
+      'side'
+      'over'
+      'quiz'
+      'done';
+  }
+
+  .lesson.is-live:not(.stage-failed) .step-side {
+    margin-top: 14px;
+  }
+}
+
+/* ---------- Below 760px: Path drawer, full-width stage, sticky step bar ---------- */
+
+@media (max-width: 760px) {
+  :root {
+    --ml-t-h1: 1.75rem;
+    --ml-t-h2: 1.375rem;
+    --ml-t-lede: 1rem;
+  }
+
+  .ml-top {
+    gap: var(--ml-s3);
+    padding: 12px var(--ml-s4);
+  }
+
+  .ml-site,
+  .ml-progress-label {
+    display: none;
+  }
+
+  .ml-bar {
+    width: 56px;
+  }
+
+  .js .ml-path-toggle {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--ml-line);
+    border-radius: var(--ml-radius-sm);
+    background: transparent;
+    font-family: var(--ml-mono);
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .ml-shell {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--ml-s4) var(--ml-s4) var(--ml-s7);
+  }
+
+  html:not(.js) .ml-path {
+    position: static;
+    max-height: none;
+  }
+
+  .js .ml-path {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 950;
+    width: min(320px, 86vw);
+    max-height: none;
+    border-radius: 0 var(--ml-radius) var(--ml-radius) 0;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform var(--ml-mid) var(--ml-ease), visibility 0s linear var(--ml-mid);
+  }
+
+  .js.path-open .ml-path {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--ml-mid) var(--ml-ease);
+  }
+
+  .js .ml-path-close {
+    position: absolute;
+    top: var(--ml-s3);
+    right: var(--ml-s3);
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--ml-line);
+    border-radius: var(--ml-radius-sm);
+    background: transparent;
+    font-family: var(--ml-mono);
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .ml-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 940;
+    background: rgba(15, 23, 42, 0.7);
+  }
+
+  .ml-scrim[hidden] {
+    display: none;
+  }
+
+  .stage {
+    margin-left: calc(-1 * var(--ml-s4));
+    margin-right: calc(-1 * var(--ml-s4));
+    padding: var(--ml-s2) var(--ml-s2) 0;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  /* The step controls become a bar fixed to the bottom of the screen. */
+  .lesson.is-live:not(.stage-failed) .controls {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 800;
+    margin: 0;
+    padding: 10px var(--ml-s4) calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--ml-surface);
+    border-top: 1px solid var(--ml-line);
+  }
+
+  .ml-nav button {
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .ml-tools input[type='range'] {
+    width: 100px;
+  }
+
+  .ml-tools select,
+  .ml-tools button {
+    height: 44px;
+  }
+
+  .ml-dot {
+    width: 28px;
+    height: 44px;
+  }
+
+  /* The 600-unit stage shrinks to about 0.6x on a phone, so axis text and
+     the shared .value and .note labels grow to 15 user units (about 9px on
+     screen). Lesson text with any other class keeps its own size; a lesson
+     that wants the phone size for its own labels adds class "stage-text". */
+  #stage-svg .axes text,
+  #stage-svg .value,
+  #stage-svg .note,
+  #stage-svg .stage-text {
+    font-size: 15px;
+  }
+
+  /* Room to scroll the last lines clear of the coffee cup. */
+  body {
+    padding-bottom: calc(var(--controls-h) + 72px);
+  }
+
+  /* The step's side cards sit just above the bar, where the cup floats:
+     keep their text out of the cup's column (right 24px + 48px). */
+  .lesson.is-live:not(.stage-failed) .step-side > .happening,
+  .lesson.is-live:not(.stage-failed) .step-side > .maths {
+    padding-right: 64px;
+  }
+
+  .coffee-float {
+    bottom: calc(24px + var(--controls-h));
+  }
+
+  .coffee-panel {
+    right: 12px;
+    bottom: calc(84px + var(--controls-h));
+  }
+}
+
+/* ---------- Reduced motion: jump to end states ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+}
+
+/* ---------- Hub pages: the landing page and the notation page ---------- */
+
+.hub {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--ml-s7) var(--ml-s6) 96px;
+}
+
+.hub-head {
+  max-width: 68ch;
+}
+
+.hub-cap a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.hub-cap a:hover {
+  color: var(--ml-ink);
+  text-decoration: underline;
+}
+
+.hub-cap,
+.hub-n,
+.hub-soon,
+.hub .sym-k {
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ml-muted);
+}
+
+.hub-head h1 {
+  margin-top: var(--ml-s2);
+  font-size: 2.625rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  color: var(--ml-strong);
+}
+
+.hub-head .promise {
+  margin-top: var(--ml-s3);
+  font-size: 1.1875rem;
+  line-height: 1.5;
+}
+
+.hub-intro {
+  margin-top: var(--ml-s5);
+}
+
+.hub-intro p + p {
+  margin-top: var(--ml-s3);
+}
+
+.hub-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ml-s3);
+  margin-top: var(--ml-s6);
+}
+
+/* One line each; a long "Continue: …" title is cut with an ellipsis, while the
+   link text (its accessible name) stays whole. */
+.hub-btn {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 26px;
+  padding: 8px 18px;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  color: var(--ml-ink);
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color var(--ml-fast) var(--ml-ease), background-color var(--ml-fast) var(--ml-ease);
+}
+
+.hub-btn:hover {
+  border-color: var(--ml-muted);
+}
+
+.hub-btn.is-primary {
+  background: var(--ml-cyan);
+  border-color: var(--ml-cyan);
+  color: var(--ml-bg);
+  font-weight: 600;
+}
+
+.hub-btn.is-primary:hover {
+  background: var(--ml-cyan-2);
+  border-color: var(--ml-cyan-2);
+}
+
+.hub-path-sec {
+  margin-top: 56px;
+}
+
+.hub h2 {
+  font-size: 1.375rem;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--ml-strong);
+}
+
+.hub-sub {
+  margin-top: var(--ml-s2);
+  max-width: 68ch;
+  font-size: var(--ml-t-info);
+  color: var(--ml-muted);
+}
+
+.hub-path {
+  list-style: none;
+  padding: 0;
+  margin-top: var(--ml-s5);
+  border-bottom: 1px solid var(--ml-line);
+}
+
+.hub-level {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  column-gap: var(--ml-s5);
+  padding: var(--ml-s5) 0;
+  border-top: 1px solid var(--ml-line);
+}
+
+.hub-level > :not(.hub-level-head) {
+  grid-column: 2;
+}
+
+.hub-level-head {
+  grid-row: 1 / span 2;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.hub-lv {
+  min-width: 22px;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-small);
+  color: var(--ml-cyan);
+}
+
+.hub-lt {
+  font-size: var(--ml-t-body);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ml-strong);
+}
+
+.hub-lessons {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--ml-s2);
+}
+
+.hub-lesson {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
+  grid-template-areas:
+    'n n'
+    'title promise';
+  column-gap: var(--ml-s5);
+  row-gap: 2px;
+  padding: 12px var(--ml-s4) 14px;
+  background: var(--ml-surface);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+  transition: border-color var(--ml-fast) var(--ml-ease);
+}
+
+.hub-lesson:hover {
+  border-color: var(--ml-muted);
+}
+
+.hub-lesson:has(a:focus-visible) {
+  outline: 2px solid var(--ml-cyan);
+  outline-offset: 2px;
+}
+
+.hub-n {
+  grid-area: n;
+  display: flex;
+  align-items: baseline;
+}
+
+.hub-lesson a {
+  grid-area: title;
+  color: var(--ml-strong);
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.hub-lesson a:focus-visible {
+  outline: none;
+}
+
+/* Without :has(), the ring goes back on the link itself. */
+@supports not selector(:has(*)) {
+  .hub-lesson a:focus-visible {
+    outline: 2px solid var(--ml-cyan);
+    outline-offset: 2px;
+  }
+}
+
+/* The whole row is the link's target. */
+.hub-lesson a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.hub-promise {
+  grid-area: promise;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--ml-muted);
+  padding-top: 1px;
+}
+
+.hub-done {
+  margin-left: auto;
+  padding-left: var(--ml-s3);
+  white-space: nowrap;
+  color: var(--ml-cyan);
+}
+
+.hub-done::before {
+  content: '\2713\2009';
+}
+
+.hub-lesson.is-done {
+  border-color: color-mix(in srgb, var(--ml-cyan) 45%, var(--ml-line));
+}
+
+.hub-level.is-soon .hub-lv,
+.hub-level.is-soon .hub-lt {
+  color: var(--ml-muted);
+}
+
+.hub-topics {
+  font-size: var(--ml-t-info);
+  color: var(--ml-muted);
+}
+
+.hub-soon {
+  margin-top: 2px;
+}
+
+.hub-foot {
+  margin-top: var(--ml-s7);
+  font-size: var(--ml-t-small);
+  color: var(--ml-muted);
+}
+
+/* Notation page */
+
+.hub .hub-toc {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ml-s2) var(--ml-s5);
+  margin-top: var(--ml-s5);
+  font-size: var(--ml-t-info);
+}
+
+.hub .sym-group {
+  margin-top: 56px;
+}
+
+.hub .sym-group > p {
+  margin-top: var(--ml-s2);
+  max-width: 68ch;
+  font-size: var(--ml-t-info);
+  color: var(--ml-muted);
+}
+
+.hub .sym-group > ul {
+  margin-top: var(--ml-s2);
+  max-width: 68ch;
+  padding-left: 1.25em;
+  font-size: var(--ml-t-info);
+  color: var(--ml-muted);
+}
+
+.hub .sym-group > ul li + li {
+  margin-top: var(--ml-s1);
+}
+
+.hub .sym-list {
+  margin: var(--ml-s4) 0 0;
+  border-bottom: 1px solid var(--ml-line);
+}
+
+.hub .sym {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  column-gap: var(--ml-s5);
+  padding: var(--ml-s4) 0;
+  border-top: 1px solid var(--ml-line);
+}
+
+.hub .sym dt {
+  font-size: 1.125rem;
+  color: var(--ml-strong);
+}
+
+.hub .sym dd {
+  margin: 0;
+  min-width: 0;
+  max-width: 68ch;
+}
+
+.hub .sym dd > p + p {
+  margin-top: 6px;
+}
+
+.hub .sym-eg,
+.hub .sym-where,
+.hub .sym-diff {
+  font-size: var(--ml-t-info);
+}
+
+.hub .sym-eg .katex {
+  color: var(--ml-strong);
+}
+
+.hub .sym-k {
+  margin-right: var(--ml-s2);
+}
+
+.hub .sym-where {
+  color: var(--ml-muted);
+}
+
+.hub .sym-diff {
+  padding-left: var(--ml-s3);
+  border-left: 2px solid var(--ml-muted);
+  color: var(--ml-ink);
+}
+
+.hub .callout {
+  margin-top: 56px;
+  max-width: 76ch;
+  padding: var(--ml-s5);
+  background: var(--ml-surface);
+  border: 1px solid var(--ml-line);
+  border-left: 3px solid var(--ml-cyan);
+  border-radius: var(--ml-radius);
+}
+
+.hub .callout > * + * {
+  margin-top: var(--ml-s3);
+}
+
+.hub .callout ul {
+  padding-left: 1.25em;
+}
+
+.hub .callout li + li {
+  margin-top: var(--ml-s1);
+}
+
+.hub .katex-display {
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+@media (max-width: 760px) {
+  .hub {
+    padding: var(--ml-s6) var(--ml-s4) 104px;
+  }
+
+  .hub-head h1 {
+    font-size: 2.125rem;
+  }
+
+  .hub-head .promise {
+    font-size: 1.0625rem;
+  }
+
+  /* One button per row, so a long "Continue: …" label never changes the
+     number of rows after load. */
+  .hub-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hub-level,
+  .hub .sym {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hub-level-head {
+    grid-row: auto;
+    margin-bottom: var(--ml-s3);
+  }
+
+  .hub-level > :not(.hub-level-head) {
+    grid-column: 1;
+  }
+
+  .hub-level.is-soon .hub-level-head {
+    margin-bottom: var(--ml-s1);
+  }
+
+  .hub-lesson {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'n'
+      'title'
+      'promise';
+  }
+
+  .hub .sym dt {
+    margin-bottom: var(--ml-s1);
+  }
+}
