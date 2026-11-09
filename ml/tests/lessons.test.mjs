@@ -497,3 +497,116 @@ test('lesson5 downhill arrow never ends higher than it starts', () => {
   assert.notEqual(lesson5.downhillArrow(0.5), null);
   assert.equal(lesson5.downhillArrow(1.99), null);
 });
+
+// ---------------------------------------------------------------- lesson 6
+
+import { mulberry32 as rng6, uniform as uniform6, randn as randn6 } from '../assets/maths.js';
+import * as lesson6 from '../linear-regression/stage.js';
+
+const lesson6Html = readFileSync(new URL('../linear-regression/index.html', import.meta.url), 'utf8');
+
+test('lesson6 regressionData is seed 11, n = 25, x drawn before y', () => {
+  const { xs, ys } = lesson6.regressionData();
+  assert.equal(xs.length, 25);
+  assert.equal(ys.length, 25);
+  const r = rng6(11);
+  for (let i = 0; i < 25; i++) {
+    const x = uniform6(r, 0, 10);
+    assert.equal(xs[i], x);
+    assert.equal(ys[i], 4 + 1.5 * x + 2 * randn6(r));
+  }
+  assert.deepEqual(lesson6.regressionData(), { xs, ys });
+});
+
+test('lesson6 user SSE is never below OLS SSE', () => {
+  const { xs, ys } = lesson6.regressionData();
+  const ols = lesson6.fitLine(xs, ys);
+  const best = lesson6.sse(xs, ys, ols);
+  const r = rng6(2024);
+  // 200 random lines anywhere.
+  for (let k = 0; k < 200; k++) {
+    const line = { a: uniform6(r, -20, 40), b: uniform6(r, -6, 6) };
+    assert.ok(lesson6.sse(xs, ys, line) >= best, `a ${line.a}, b ${line.b}`);
+  }
+  // 200 lines the reader can make with the two handles.
+  for (let k = 0; k < 200; k++) {
+    const line = lesson6.lineFromHandles(uniform6(r, lesson6.Y_LO, lesson6.Y_HI), uniform6(r, lesson6.Y_LO, lesson6.Y_HI));
+    assert.ok(lesson6.sse(xs, ys, line) >= best);
+  }
+  // 200 lines very close to the least-squares line.
+  for (let k = 0; k < 200; k++) {
+    const line = { a: ols.a + uniform6(r, -1e-4, 1e-4), b: ols.b + uniform6(r, -1e-5, 1e-5) };
+    assert.ok(lesson6.sse(xs, ys, line) >= best - 1e-9);
+  }
+  // The flat line at the mean of y is one of the candidates, so SSE <= SST.
+  assert.ok(best <= lesson6.sst(ys));
+  // "Solve" lands exactly on the least-squares line.
+  const from = lesson6.lineFromHandles(15, 9);
+  assert.deepEqual(lesson6.solveFrame(from, ols, 1), ols);
+  const f = olsFit(xs, ys);
+  assert.equal(lesson6.solveFrame(from, ols, 1).a, f.intercept);
+  assert.equal(lesson6.solveFrame(from, ols, 1).b, f.slope);
+  assert.deepEqual(lesson6.solveFrame(from, ols, 0), from);
+});
+
+test('lesson6 R2 equals squared correlation for simple regression', () => {
+  const { xs, ys } = lesson6.regressionData();
+  const ols = lesson6.fitLine(xs, ys);
+  const r2 = lesson6.rSquared(xs, ys, ols);
+  const r = lesson6.correlation(xs, ys);
+  assert.ok(Math.abs(r2 - r * r) < 1e-12, `${r2} vs ${r * r}`);
+  assert.ok(Math.abs(r2 - olsFit(xs, ys).r2) < 1e-12);
+  assert.ok(r2 > 0 && r2 < 1);
+  // For any other line, 1 − SSE/SST is lower than r², so the identity needs the least-squares line.
+  assert.ok(lesson6.rSquared(xs, ys, { a: ols.a + 1, b: ols.b }) < r * r);
+  // Also on other seeds.
+  for (const seed of [1, 2, 3]) {
+    const d = lesson6.regressionData(seed);
+    const l = lesson6.fitLine(d.xs, d.ys);
+    const c = lesson6.correlation(d.xs, d.ys);
+    assert.ok(Math.abs(lesson6.rSquared(d.xs, d.ys, l) - c * c) < 1e-12);
+  }
+});
+
+test('lesson6 closed form matches the partial derivatives being zero', () => {
+  const { xs, ys } = lesson6.regressionData();
+  const ols = lesson6.fitLine(xs, ys);
+  const h = 1e-5;
+  const dA = (lesson6.sse(xs, ys, { a: ols.a + h, b: ols.b }) - lesson6.sse(xs, ys, { a: ols.a - h, b: ols.b })) / (2 * h);
+  const dB = (lesson6.sse(xs, ys, { a: ols.a, b: ols.b + h }) - lesson6.sse(xs, ys, { a: ols.a, b: ols.b - h })) / (2 * h);
+  assert.ok(Math.abs(dA) < 1e-6 && Math.abs(dB) < 1e-6, `${dA} ${dB}`);
+  const p = lesson6.pageValues(xs, ys);
+  assert.equal(p['a-hat'], ols.a.toFixed(2));
+  assert.equal(p['b-hat'], ols.b.toFixed(2));
+});
+
+test('lesson6 read-out rows and page', () => {
+  const { xs, ys } = lesson6.regressionData();
+  const ols = lesson6.fitLine(xs, ys);
+  const lines = [lesson6.lineFromHandles(lesson6.Y_LO, lesson6.Y_HI), lesson6.lineFromHandles(lesson6.Y_HI, lesson6.Y_LO), lesson6.START, ols];
+  for (let i = 0; i < 6; i++) {
+    for (const user of lines) {
+      for (const x0 of [lesson6.X0_LO(xs), lesson6.X0_HI(xs)]) {
+        for (const from of ['line', 'mean']) {
+          for (const row of lesson6.readout(i, { xs, ys, user, line: ols, x0, from })) {
+            assert.ok(!/NaN|undefined|Infinity/.test(row), row);
+            assert.ok(row.length <= 22, `row too long for a phone: "${row}"`);
+          }
+        }
+      }
+    }
+  }
+  // Step 5's slider stays inside the data, so x and x + 1 are both within it.
+  assert.ok(lesson6.X0_LO(xs) >= Math.min(...xs));
+  assert.ok(lesson6.X0_HI(xs) + 1 <= Math.max(...xs));
+  assert.equal(lesson6Html.match(/class="step"/g).length, 6);
+  const answer = (id) => lesson6Html.match(new RegExp(`<form class="q" id="${id}" data-answer="([^"]+)"`))[1];
+  assert.equal(answer('q1'), 'squares');
+  assert.equal(answer('q2'), 'per-unit');
+  const note = lesson6Html.match(/<p class="data-note">([\s\S]*?)<\/p>/)[1];
+  assert.match(note, /seed 11/);
+  assert.match(note, /4 \+ 1\.5x/);
+  // Every data-value span in the page has a value.
+  const p = lesson6.pageValues(xs, ys);
+  for (const [, key] of lesson6Html.matchAll(/data-value="([^"]+)"/g)) assert.ok(key in p, key);
+});
