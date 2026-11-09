@@ -1,11 +1,13 @@
 // Tests for the two hub pages: the landing page /ml/ and the notation page.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { PATH, TOTAL_LIVE, lessonHref, firstNotDone, startLink } from '../assets/path.js';
+import { PATH, TOTAL_LIVE, lessonHref, firstNotDone, startLink, nextLesson } from '../assets/path.js';
 import { mean, variance, sd, olsFit, mse, mae } from '../assets/maths.js';
+import { sigmoid, logLoss, gini, accuracy, confusion } from '../assets/classify.js';
+import { inertia, pca2 } from '../assets/unsupervised.js';
 
 const ML = fileURLToPath(new URL('..', import.meta.url));
 const read = (p) => readFileSync(ML + p, 'utf8');
@@ -91,7 +93,7 @@ test('landing start link goes to the first lesson', () => {
   assert.ok(stripTags(m[2]).includes('L0'));
 });
 
-test('landing JSON-LD describes the course and its ten lessons', () => {
+test('landing JSON-LD describes the course and every live lesson', () => {
   const scripts = [...landing().matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
   const inline = scripts.filter((s) => !/\bsrc=/.test(s[1]));
   assert.equal(inline.length, 1, 'one inline script only');
@@ -200,4 +202,175 @@ test('notation worked examples match the computed values', () => {
   // The variance box quotes both versions in words.
   const box = stripTags(/<section class="callout"[\s\S]*?<\/section>/.exec(notation())[0]);
   assert.ok(box.includes(`the population variance is about ${f2(variance(xs, { sample: false }))} and the sample variance is ${f2(variance(xs))}`));
+});
+
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
+
+test('TOTAL_LIVE equals the count of lessons in PATH', () => {
+  assert.equal(TOTAL_LIVE, PATH.flatMap((l) => l.lessons).length);
+  assert.equal(TOTAL_LIVE, 19);
+});
+
+test('L3 is live: not marked soon, nine lessons, each with a page whose h1 is its title', () => {
+  const l3 = PATH.find((l) => l.level === 'L3');
+  assert.ok(!l3.soon);
+  assert.equal(l3.topics, undefined);
+  assert.deepEqual(l3.lessons.map((l) => l.slug), [
+    'k-nearest-neighbours', 'logistic-regression', 'naive-bayes', 'support-vector-machines',
+    'decision-trees', 'random-forests', 'gradient-boosting', 'k-means', 'pca',
+  ]);
+  for (const l of l3.lessons) {
+    const html = read(`${l.slug}/index.html`);
+    assert.equal(stripTags(/<h1>([\s\S]*?)<\/h1>/.exec(html)[1]), l.title, l.slug);
+  }
+});
+
+test('landing intro says which levels are ready', () => {
+  const sub = stripTags(/<p class="hub-sub">([\s\S]*?)<\/p>/.exec(landing())[1]);
+  assert.ok(sub.includes('L0 to L3 are ready; L4 to L6 are coming next.'), sub);
+});
+
+test('landing numbers the lessons in order and quotes each page\'s promise and time', () => {
+  const block = pathBlock(landing());
+  const items = [...block.matchAll(/<li class="hub-lesson">([\s\S]*?)<\/li>/g)].map((m) => m[1]);
+  assert.equal(items.length, TOTAL_LIVE);
+  items.forEach((item, i) => {
+    const slug = /data-slug="([^"]+)"/.exec(item)[1];
+    const page = read(`${slug}/index.html`);
+    const mins = /<p class="meta">About (\d+) minutes/.exec(page)[1];
+    assert.equal(stripTags(/<p class="hub-n">([\s\S]*?)<\/p>/.exec(item)[1]), `Lesson ${i + 1} · About ${mins} min`);
+    assert.equal(
+      stripTags(/<p class="hub-promise">([\s\S]*?)<\/p>/.exec(item)[1]),
+      stripTags(/<p class="promise">([\s\S]*?)<\/p>/.exec(page)[1]),
+      slug,
+    );
+  });
+});
+
+test("overfitting's next link points to /ml/k-nearest-neighbours/", () => {
+  const html = read('overfitting/index.html');
+  assert.ok(html.includes('<a class="next-lesson" href="/ml/k-nearest-neighbours/">Next lesson: k-nearest neighbours →</a>'));
+  assert.ok(!html.includes('Back to the path'));
+});
+
+test('every lesson\'s next link follows the path and lands on a page that exists', () => {
+  for (const l of LIVE) {
+    const html = read(`${l.slug}/index.html`);
+    const links = [...html.matchAll(/<a class="next-lesson" href="([^"]+)">/g)].map((m) => m[1]);
+    assert.equal(links.length, 1, l.slug);
+    const next = nextLesson(l.slug);
+    assert.equal(links[0], next ? lessonHref(next.slug) : '/ml/', l.slug);
+    assert.ok(existsSync(`${ROOT}${links[0].slice(1)}index.html`), links[0]);
+  }
+});
+
+test('sitemap lists every lesson URL in PATH', () => {
+  const xml = readFileSync(`${ROOT}sitemap.xml`, 'utf8');
+  for (const l of LIVE) {
+    assert.ok(
+      new RegExp(`<url><loc>https://rejusamjohn\\.pages\\.dev/ml/${l.slug}/</loc><lastmod>\\d{4}-\\d{2}-\\d{2}</lastmod></url>`).test(xml),
+      `sitemap has ${l.slug}`,
+    );
+  }
+});
+
+test('home page card names levels 0 to 3', () => {
+  const html = readFileSync(`${ROOT}index.html`, 'utf8');
+  assert.ok(html.includes('<div class="project-label">Interactive guide · Levels 0–3 live</div>'));
+  assert.ok(html.includes('classic models such as decision trees, random forests, k-means and PCA'));
+});
+
+// Every HTML page under ml/, vendor files aside.
+function pages(dir = ML) {
+  const out = [];
+  for (const name of readdirSync(dir)) {
+    if (name === 'vendor' || name === 'node_modules') continue;
+    const p = `${dir}${name}`;
+    if (statSync(p).isDirectory()) out.push(...pages(`${p}/`));
+    else if (name.endsWith('.html')) out.push(p);
+  }
+  return out;
+}
+
+test('ISLR is cited with its four authors', () => {
+  const all = pages();
+  assert.ok(all.length > TOTAL_LIVE);
+  let cites = 0;
+  for (const p of all) {
+    const html = readFileSync(p, 'utf8');
+    assert.ok(!/Taylor/.test(html), `${p} names Taylor`);
+    assert.ok(!/Hastie, Hastie/.test(html), p);
+    for (const m of html.matchAll(/([^>]*)<cite>An Introduction to Statistical Learning<\/cite>/g)) {
+      cites++;
+      assert.match(m[1], /James, Witten, Hastie &amp; Tibshirani, $/, p);
+    }
+  }
+  assert.ok(cites > 0);
+});
+
+test('notation page lists the Level 3 symbols', () => {
+  const html = notation();
+  const tex = new Set([...html.matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1])));
+  const has = (t) => [...tex].some((s) => s.includes(t));
+  for (const t of [
+    'y \\in \\{0, 1\\}', 'y_i = \\pm 1', '\\hat{p}', '\\sigma(z) = \\frac{1}{1 + e^{-z}}', '\\mathbf{w}\\cdot\\mathbf{x} + b',
+    'N_k(\\mathbf{x})', '\\hat{k}', 'K', 'C', '\\alpha_i', '\\xi_i', 'K(\\mathbf{x}_i, \\mathbf{x}_j)',
+    'G = 1 - \\sum_k p_k^2', 'G_{\\text{split}}', 'B', '\\hat{f}_b', 'S_b', '\\rho', 'M', 'F_m', 'h_m', 'r_{mi}',
+    'c(i)', '\\boldsymbol{\\mu}_k', 'S', '\\gamma_1 \\ge \\gamma_2', '\\mathbf{v}', 'e_k', '\\operatorname{tr}',
+    '\\mathbf{1}[\\cdot]', '\\propto', '\\prod', '\\ln', 'P(c \\mid \\mathbf{x})', 'p(x_j \\mid c)', '\\in', '\\notin', '\\arg\\max',
+  ]) assert.ok(has(t), `notation page shows ${t}`);
+  for (const id of ['label', 'phat', 'sigmoid', 'wb', 'K', 'C', 'gini', 'B', 'Fm', 'rmi', 'S', 'accuracy', 'inertia', 'indicator', 'clashes']) {
+    assert.ok(html.includes(`id="${id}"`), `notation page has #${id}`);
+  }
+  for (const l of PATH.find((x) => x.level === 'L3').lessons) {
+    assert.ok(html.includes(`href="${lessonHref(l.slug)}"`), `notation page links ${l.slug}`);
+  }
+});
+
+test('notation page lists the Level 3 clashes', () => {
+  const sec = /<section class="sym-group" id="clashes"[\s\S]*?<\/section>/.exec(notation());
+  assert.ok(sec, 'a clash section exists');
+  const items = [...sec[0].matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1]);
+  const tex = (item) => [...item.matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1]));
+  const find = (...ts) => items.some((it) => ts.every((t) => tex(it).some((s) => s.includes(t))));
+  assert.ok(find('\\sigma(z)', '\\sigma'), 'sigma: sigmoid vs SD');
+  assert.ok(find('\\mathbf{w}\\cdot\\mathbf{x} + b', 'a + b\\,x'), 'b: intercept vs slope');
+  assert.ok(find('K', 'k'), 'k vs K');
+  assert.ok(find('S', '\\Sigma'), 'S vs Sigma');
+  assert.ok(find('r_{mi}', 'r'), 'r vs r_mi');
+  assert.ok(find('M'), 'M');
+  assert.ok(find('d'), 'd');
+  assert.ok(find('y_i = \\pm 1'), 'SVM labels');
+});
+
+// The Level 3 worked examples use the same three points (1, 1), (2, 3), (3, 2).
+test('notation Level 3 worked examples match the computed values', () => {
+  const f2 = (v) => v.toFixed(2).replace(/\.?0+$/, '');
+  const X = [[1, 1], [2, 3], [3, 2]];
+  const ys = [1, 3, 2];
+  const { S, gammas, vecs } = pca2(X);
+  const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-12, `${a} vs ${b}`);
+  close(S[0][0], 1); close(S[1][1], 1); close(S[0][1], 0.5);
+  close(gammas[0], 1.5); close(gammas[1], 0.5);
+  close(vecs[0][0], Math.SQRT1_2); close(vecs[0][1], Math.SQRT1_2);
+  const cm = confusion([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1]);
+  const expected = [
+    `\\sigma(0) = ${f2(sigmoid(0))}`,
+    `\\sigma(2) \\approx ${f2(sigmoid(2))}`,
+    `\\sigma(-2) \\approx ${f2(sigmoid(-2))}`,
+    `\\hat{p} = \\sigma(-3 + 1 \\times 5) = \\sigma(2) \\approx ${f2(sigmoid(-3 + 5))}`,
+    `-\\ln ${f2(sigmoid(2))} \\approx ${f2(logLoss([1], [sigmoid(2)]))}`,
+    `G = 1 - (3/4)^2 - (1/4)^2 = ${gini([3, 1])}`,
+    `\\text{accuracy} = 45/50 = ${accuracy([...Array(45).fill(1), ...Array(5).fill(0)], Array(50).fill(1))}`,
+    `\\text{precision} = 8/(8 + 2) = ${f2(cm.tp / (cm.tp + cm.fp))}`,
+    `\\text{recall} = 8/(8 + 4) \\approx ${f2(cm.tp / (cm.tp + cm.fn))}`,
+    `\\text{inertia} = 2 + 1 + 1 = ${inertia(X, [[2, 2]], [0, 0, 0])}`,
+    `(1 - 1/3)^3 = 8/27 \\approx ${f2((2 / 3) ** 3)}`,
+    `r_{1i} = y_i - F_0(x_i) = ${ys.map((y) => y - mean(ys)).join(',\\ ')}`,
+    `S = \\begin{pmatrix} ${f2(S[0][0])} & ${f2(S[0][1])} \\\\ ${f2(S[1][0])} & ${f2(S[1][1])} \\end{pmatrix}`,
+    `\\gamma_1 = ${f2(gammas[0])},\\ \\gamma_2 = ${f2(gammas[1])}`,
+    `e_1 = ${f2(gammas[0])}/(${f2(gammas[0])} + ${f2(gammas[1])}) = ${f2(gammas[0] / (gammas[0] + gammas[1]))}`,
+  ];
+  const tex = [...notation().matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1]));
+  for (const t of expected) assert.ok(tex.includes(t), `notation page shows ${t}`);
 });

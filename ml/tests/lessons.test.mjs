@@ -1246,7 +1246,7 @@ test('lesson10 read-out rows and page', () => {
   assert.match(html, /<title>Overfitting and regularisation · ML Explorer<\/title>/);
   assert.match(html, /seed 3/);
   assert.match(html, /seed 4/);
-  assert.match(html, /<a class="next-lesson" href="\/ml\/">/);
+  assert.match(html, /<a class="next-lesson" href="\/ml\/k-nearest-neighbours\/">/);
   assert.doesNotMatch(html, /through every point/);
   const pv = lesson10.pageValues();
   for (const [, key] of html.matchAll(/data-value="([^"]+)"/g)) assert.ok(key in pv, key);

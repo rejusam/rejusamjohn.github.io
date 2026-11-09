@@ -92,6 +92,51 @@
           "@type": "LearningResource",
           "name": "Overfitting and regularisation",
           "url": "https://rejusamjohn.pages.dev/ml/overfitting/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "k-nearest neighbours",
+          "url": "https://rejusamjohn.pages.dev/ml/k-nearest-neighbours/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Logistic regression",
+          "url": "https://rejusamjohn.pages.dev/ml/logistic-regression/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Naive Bayes",
+          "url": "https://rejusamjohn.pages.dev/ml/naive-bayes/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Support vector machines",
+          "url": "https://rejusamjohn.pages.dev/ml/support-vector-machines/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Decision trees",
+          "url": "https://rejusamjohn.pages.dev/ml/decision-trees/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Bagging and random forests",
+          "url": "https://rejusamjohn.pages.dev/ml/random-forests/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Gradient boosting",
+          "url": "https://rejusamjohn.pages.dev/ml/gradient-boosting/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "k-means clustering",
+          "url": "https://rejusamjohn.pages.dev/ml/k-means/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Principal component analysis",
+          "url": "https://rejusamjohn.pages.dev/ml/pca/"
         }
       ]
     }
@@ -108,7 +153,7 @@
     <header class="hub-head">
         <p class="hub-cap">Machine learning, one idea at a time</p>
         <h1>ML Explorer</h1>
-        <p class="promise">How machine learning works, for students and complete beginners: from what a model is to fitting one, testing it fairly and keeping it from overfitting.</p>
+        <p class="promise">How machine learning works, for students and complete beginners: from what a model is to fitting one, testing it fairly and keeping it from overfitting, and on to the classic methods: nearest neighbours, trees and forests, clustering and PCA.</p>
         <div class="hub-intro">
             <p>Each lesson shows one idea on a single picture, in a few short steps. Move the controls and watch what changes. Every number in the pictures is computed in your browser from the lesson&#8217;s data as you go.</p>
             <p>The main text needs no maths. The formulas, and the reasons behind them, sit one click deeper under &#8220;The maths&#8221;.</p>
@@ -121,7 +166,7 @@
 
     <section class="hub-path-sec" id="path" aria-labelledby="path-title">
         <h2 id="path-title">The path</h2>
-        <p class="hub-sub">Each lesson builds on the ones before it. L0 to L2 are ready; L3 to L6 are coming next. Your progress is kept in this browser only.</p>
+        <p class="hub-sub">Each lesson builds on the ones before it. L0 to L3 are ready; L4 to L6 are coming next. Your progress is kept in this browser only.</p>
         <!-- Safari drops list semantics when list-style is none; role="list" restores them. -->
         <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
         <ol class="hub-path" role="list">
@@ -193,10 +238,56 @@
                     </li>
                 </ol>
             </li>
-            <li class="hub-level is-soon" data-level="L3">
+            <li class="hub-level" data-level="L3">
                 <div class="hub-level-head"><span class="hub-lv">L3</span> <h3 class="hub-lt">Classic ML</h3></div>
-                <p class="hub-topics">Logistic regression, k-NN, trees, ensembles, k-means, PCA</p>
-                <p class="hub-soon">Coming next</p>
+                <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
+                <ol class="hub-lessons" role="list">
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 11 · About 10 min</p>
+                        <a data-slug="k-nearest-neighbours" href="/ml/k-nearest-neighbours/"><span class="hub-title">k-nearest neighbours</span></a>
+                        <p class="hub-promise">To label a new case, look at the cases most like it and let them vote.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 12 · About 12 min</p>
+                        <a data-slug="logistic-regression" href="/ml/logistic-regression/"><span class="hub-title">Logistic regression</span></a>
+                        <p class="hub-promise">Squash a straight-line score into a probability, then pick a threshold to turn it into a class.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 13 · About 12 min</p>
+                        <a data-slug="naive-bayes" href="/ml/naive-bayes/"><span class="hub-title">Naive Bayes</span></a>
+                        <p class="hub-promise">Describe each class on its own, then let Bayes' rule say which class a new case most likely came from.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 14 · About 12 min</p>
+                        <a data-slug="support-vector-machines" href="/ml/support-vector-machines/"><span class="hub-title">Support vector machines</span></a>
+                        <p class="hub-promise">Of all the straight lines that split two classes, pick the one with the widest empty street around it.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 15 · About 10 min</p>
+                        <a data-slug="decision-trees" href="/ml/decision-trees/"><span class="hub-title">Decision trees</span></a>
+                        <p class="hub-promise">Label a case by asking it a few yes/no questions, each one chosen to sort the classes apart as well as it can.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 16 · About 10 min</p>
+                        <a data-slug="random-forests" href="/ml/random-forests/"><span class="hub-title">Bagging and random forests</span></a>
+                        <p class="hub-promise">One tree is jumpy. Many trees, each grown on its own sample of the data, voting together, are steadier, and the rows each tree never saw give you a test score for free.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 17 · About 12 min</p>
+                        <a data-slug="gradient-boosting" href="/ml/gradient-boosting/"><span class="hub-title">Gradient boosting</span></a>
+                        <p class="hub-promise">Add small trees one at a time, each fitted to what the model still gets wrong.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 18 · About 10 min</p>
+                        <a data-slug="k-means" href="/ml/k-means/"><span class="hub-title">k-means clustering</span></a>
+                        <p class="hub-promise">With no labels at all, find groups by moving a few centres until they settle.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 19 · About 12 min</p>
+                        <a data-slug="pca" href="/ml/pca/"><span class="hub-title">Principal component analysis</span></a>
+                        <p class="hub-promise">Find the direction in which the data vary most, and keep most of the information with fewer numbers.</p>
+                    </li>
+                </ol>
             </li>
             <li class="hub-level is-soon" data-level="L4">
                 <div class="hub-level-head"><span class="hub-lv">L4</span> <h3 class="hub-lt">Deep learning</h3></div>
