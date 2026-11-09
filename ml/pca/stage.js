@@ -380,6 +380,10 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     op(axesMm, u === 'mm' ? 1 : 0);
     op(axesStd, u === 'std' ? 1 : 0);
     crossLabel.textContent = s.c < 0.5 && step === 0 ? 'mean' : '0';
+    // In the mm view PC1 runs close to the vertical line; put the label on its left.
+    const leftLabel = u === 'mm';
+    crossLabel.setAttribute('x', leftLabel ? midX - 6 : midX + 6);
+    crossLabel.setAttribute('text-anchor', leftLabel ? 'end' : 'start');
 
     D.forEach((x, i) => {
       // Rebuilt points slide along their own perpendicular.
