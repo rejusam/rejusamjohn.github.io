@@ -270,3 +270,130 @@ test('lesson3 page agrees with the stage', () => {
   assert.match(note, /seed 21/);
   assert.match(note, /50 \+ 8/);
 });
+
+// ---------------------------------------------------------------- lesson 4
+
+import { mean as meanOf, mse as mseOf, mae as maeOf, olsFit } from '../assets/maths.js';
+import * as lesson4 from '../measuring-error/stage.js';
+
+const lesson4Html = readFileSync(new URL('../measuring-error/index.html', import.meta.url), 'utf8');
+
+// Grid search over constants c in [lo, hi] with the given step; returns the best c.
+function gridArgmin(f, lo, hi, step) {
+  let best = lo;
+  let fBest = f(lo);
+  const steps = Math.round((hi - lo) / step);
+  for (let k = 1; k <= steps; k++) {
+    const c = lo + k * step;
+    const v = f(c);
+    if (v < fBest) { fBest = v; best = c; }
+  }
+  return best;
+}
+
+test('lesson4 data is reproducible and the line is the least-squares fit', () => {
+  const { xs, ys } = lesson4.lessonData();
+  assert.equal(xs.length, 11);
+  assert.equal(ys.length, 11);
+  assert.deepEqual(lesson4.lessonData(), { xs, ys });
+  for (const x of xs) assert.ok(x >= 0 && x <= 10);
+  // n is odd, so the median of y is unique.
+  assert.equal(xs.length % 2, 1);
+  const fit = olsFit(xs, ys);
+  const line = lesson4.fitLine(xs, ys);
+  assert.ok(Math.abs(line.a - fit.intercept) < 1e-12);
+  assert.ok(Math.abs(line.b - fit.slope) < 1e-12);
+  // The residuals of the least-squares line (with an intercept) add to zero.
+  const es = lesson4.residualsOf(xs, ys, line);
+  assert.ok(Math.abs(es.reduce((s, e) => s + e, 0)) < 1e-9);
+});
+
+test('lesson4 argmin of MSE over constants is the mean', () => {
+  const { ys } = lesson4.lessonData();
+  const c = gridArgmin((c) => lesson4.mseAt(ys, c), lesson4.C_LO, lesson4.C_HI, 0.001);
+  assert.ok(Math.abs(c - meanOf(ys)) <= 0.001, `grid ${c} vs mean ${meanOf(ys)}`);
+  // The stage's own helper agrees, and the lowest MSE is the population variance of y.
+  assert.ok(Math.abs(lesson4.mseAt(ys, meanOf(ys)) - ys.reduce((s, y) => s + (y - meanOf(ys)) ** 2, 0) / ys.length) < 1e-12);
+  assert.ok(Math.abs(lesson4.mseAt(ys, 3) - mseOf(ys, ys.map(() => 3))) < 1e-12);
+});
+
+test('lesson4 argmin of MAE over constants is the median', () => {
+  const { ys } = lesson4.lessonData();
+  const c = gridArgmin((c) => lesson4.maeAt(ys, c), lesson4.C_LO, lesson4.C_HI, 0.001);
+  assert.ok(Math.abs(c - medianOf(ys)) <= 0.001, `grid ${c} vs median ${medianOf(ys)}`);
+  assert.ok(Math.abs(lesson4.maeAt(ys, 3) - maeOf(ys, ys.map(() => 3))) < 1e-12);
+  // The mean and the median differ here, so the two losses pick different constants.
+  assert.ok(Math.abs(meanOf(ys) - medianOf(ys)) > 0.1);
+  // With an even number of values, every c between the two middle values ties.
+  const even = [1, 2, 4, 9];
+  assert.ok(Math.abs(lesson4.maeAt(even, 2.2) - lesson4.maeAt(even, 3.9)) < 1e-12);
+  assert.ok(lesson4.maeAt(even, 1.9) > lesson4.maeAt(even, 2));
+});
+
+test('lesson4 loss summary and the read-out agree with maths.js', () => {
+  const { xs, ys } = lesson4.lessonData();
+  const line = lesson4.fitLine(xs, ys);
+  const yhat = xs.map((x) => lesson4.predict(line, x));
+  const L = lesson4.lossSummary(lesson4.residualsOf(xs, ys, line));
+  assert.ok(Math.abs(L.mae - maeOf(ys, yhat)) < 1e-12);
+  assert.ok(Math.abs(L.mse - mseOf(ys, yhat)) < 1e-12);
+  assert.ok(Math.abs(L.rmse - Math.sqrt(L.mse)) < 1e-12);
+  // Positive and negative residuals cancel.
+  assert.ok(Math.abs(L.above + L.below) < 1e-9);
+  assert.ok(L.above > 0 && L.nAbove + L.nBelow === 11);
+  const rows = (i) => lesson4.readout(i, { xs, ys, line, start: ys, c: 3 }).join('\n');
+  assert.match(rows(1), /sum of e: 0\.00/);
+  assert.match(rows(2), new RegExp(`MAE = ${L.sumAbs.toFixed(2)}/11 = ${L.mae.toFixed(2)}`));
+  assert.match(rows(3), new RegExp(`MSE = ${L.sumSq.toFixed(2)}/11 = ${L.mse.toFixed(2)}`));
+  assert.match(rows(4), /miss: ×1\.00/);
+  assert.match(rows(5), /c = 3\.00/);
+  for (let i = 0; i < 6; i++) for (const r of lesson4.readout(i, { xs, ys, line, start: ys, c: 3 })) {
+    assert.ok(!/NaN|undefined|Infinity/.test(r), r);
+    assert.ok(r.length <= 22, `row too long for a phone: "${r}"`);
+  }
+});
+
+test('lesson4 one miss k times as big: its square is k² times as big', () => {
+  const { xs, ys } = lesson4.lessonData();
+  const line = lesson4.fitLine(xs, ys);
+  const i = lesson4.CHOSEN;
+  const r = lesson4.dragRange(xs, ys, line);
+  // The drag range keeps the point on the stage and the factor k within 0–KMAX.
+  assert.ok(r.lo >= lesson4.Y_LO && r.hi <= lesson4.Y_HI);
+  assert.ok(Math.abs(r.e0) > 0.5);
+  for (const k of [0, 0.5, 1, 2, 3, lesson4.KMAX]) {
+    const y = r.yhat + k * r.e0;
+    assert.ok(y >= r.lo - 1e-9 && y <= r.hi + 1e-9, `k = ${k}`);
+    const moved = ys.slice();
+    moved[i] = y;
+    const es = lesson4.residualsOf(xs, moved, line);
+    assert.ok(Math.abs(lesson4.kFactor(es[i], r.e0) - k) < 1e-9);
+    const L0 = lesson4.lossSummary(lesson4.residualsOf(xs, ys, line));
+    const L1 = lesson4.lossSummary(es);
+    // Its part of MAE grows k times, its part of MSE k² times; the other ten parts stay put.
+    assert.ok(Math.abs((L1.mae - L0.mae) * 11 - (k - 1) * Math.abs(r.e0)) < 1e-9);
+    assert.ok(Math.abs((L1.mse - L0.mse) * 11 - (k * k - 1) * r.e0 ** 2) < 1e-9);
+  }
+  const rows = lesson4.readout(4, { xs, ys: (() => { const m = ys.slice(); m[i] = r.yhat + 3 * r.e0; return m; })(), line, start: ys, c: 3 });
+  assert.match(rows.join('\n'), /miss: ×3\.00/);
+  assert.match(rows.join('\n'), /miss²: ×9\.00/);
+});
+
+test('lesson4 page agrees with the stage', () => {
+  const keys = [...lesson4Html.matchAll(/data-value="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(keys.length > 0);
+  const { xs, ys } = lesson4.lessonData();
+  const values = lesson4.pageValues(xs, ys);
+  for (const k of keys) assert.ok(k in values, `no value for ${k}`);
+  for (const v of Object.values(values)) assert.ok(!/NaN|undefined|Infinity/.test(v));
+  assert.equal(values.mean, meanOf(ys).toFixed(2));
+  assert.equal(values.median, medianOf(ys).toFixed(2));
+  // The quiz answers.
+  const answer = (id) => lesson4Html.match(new RegExp(`<form class="q" id="${id}" data-answer="([^"]+)"`))[1];
+  assert.equal(answer('q1'), 'mse');
+  assert.equal(answer('q2'), 'median');
+  // The seed and the formula are stated in About the data.
+  const note = lesson4Html.match(/<p class="data-note">([\s\S]*?)<\/p>/)[1];
+  assert.match(note, /seed 5/);
+  assert.match(note, /2 \+ 0\.8/);
+});
