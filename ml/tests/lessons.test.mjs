@@ -813,3 +813,121 @@ test('lesson7 slider stops on both boundaries, and the shown η agrees with its 
     }
   }
 });
+
+// ---------------------------------------------------------------- lesson 8
+import { mse as mse8, olsFit as olsFit8, gdRun as gdRun8, mseGrad2D as grad8, standardise as standardise8 } from '../assets/maths.js';
+import { linearScale as scale8 } from '../assets/plot.js';
+import * as lesson8 from '../loss-surface/stage.js';
+
+const lesson8Html = readFileSync(new URL('../loss-surface/index.html', import.meta.url), 'utf8');
+
+test('lesson8 standardised condition number is 1', () => {
+  const { xs } = lesson8.lossData();
+  const { z } = standardise8(xs);
+  const c = lesson8.curvatures(z);
+  assert.ok(Math.abs(c.kappa - 1) < 1e-9, `kappa ${c.kappa}`);
+  assert.ok(Math.abs(c.gmax - 2) < 1e-9 && Math.abs(c.gmin - 2) < 1e-9);
+  // The raw Hessian is (2/n)·[[n, Σx], [Σx, Σx²]].
+  const n = xs.length;
+  const sx = xs.reduce((s, x) => s + x, 0);
+  const sxx = xs.reduce((s, x) => s + x * x, 0);
+  const H = lesson8.hessian(xs);
+  assert.ok(Math.abs(H[0][0] - 2) < 1e-12 && Math.abs(H[0][1] - (2 / n) * sx) < 1e-9 && Math.abs(H[1][1] - (2 / n) * sxx) < 1e-6);
+  const r = lesson8.curvatures(xs);
+  assert.ok(r.kappa > 1e5, `raw kappa ${r.kappa}`);
+});
+
+test('lesson8 standardised run, mapped back to original units, equals the OLS line within 1e-4', () => {
+  const { xs, ys } = lesson8.lossData();
+  const ols = olsFit8(xs, ys);
+  const fit = lesson8.standardisedFit();
+  assert.ok(Math.abs(fit.a - ols.intercept) < 1e-4, `a ${fit.a} v ${ols.intercept}`);
+  assert.ok(Math.abs(fit.w - ols.slope) < 1e-4, `w ${fit.w} v ${ols.slope}`);
+  // The mapping itself: a = a′ − w′μ/σ, w = w′/σ gives the same predictions.
+  const { z, mu, sigma } = standardise8(xs);
+  const back = lesson8.mapBack([3, 7], mu, sigma);
+  xs.forEach((x, i) => assert.ok(Math.abs(back.a + back.w * x - (3 + 7 * z[i])) < 1e-9));
+});
+
+test('lesson8 raw run\'s closed-form step count exceeds the standardised run\'s', () => {
+  const s = lesson8.runFacts();
+  assert.ok(Number.isInteger(s.raw.steps) && Number.isInteger(s.std.steps));
+  assert.ok(s.raw.steps > s.std.steps, `${s.raw.steps} v ${s.std.steps}`);
+  assert.ok(s.raw.steps > 1000 * s.std.steps);
+  // Both use η = 1.8 / γmax of their own Hessian, which is stable (below 2 / γmax).
+  assert.ok(Math.abs(s.raw.eta * s.raw.gmax - 1.8) < 1e-12 && Math.abs(s.std.eta * s.std.gmax - 1.8) < 1e-12);
+});
+
+test('lesson8 closed-form step count matches gdRun for the standardised run', () => {
+  const { xs, ys } = lesson8.lossData();
+  const { z } = standardise8(xs);
+  const s = lesson8.runFacts();
+  const ols = olsFit8(z, ys);
+  const Ls = mse8(ys, z.map((v) => ols.intercept + ols.slope * v));
+  const run = gdRun8({ grad: grad8(z, ys), init: lesson8.START, eta: s.std.eta, steps: 200, tol: 0 });
+  const ex = run.path.map(([a, w]) => mse8(ys, z.map((v) => a + w * v)) - Ls);
+  const first = ex.findIndex((e) => e <= lesson8.TOL * ex[0]);
+  assert.ok(first > 0);
+  assert.ok(Math.abs(first - s.std.steps) <= 1, `gdRun ${first} v closed form ${s.std.steps}`);
+  // The closed-form extra loss follows gdRun step by step, for both runs.
+  for (const [data, eta] of [[z, s.std.eta], [xs, s.raw.eta]]) {
+    const o = olsFit8(data, ys);
+    const L0 = mse8(ys, data.map((v) => o.intercept + o.slope * v));
+    const p = gdRun8({ grad: grad8(data, ys), init: lesson8.START, eta, steps: 60, tol: 0 }).path;
+    p.forEach(([a, w], k) => {
+      const direct = mse8(ys, data.map((v) => a + w * v)) - L0;
+      const closed = lesson8.closedExcess(data, ys, eta, k);
+      assert.ok(Math.abs(direct - closed) <= 1e-6 * ex[0] + 1e-6 * Math.abs(direct), `k ${k}: ${direct} v ${closed}`);
+    });
+  }
+});
+
+test('lesson8 contours come from the real loss, and the downhill arrow points downhill everywhere', () => {
+  const { xs, ys } = lesson8.lossData();
+  const L = (a, w) => mse8(ys, xs.map((x) => a + w * x));
+  const g = lesson8.lossGrid(xs, ys, lesson8.RAW_A, lesson8.RAW_W, 40, 60);
+  assert.equal(g.vals[7][11], L(g.as[11], g.ws[7]));
+  const Ls = lesson8.minLoss(xs, ys);
+  // A segment end sits on a cell edge, so its loss is the level up to linear-interpolation error.
+  const ha = g.as[1] - g.as[0];
+  const hw = g.ws[1] - g.ws[0];
+  const H = lesson8.hessian(xs);
+  const bound = Math.max(H[0][0] * ha * ha, H[1][1] * hw * hw) / 8 + 1e-9;
+  for (const c of lesson8.LEVELS) {
+    const segs = lesson8.contourSegments(g, Ls + c);
+    for (const seg of segs) for (const [a, w] of seg) assert.ok(Math.abs(L(a, w) - (Ls + c)) <= bound, `level ${c}`);
+  }
+  assert.ok(lesson8.contourSegments(g, Ls + lesson8.LEVELS[2]).length > 0);
+  // The drawn arrow, mapped back from pixels to (a, w), lowers the loss at every slider position.
+  const X = scale8(lesson8.RAW_A, [56, 372]);
+  const Y = scale8(lesson8.RAW_W, [290, 20]);
+  for (let a = lesson8.RAW_A[0]; a <= lesson8.RAW_A[1]; a += 2.5) {
+    for (let w = lesson8.RAW_W[0]; w <= lesson8.RAW_W[1] + 1e-9; w += 0.025) {
+      const v = lesson8.arrowVec(xs, ys, a, w, X, Y);
+      if (!v) continue;
+      const da = (X.invert(X(a) + v[0]) - a) * 1e-4;
+      const dw = (Y.invert(Y(w) + v[1]) - w) * 1e-4;
+      assert.ok(L(a + da, w + dw) < L(a, w), `a ${a}, w ${w}`);
+    }
+  }
+});
+
+test('lesson8 read-out rows and page', () => {
+  for (let step = 0; step < 6; step++) {
+    for (const st of [{}, { a: -10, w: 2.3 }, { a: 125, w: -0.1 }, { k: 0 }, { k: 40 }, { view: 'raw' }]) {
+      for (const r of lesson8.readout(step, st)) {
+        assert.ok(!/NaN|undefined|Infinity/.test(r), r);
+        assert.ok(r.length <= 24, r);
+      }
+    }
+  }
+  assert.equal((lesson8Html.match(/<li class="step"/g) || []).length, 6);
+  assert.match(lesson8Html, /data-answer="across"/);
+  assert.match(lesson8Html, /data-answer="shape"/);
+  assert.match(lesson8Html, /seed 13/);
+  assert.match(lesson8Html, /<title>Many features and the loss surface · ML Explorer<\/title>/);
+  const pv = lesson8.pageValues();
+  for (const [, key] of lesson8Html.matchAll(/data-value="([^"]+)"/g)) assert.ok(key in pv, key);
+  for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+  assert.equal(pv['std-steps'], '31');
+});
