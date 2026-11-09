@@ -251,7 +251,7 @@ test('svm read-out rows and page', () => {
   }
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Support vector machines · ML Explorer<\/title>/);
-  assert.match(html, /L3 · Classic ML/);
+  assert.match(html, /Level 3 · Classic ML/);
   assert.match(html, /seed 71/);
   assert.match(html, /seed 77/);
   assert.match(html, /seed 73/);

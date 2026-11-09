@@ -124,7 +124,7 @@ test('knn read-out rows and page', () => {
   }
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>k-nearest neighbours · ML Explorer<\/title>/);
-  assert.match(html, /L3 · Classic ML/);
+  assert.match(html, /Level 3 · Classic ML/);
   assert.match(html, /seed 41/);
   assert.match(html, /seed 42/);
   assert.match(html, /<a class="next-lesson" href="\/ml\/logistic-regression\/">/);

@@ -100,7 +100,7 @@ test('the first stump is the one-split fit to y, and is F₁ at η = 1', () => {
 test('gb page structure and contract', () => {
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Gradient boosting · ML Explorer<\/title>/);
-  assert.match(html, /L3 · Classic ML/);
+  assert.match(html, /Level 3 · Classic ML/);
   assert.match(html, /<a class="next-lesson" href="\/ml\/k-means\/">/);
   assert.match(html, /href="\/ml\/random-forests\/"/);
   assert.match(html, /href="\/ml\/gradient-descent\/"/);

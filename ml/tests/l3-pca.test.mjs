@@ -143,7 +143,7 @@ test('pca read-out rows', () => {
 test('pca page contract', () => {
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Principal component analysis · ML Explorer<\/title>/);
-  assert.match(html, /L3 · Classic ML/);
+  assert.match(html, /Level 3 · Classic ML/);
   assert.match(html, /seed 111/);
   assert.match(html, /<a class="next-lesson" href="\/ml\/">Back to the path →<\/a>/);
   assert.match(html, /href="\/ml\/k-means\/"/);

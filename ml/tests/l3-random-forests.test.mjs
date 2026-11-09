@@ -214,7 +214,7 @@ test('random forests read-out rows and page', () => {
   }
   assert.equal((html.match(/<li class="step"/g) || []).length, 5);
   assert.match(html, /<title>Bagging and random forests · ML Explorer<\/title>/);
-  assert.match(html, /L3 · Classic ML/);
+  assert.match(html, /Level 3 · Classic ML/);
   assert.match(html, /seed 99/);
   assert.match(html, /seed 100/);
   assert.match(html, new RegExp(`seed ${L.SEED_FOREST}\\b`));

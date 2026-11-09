@@ -298,7 +298,7 @@ test('trees read-out rows and page', () => {
   }
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Decision trees · ML Explorer<\/title>/);
-  assert.match(html, /L3 · Classic ML/);
+  assert.match(html, /Level 3 · Classic ML/);
   assert.match(html, /seed 99/);
   assert.match(html, /seed 100/);
   assert.match(html, /<link rel="stylesheet" href="\/ml\/assets\/ml\.css">\s*<link rel="stylesheet" href="\/ml\/decision-trees\/lesson\.css">/);

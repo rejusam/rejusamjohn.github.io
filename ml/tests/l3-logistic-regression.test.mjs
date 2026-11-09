@@ -171,7 +171,7 @@ test('logistic read-out rows and page', () => {
   }
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Logistic regression · ML Explorer<\/title>/);
-  assert.match(html, /L3 · Classic ML/);
+  assert.match(html, /Level 3 · Classic ML/);
   assert.match(html, /seed 51/);
   assert.match(html, /seed 52/);
   assert.match(html, /σ here is the sigmoid, not a standard deviation/);

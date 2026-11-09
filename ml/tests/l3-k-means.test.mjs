@@ -188,7 +188,7 @@ test('k-means page values match the computations and the page contract', () => {
   }
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>k-means clustering · ML Explorer<\/title>/);
-  assert.match(html, /L3 · Classic ML/);
+  assert.match(html, /Level 3 · Classic ML/);
   assert.match(html, /seed 101/);
   assert.match(html, /mulberry32\(200 \+ K\)/);
   assert.match(html, /<a class="next-lesson" href="\/ml\/pca\/">/);

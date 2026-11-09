@@ -256,10 +256,12 @@ test("overfitting's next link points to /ml/k-nearest-neighbours/", () => {
 test('every lesson\'s next link follows the path and lands on a page that exists', () => {
   for (const l of LIVE) {
     const html = read(`${l.slug}/index.html`);
-    const links = [...html.matchAll(/<a class="next-lesson" href="([^"]+)">/g)].map((m) => m[1]);
+    const found = [...html.matchAll(/<a class="next-lesson" href="([^"]+)">([^<]*)<\/a>/g)];
+    const links = found.map((m) => m[1]);
     assert.equal(links.length, 1, l.slug);
     const next = nextLesson(l.slug);
     assert.equal(links[0], next ? lessonHref(next.slug) : '/ml/', l.slug);
+    assert.equal(found[0][2], next ? `Next lesson: ${next.title} →` : 'Back to the path →', l.slug);
     assert.ok(existsSync(`${ROOT}${links[0].slice(1)}index.html`), links[0]);
   }
 });

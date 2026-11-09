@@ -146,7 +146,7 @@ test('nb read-out rows and page', () => {
   }
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Naive Bayes · ML Explorer<\/title>/);
-  assert.match(html, /L3 · Classic ML/);
+  assert.match(html, /Level 3 · Classic ML/);
   assert.match(html, /<a class="next-lesson" href="\/ml\/support-vector-machines\/">/);
   assert.match(html, /href="\/ml\/logistic-regression\/"/);
   assert.match(html, /<p class="coffee-line">If this helped, you can <button type="button" data-coffee>buy me a coffee<\/button>\.<\/p>/);
