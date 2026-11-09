@@ -160,3 +160,111 @@ test('lesson2 claims in the text hold for the data', () => {
   assert.deepEqual([lesson2.FRUIT[0].kind, lesson2.FRUIT[2].kind, lesson2.FRUIT[3].kind, lesson2.FRUIT[4].kind, lesson2.FRUIT[5].kind],
     ['apple', 'nectarine', 'plum', 'apple', 'apricot']);
 });
+
+// ---------------------------------------------------------------- lesson 3
+
+import { median as medianOf } from '../assets/maths.js';
+import * as lesson3 from '../centre-and-spread/stage.js';
+
+const lesson3Html = readFileSync(new URL('../centre-and-spread/index.html', import.meta.url), 'utf8');
+
+// The nine values from mulberry32(21), each round(50 + 8·randn), worked out
+// once and written down here so the tests below can check by hand.
+const L3_DATA = [40, 41, 58, 48, 52, 42, 46, 65, 37];
+
+test('lesson3 data is reproducible and in range', () => {
+  const v = lesson3.lessonData();
+  assert.deepEqual(v, L3_DATA);
+  assert.deepEqual(lesson3.lessonData(), v);
+  for (const x of v) assert.ok(Number.isInteger(x) && x >= lesson3.LO && x <= lesson3.HI, `value ${x}`);
+  // Dragged values are clamped to 0–120 and rounded to whole minutes.
+  assert.equal(lesson3.clampValue(-7), 0);
+  assert.equal(lesson3.clampValue(130.2), 120);
+  assert.equal(lesson3.clampValue(64.6), 65);
+});
+
+test('lesson3 median unchanged by moving the maximum further out', () => {
+  const v = lesson3.lessonData();
+  const start = lesson3.stats(v);
+  assert.equal(start.median, 46);
+  for (const to of [66, 80, 100, 120]) {
+    const moved = lesson3.moveLargest(v, to);
+    assert.equal(Math.max(...moved), to);
+    assert.deepEqual(moved.filter((x) => x !== to), v.filter((x) => x !== 65), 'only the largest value moved');
+    const st = lesson3.stats(moved);
+    assert.equal(st.median, start.median);
+    // The mean moves by (distance moved) / n.
+    assert.ok(Math.abs(st.mean - (start.mean + (to - 65) / 9)) < 1e-12);
+  }
+  // The input array is left alone.
+  assert.deepEqual(v, L3_DATA);
+});
+
+test('lesson3 displayed variance uses n-1', () => {
+  // By hand: the sum is 429, so the mean is 429/9 = 143/3.
+  // 3x − 143 for each value: −23, −20, 31, 1, 13, −17, −5, 52, −32.
+  // Their squares add to 529 + 400 + 961 + 1 + 169 + 289 + 25 + 2704 + 1024 = 6102,
+  // so the sum of squared distances from the mean is 6102 / 9 = 678.
+  const st = lesson3.stats(lesson3.lessonData());
+  assert.equal(st.sum, 429);
+  assert.ok(Math.abs(st.mean - 143 / 3) < 1e-12);
+  assert.ok(Math.abs(st.ss - 678) < 1e-9);
+  assert.ok(Math.abs(st.sampleVar - 678 / 8) < 1e-9);  // 84.75
+  assert.ok(Math.abs(st.popVar - 678 / 9) < 1e-9);     // 75.33…
+  assert.ok(Math.abs(st.sampleSd - Math.sqrt(84.75)) < 1e-12);
+  assert.ok(Math.abs(st.popSd - Math.sqrt(678 / 9)) < 1e-12);
+  // What the stage shows on the n − 1 step and the SD step.
+  const rows5 = lesson3.readout(4, lesson3.lessonData(), 7).join('\n');
+  assert.match(rows5, /sample variance \(÷ 8\):\s+84\.8 min²/);
+  assert.match(rows5, /population variance \(÷ 9\):\s+75\.3 min²/);
+  const rows6 = lesson3.readout(5, lesson3.lessonData(), 7).join('\n');
+  assert.match(rows6, /sample SD \(÷ 8\):\s+9\.2 min/);
+  assert.match(rows6, /population SD \(÷ 9\):\s+8\.7 min/);
+});
+
+test('lesson3 claims in the text hold for any single drag', () => {
+  const v = lesson3.lessonData();
+  const sorted = [...v].sort((a, b) => a - b);
+  for (let i = 0; i < v.length; i++) {
+    for (let to = lesson3.LO; to <= lesson3.HI; to++) {
+      const w = v.slice();
+      w[i] = to;
+      const st = lesson3.stats(w);
+      // The median stays between the old 4th and 6th values.
+      assert.ok(st.median >= sorted[3] && st.median <= sorted[5], `drag ${i} to ${to}`);
+      assert.equal(st.median, medianOf(w));
+      // The balance point: the distances below and above the mean are equal.
+      assert.ok(Math.abs(st.below - st.above) < 1e-9);
+      // Dividing by 8 gives a bigger variance than dividing by 9, unless all are equal.
+      assert.ok(st.sampleVar >= st.popVar);
+    }
+  }
+  // z-scores use the population SD, and z = −2 sits two SDs below the mean.
+  const st = lesson3.stats(v);
+  assert.ok(Math.abs(lesson3.zscore(st.mean - 2 * st.popSd, st) + 2) < 1e-12);
+  assert.ok(Math.abs(lesson3.zscore(65, st) - (65 - st.mean) / st.popSd) < 1e-12);
+  // No spread: the z-score is undefined rather than NaN or 0.
+  assert.equal(lesson3.zscore(50, lesson3.stats(new Array(9).fill(50))), null);
+  // Stacking keeps dots that would overlap on separate levels.
+  const lv = lesson3.levels([100, 104, 108, 140, 140], 13);
+  assert.deepEqual(lv, [0, 1, 2, 0, 1]);
+});
+
+test('lesson3 page agrees with the stage', () => {
+  // Every data-value span on the page is filled by the stage.
+  const keys = [...lesson3Html.matchAll(/data-value="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(keys.length > 0);
+  const values = lesson3.pageValues(lesson3.lessonData());
+  for (const k of keys) assert.ok(k in values, `no value for ${k}`);
+  assert.equal(values['mean-start'], '47.7');
+  assert.equal(values['median-start'], '46');
+  assert.equal(values['mean-moved'], '53.8');
+  // The quiz answers.
+  const answer = (id) => lesson3Html.match(new RegExp(`<form class="q" id="${id}" data-answer="([^"]+)"`))[1];
+  assert.equal(answer('q1'), 'median');
+  assert.equal(answer('q2'), 'two-sd-below');
+  // The seed and the formula are stated in About the data.
+  const note = lesson3Html.match(/<p class="data-note">([\s\S]*?)<\/p>/)[1];
+  assert.match(note, /seed 21/);
+  assert.match(note, /50 \+ 8/);
+});
