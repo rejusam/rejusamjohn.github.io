@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: 20
       - name: Test numerics
-        run: node --test ml/tests/
+        run: node --test ml/tests/*.test.mjs
 
   links:
     runs-on: ubuntu-latest

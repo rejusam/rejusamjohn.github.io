@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   mulberry32, randn, uniform, mean, median, variance, sd, mse, mae, euclidean,
   centralDiff, olsFit, polyFit, polyEval, gdRun, mseGrad2D, standardise,
-  trainTestSplit, eig2Sym
+  trainTestSplit, eig2Sym, lstsq
 } from '../assets/maths.js';
 
 test('mulberry32 is deterministic', () => { const a = mulberry32(42), b = mulberry32(42); assert.equal(a(), b()); });
@@ -24,11 +24,12 @@ test('olsFit returns ok:false when x has no spread', () => assert.deepEqual(olsF
 test('lstsq recovers exact degree-5 polynomial', () => {
   const xs = Array.from({length:15}, (_,i) => -1 + 2*i/14), c = [0.5,-1,2,0.3,-0.7,1.1];
   const r = polyFit(xs, xs.map(x => polyEval(c,x)), 5);
+  assert.ok(r.ok);
   r.coef.forEach((v,i) => assert.ok(Math.abs(v-c[i]) < 1e-8));
 });
 test('ridge shrinks coefficient norm as lambda grows', () => {
   const rng = mulberry32(3), xs = Array.from({length:15}, () => uniform(rng,-1,1)), ys = xs.map(x => Math.sin(Math.PI*x)+0.25*randn(rng));
-  const n = l => Math.hypot(...polyFit(xs, ys, 12, l).coef.slice(1));
+  const n = l => { const r = polyFit(xs, ys, 12, l); assert.ok(r.ok); return Math.hypot(...r.coef.slice(1)); };
   assert.ok(n(1e-6) > n(1e-2) && n(1e-2) > n(1));
 });
 test('train MSE is non-increasing in degree (lambda 0)', () => {
@@ -51,3 +52,17 @@ test('trainTestSplit is a disjoint cover', () => {
   assert.equal(te.length, 12); assert.deepEqual([...train,...te].sort((a,b)=>a-b), [...Array(40).keys()]);
 });
 test('eig2Sym', () => assert.deepEqual(eig2Sym([[2,0],[0,2]]), [2,2]));
+test('olsFit catches constant non-dyadic x', () => {
+  const x = 0.3083339938252039;
+  assert.deepEqual(olsFit(Array(7).fill(x), [1,2,3,4,5,6,7]), {ok:false, reason:'no-x-spread'});
+  assert.deepEqual(olsFit([0.1,0.1,0.1], [1,2,4]), {ok:false, reason:'no-x-spread'});
+});
+test('gdRun rejects non-finite init', () => {
+  assert.deepEqual(gdRun({grad: w => w, init:[NaN], eta:0.1, steps:10}), {path:[], status:'diverged'});
+  assert.deepEqual(gdRun({grad: w => w, init:[1e9], eta:0.1, steps:10}), {path:[], status:'diverged'});
+});
+test('standardise constant input gives zeros', () => {
+  const r = standardise([5,5,5]);
+  assert.deepEqual(r.z, [0,0,0]); assert.equal(r.sigma, 0);
+});
+test('lstsq on empty design returns ok:false', () => assert.deepEqual(lstsq([], []), {ok:false, coef:[]}));

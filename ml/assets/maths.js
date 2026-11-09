@@ -34,9 +34,10 @@ export function variance(xs, {sample = true} = {}) {
 
 export const sd = (xs, opts) => Math.sqrt(variance(xs, opts));
 
+// Constant input has no spread, so every z-score is 0 rather than NaN.
 export function zscores(xs, opts) {
   const m = mean(xs), s = sd(xs, opts);
-  return xs.map(x => (x - m) / s);
+  return xs.map(x => (s === 0 ? 0 : (x - m) / s));
 }
 
 export const residuals = (ys, yhat) => ys.map((y, i) => y - yhat[i]);
@@ -57,7 +58,8 @@ export function olsFit(xs, ys) {
     sxy += (xs[i] - mx) * (ys[i] - my);
     syy += (ys[i] - my) ** 2;
   }
-  if (sxx === 0) return {ok: false, reason: 'no-x-spread'};
+  const sx2 = xs.reduce((s, x) => s + x * x, 0);
+  if (Math.max(...xs) === Math.min(...xs) || sxx <= 1e-14 * sx2) return {ok: false, reason: 'no-x-spread'};
   const slope = sxy / sxx, intercept = my - slope * mx;
   const r2 = syy === 0 ? 1 : (sxy * sxy) / (sxx * syy);
   return {ok: true, slope, intercept, r2};
@@ -65,6 +67,7 @@ export function olsFit(xs, ys) {
 
 // Least squares by Householder QR on X, augmented with sqrt(lambda) rows for ridge.
 export function lstsq(X, y, {lambda = 0, penalise = null} = {}) {
+  if (!X.length) return {ok: false, coef: []};
   const p = X[0].length;
   const A = X.map(r => [...r]), b = [...y];
   if (lambda > 0) {
@@ -125,6 +128,7 @@ export const polyFit = (xs, ys, degree, lambda = 0) =>
 export const polyEval = (coef, x) => coef.reduceRight((s, c) => s * x + c, 0);
 
 export function gdRun({grad, init, eta, steps, tol = 1e-10, limit = 1e6}) {
+  if (!init.every(Number.isFinite) || norm(init) > limit) return {path: [], status: 'diverged'};
   let w = [...init];
   const path = [w];
   for (let t = 0; t < steps; t++) {
@@ -155,7 +159,8 @@ export const mseGrad2D = (xs, ys) => ([b, w]) => {
 
 export function standardise(xs) {
   const mu = mean(xs), sigma = sd(xs, {sample: false});
-  return {z: xs.map(x => (x - mu) / sigma), mu, sigma};
+  // Constant input gives sigma 0 and z all 0, not NaN.
+  return {z: xs.map(x => (sigma === 0 ? 0 : (x - mu) / sigma)), mu, sigma};
 }
 
 export function trainTestSplit(n, testFraction, rng) {
