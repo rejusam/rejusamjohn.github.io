@@ -217,6 +217,8 @@ test('lesson3 displayed variance uses n-1', () => {
   const rows5 = lesson3.readout(4, lesson3.lessonData(), 7).join('\n');
   assert.match(rows5, /sample variance \(÷ 8\):\s+84\.8 min²/);
   assert.match(rows5, /population variance \(÷ 9\):\s+75\.3 min²/);
+  assert.match(rows5, /÷ 8 gives 9\/8 = 1\.125 × the area/);
+  assert.ok(Math.abs(st.sampleVar / st.popVar - 9 / 8) < 1e-12);
   const rows6 = lesson3.readout(5, lesson3.lessonData(), 7).join('\n');
   assert.match(rows6, /sample SD \(÷ 8\):\s+9\.2 min/);
   assert.match(rows6, /population SD \(÷ 9\):\s+8\.7 min/);

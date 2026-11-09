@@ -11,7 +11,7 @@ export const N = 9;
 export const LO = 0;
 export const HI = 120;
 
-// Nine made-up commute times in minutes: round(50 + 8z), z ~ N(0, 1).
+// Nine made-up commute times in minutes: 50 + 8 times a standard normal draw, rounded.
 export function lessonData(seed = SEED, n = N) {
   const rng = mulberry32(seed);
   return Array.from({ length: n }, () => Math.round(50 + 8 * randn(rng)));
@@ -127,6 +127,7 @@ export function readout(step, values, sel, start = lessonData()) {
     return [
       `population variance (÷ ${n}): ${f1(st.popVar)} min²`,
       `sample variance (÷ ${n - 1}): ${f1(st.sampleVar)} min²`,
+      `÷ ${n - 1} gives ${n}/${n - 1} = ${fmt(n / (n - 1), 3)} × the area`,
     ];
   }
   const z = zscore(values[sel], st);
@@ -218,6 +219,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const squares = el('g', {}, clipped);
   const sq = values.map(() => el('rect', { fill: CYAN, 'fill-opacity': 0.06, stroke: MUTED, 'stroke-width': 1 }, squares));
   const avg = el('rect', { fill: 'none', stroke: STRONG, 'stroke-width': 2.5 }, clipped);
+  // The extra area of the ÷ (n − 1) square: an L-shaped strip around the ÷ n square.
+  const strip = el('path', { fill: VIOLET, 'fill-opacity': 0.3, 'fill-rule': 'evenodd' }, clipped);
   const avg8 = el('rect', { class: 'series-b' }, clipped);
 
   // The z ruler (step 6): ticks one population SD apart.
@@ -243,6 +246,10 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   // Dots, a ring for the chosen one, and larger invisible handles to drag.
   const ring = el('circle', { r: R + 4, fill: 'none', stroke: STRONG, 'stroke-width': 1.5 }, svg);
+  // A round keyboard focus ring (the browser's square outline could be
+  // mistaken for a variance square).
+  const focusRing = el('circle', { r: R + 7, fill: 'none', stroke: CYAN, 'stroke-width': 2 }, svg);
+  let focused = -1;
   const dotsG = el('g', {}, svg);
   const dots = values.map(() => el('circle', { class: 'dot', r: R, stroke: BG, 'stroke-width': 1.5 }, dotsG));
   const handlesG = el('g', {}, svg);
@@ -251,6 +258,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     'aria-label': `Person ${i + 1}’s commute time`,
     'aria-valuemin': LO, 'aria-valuemax': HI,
   }, handlesG));
+  handles.forEach((h) => { h.style.outline = 'none'; });
 
   // Read-out box, top left, above everything the plot draws.
   const box = el('g', {}, svg);
@@ -267,7 +275,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     [null, 'median'],
     ['mean', 'median'],
     [null, 'avg'],
-    ['avg', 'avg8'],
+    ['avg', 'avg8', null],
     [null, null, null],
   ];
 
@@ -284,7 +292,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   let step = 0;
   let token = 0;
   let valueToken = 0;
-  const LAYERS = { plank: 0, mean: 0, median: 0, ghost: 0, squares: 0, avg: 0, avg8: 0, ruler: 0 };
+  const LAYERS = { plank: 0, mean: 0, median: 0, ghost: 0, squares: 0, avg: 0, avg8: 0, ruler: 0, dots: 1 };
   let s = { ...LAYERS, plank: 1, mean: 1 };
 
   function target(i) {
@@ -292,7 +300,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     if (i === 1) return { ...LAYERS, median: 1 };
     if (i === 2) return { ...LAYERS, mean: 1, median: 1, ghost: 1 };
     if (i === 3) return { ...LAYERS, mean: 1, squares: 1, avg: 1 };
-    if (i === 4) return { ...LAYERS, mean: 1, squares: 0.35, avg: 1, avg8: 1 };
+    if (i === 4) return { ...LAYERS, mean: 1, squares: 0.35, avg: 1, avg8: 1, dots: 0.45 };
     return { ...LAYERS, mean: 1, ruler: 1 };
   }
 
@@ -366,6 +374,11 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     };
     setSquare(avg, st.popSd * unit);
     setSquare(avg8, st.sampleSd * unit);
+    const a9 = st.popSd * unit;
+    const a8 = st.sampleSd * unit;
+    strip.setAttribute('d', `M${mx.toFixed(2)},${(PLANK - a8).toFixed(2)}h${a8.toFixed(2)}v${a8.toFixed(2)}h${(-a8).toFixed(2)}Z` +
+      `M${mx.toFixed(2)},${(PLANK - a9).toFixed(2)}h${a9.toFixed(2)}v${a9.toFixed(2)}h${(-a9).toFixed(2)}Z`);
+    op(strip, s.avg8);
     op(avg, s.avg);
     op(avg8, s.avg8);
 
@@ -417,6 +430,12 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     op(ruler, s.ruler);
 
     // Dots and their handles.
+    dotsG.setAttribute('opacity', s.dots.toFixed(3));
+    focusRing.style.display = focused < 0 ? 'none' : '';
+    if (focused >= 0) {
+      focusRing.setAttribute('cx', px[focused].toFixed(2));
+      focusRing.setAttribute('cy', cy[focused].toFixed(2));
+    }
     dots.forEach((d, i) => {
       d.setAttribute('cx', px[i].toFixed(2));
       d.setAttribute('cy', cy[i].toFixed(2));
@@ -491,7 +510,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       return `Mean ${f1(st.mean)} minutes, from ${f1(s0.mean)} at the start. Median ${whole(st.median)} minutes, from ${whole(s0.median)}.`;
     }
     if (i === 3) return `Squared distances add up to ${f1(st.ss)} square minutes. Their average, dividing by ${n}, is ${f1(st.popVar)}.`;
-    if (i === 4) return `Population variance, dividing by ${n}: ${f1(st.popVar)} square minutes. Sample variance, dividing by ${n - 1}: ${f1(st.sampleVar)}.`;
+    if (i === 4) return `Population variance, dividing by ${n}: ${f1(st.popVar)} square minutes. Sample variance, dividing by ${n - 1}: ${f1(st.sampleVar)}, which is ${n}/${n - 1} = ${fmt(n / (n - 1), 3)} times as much.`;
     const z = zscore(values[sel], st);
     return `Population SD ${f1(st.popSd)} minutes, sample SD ${f1(st.sampleSd)}. Person ${sel + 1}, ${whole(values[sel])} minutes: ` +
       (z === null ? 'z-score not defined, because the SD is 0.' : `z-score ${fmt(z, 2)}.`);
@@ -531,10 +550,17 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       setValue(i, map[e.key]);
     });
     hdl.addEventListener('focus', () => {
+      let kb = true;
+      try { kb = hdl.matches(':focus-visible'); } catch { /* keep the ring */ }
+      focused = kb ? i : -1;
+      render();
       if (sel === i) return;
       sel = i;
       render();
       if (step === 5) say(spoken(5));
+    });
+    hdl.addEventListener('blur', () => {
+      if (focused === i) { focused = -1; render(); }
     });
     draggable(hdl, {
       bounds: { x0: X(LO), x1: X(HI), y0: 0, y1: 340 },

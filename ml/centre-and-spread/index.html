@@ -68,7 +68,7 @@
                 <p>Each dot is one person's commute time, placed along a line from 0 to 120 minutes. Dots with nearly the same time are stacked so you can see them all.</p>
                 <p>Picture each dot as an equal weight on a plank. The plank balances on the mean. This is a picture, not physics: the plank weighs nothing and only the dots count.</p>
                 <p>It balances because the distances of the values below the mean add up to the same total as the distances of the values above it. The box shows both totals.</p>
-                <p>Drag any dot, or select it with Tab and use the arrow keys, and watch the balance point move. Times are whole minutes; the box rounds to one decimal place.</p>
+                <p>Drag any dot, or use the keyboard: Tab moves between the nine dots, and the arrow keys move the selected one. Watch the balance point move. Times are whole minutes; the box rounds to one decimal place.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -85,7 +85,7 @@
             <h2>The median is the middle value</h2>
             <p class="lede">Sort the values from smallest to largest. The median is the one in the middle.</p>
             <div class="happening">
-                <p>With nine values, the middle one is the 5th: four values sit below it and four above. The box lists all nine in order.</p>
+                <p>With nine values, the middle one is the 5th: four values are at or below it and four at or above it. The box lists all nine in order.</p>
                 <p>The dashed line marks the median, and the ring shows which dot is the middle one.</p>
                 <p>With an even number of values there would be two in the middle, and the median would be halfway between them. Here there are always nine, so that never comes up.</p>
             </div>
@@ -136,9 +136,11 @@
 
         <li class="step" id="step-5">
             <h2>Divide by n or by n&nbsp;−&nbsp;1?</h2>
-            <p class="lede">If the nine values are a sample from a bigger group and you want the spread of that whole group, divide by n&nbsp;−&nbsp;1 instead of n. The maths explains why.</p>
+            <p class="lede">If the nine values are a sample from a bigger group and you want the spread of that whole group, divide by n&nbsp;−&nbsp;1 instead of n.</p>
             <div class="happening">
-                <p>The solid square divides by n = 9. The dashed square divides by n&nbsp;−&nbsp;1 = 8, so it is bigger, unless all nine values are the same.</p>
+                <p>Why? Distances measured from the sample's own mean come out too small on average, and dividing by n&nbsp;−&nbsp;1 instead of n corrects that exactly for the variance. The maths shows how.</p>
+                <p>The solid square divides by n = 9. The dashed square divides by n&nbsp;−&nbsp;1 = 8, so it is bigger, unless all nine values are the same. The shaded strip is the extra area, and the box gives the ratio.</p>
+                <p>Drag a dot far out: both squares grow, and the gap with them.</p>
                 <p>Dividing by n gives the population variance: the spread of exactly these nine values. Dividing by n&nbsp;−&nbsp;1 gives the sample variance: an estimate of the spread of the bigger group the nine came from, for example everyone who commutes in the same city.</p>
                 <p>With many values, the two hardly differ. Every page in the Explorer says which one it uses, and the box here shows both.</p>
             </div>
@@ -223,7 +225,7 @@ M1001 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <label><input type="radio" name="q1" value="sd"> The standard deviation</label>
             </fieldset>
             <p class="why" data-for="mean">The mean uses the size of every value, so one far value pulls it along. Moving one of nine values by 9 minutes moves the mean by 1 minute.</p>
-            <p class="why" data-for="median">Right. The median is the middle value of the sorted list. Moving the largest value further out keeps the order, so the middle value stays where it was.</p>
+            <p class="why" data-for="median">Right. The median is the middle value of the sorted list. Moving an end value further out keeps the order, so the middle value stays put.</p>
             <p class="why" data-for="variance">The variance squares each distance from the mean, so one far value adds a very large square and the variance jumps.</p>
             <p class="why" data-for="sd">The SD is the square root of the variance, so one far value raises it as well.</p>
         </form>
@@ -236,7 +238,7 @@ M1001 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <label><input type="radio" name="q2" value="two-sd-below"> It is 2 standard deviations below the mean.</label>
                 <label><input type="radio" name="q2" value="error"> It is a mistake and should be removed.</label>
             </fieldset>
-            <p class="why" data-for="two-min-below">A z-score counts standard deviations, not minutes. To turn it into minutes, multiply by the SD.</p>
+            <p class="why" data-for="two-min-below">A z-score counts standard deviations, not minutes. Multiply it by the SD to get the distance from the mean in minutes.</p>
             <p class="why" data-for="negative">The sign compares the value with the mean, not with zero. A negative z-score means below the mean; the time itself is still positive.</p>
             <p class="why" data-for="two-sd-below">Right. The z-score is the distance from the mean divided by the SD, so −2 means two SDs below the mean.</p>
             <p class="why" data-for="error">A z-score only says where a value sits. A value far from the mean is worth checking, but it may be perfectly real.</p>
@@ -267,7 +269,7 @@ M1001 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
             <li>Goodfellow, Bengio &amp; Courville, <cite>Deep Learning</cite>, Section 5.4, "Estimators, Bias and Variance", which works through why dividing by one less than the sample size gives an unbiased variance, and notes that the square root still underestimates the standard deviation.</li>
         </ol>
 
-        <p class="data-note"><strong>About the data.</strong> The nine commute times are made up. They come from a seeded random number generator, mulberry32 with seed 21. Each time is 50 + 8z minutes rounded to a whole minute, where z is a random draw from a normal distribution with mean 0 and SD 1. So the starting values are the same for everyone. Dragged values stay between 0 and 120 minutes and are rounded to whole minutes. The stage shows means, variances and SDs to one decimal place and z-scores to two; the calculations use unrounded values. Real commute times need not follow this bell-shaped pattern.</p>
+        <p class="data-note"><strong>About the data.</strong> The nine commute times are made up. They come from a seeded random number generator, mulberry32 with seed 21. Each time is 50 + 8 times a random draw from a normal distribution with mean 0 and SD 1, rounded to a whole minute. So the starting values are the same for everyone. Dragged values stay between 0 and 120 minutes and are rounded to whole minutes. The stage shows means, variances and SDs to one decimal place and z-scores to two; the calculations use unrounded values. Real commute times need not follow this bell-shaped pattern.</p>
 
         <p class="coffee-line">If this helped, you can <button type="button" data-coffee>buy me a coffee</button>.</p>
     </section>
