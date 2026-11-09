@@ -223,3 +223,18 @@ test('nb fixed facts in the text', () => {
   // The new case's starting posterior is below 0.5 (predicted class 0).
   assert.ok(nbPosterior(L.model(), L.Q0)[1] < 0.5);
 });
+
+test('nb review fixes: two crossings and the taller class 1 curve', () => {
+  // Two crossings for every prior on the slider.
+  for (const p1 of L.PRIORS) assert.equal(L.boundaries1D(p1).length, 2);
+  // Class 1's weighted peak (at its mean) is above class 0's at the counted prior.
+  const m1 = L.oneD(L.model());
+  const peak0 = L.weighted(m1, m1.mu[0][0])[0];
+  const peak1 = L.weighted(m1, m1.mu[1][0])[1];
+  assert.ok(peak1 > peak0, `${peak1} vs ${peak0}`);
+  assert.match(html, /narrower and, even after multiplying by its smaller prior, taller/);
+  assert.match(html, /can cross at two points, and here they do/);
+  assert.match(html, /\\prod_\{j=1\}\^\{d\}/);
+  assert.doesNotMatch(html, /\\prod_\{j=1\}\^\{p\}/);
+  assert.match(html, /\(seed 5\)/);
+});
