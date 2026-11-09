@@ -255,7 +255,7 @@ export function readout(step, { t = T_GUESS, depth = 1, q = Q0 } = {}) {
   if (step === 0) {
     const s = splitScore(0, T_GUESS);
     const right = Math.max(...s.left) + Math.max(...s.right);
-    return [`x₁ < ${T_GUESS}?`, `yes: ${side(s.left)}`, `no: ${side(s.right)}`, `accuracy: ${pct(right / N_TRAIN)}`];
+    return [`x₁ < ${fmtT(T_GUESS)}?`, `yes: ${side(s.left)}`, `no: ${side(s.right)}`, `accuracy: ${pct(right / N_TRAIN)}`];
   }
   if (step === 1) {
     const s = splitScore(0, t);
@@ -305,8 +305,8 @@ export function pageValues() {
     'x1-g': fmtG(rc.byFeature[0].impurity),
     'x2-t': fmtT(rc.byFeature[1].threshold),
     'x2-g': fmtG(rc.byFeature[1].impurity),
-    'x1-a': fmtT(m.a),
-    'x1-b': fmtT(m.b),
+    'x1-a': m.a.toFixed(3),
+    'x1-b': m.b.toFixed(3),
     'best-d': String(b),
     'best-test': pct(rows[b - 1].test),
     'best-train': pct(rows[b - 1].train),
@@ -467,6 +467,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const dMark = el('line', { y1: CY1, y2: CY0, stroke: STRONG, 'stroke-width': 1.4, 'stroke-dasharray': '3 3' }, accG);
   const bestLabel = el('text', { class: 'stage-text', x: DX(best) + 2, y: AY(rows[best - 1].test) + 22, text: `best depth = ${best}` }, accG);
   bestLabel.style.fill = STRONG;
+  // A ring round the best depth's test square.
+  el('circle', { cx: DX(best), cy: AY(rows[best - 1].test), r: 7.5, fill: 'none', stroke: STRONG, 'stroke-width': 1.6 }, accG);
   const series = (key, attrs) => el('path', {
     d: rows.map((r, i) => `${i ? 'L' : 'M'}${DX(r.d).toFixed(2)},${AY(r[key]).toFixed(2)}`).join(''),
     fill: 'none', 'stroke-width': 2, ...attrs,

@@ -343,8 +343,11 @@ test('trees page values match the computations', () => {
   assert.equal(pv['x1-g'], '0.414');
   assert.equal(pv['x2-t'], '3.04');
   assert.equal(pv['x2-g'], '0.400');
-  assert.equal(pv['x1-a'], L.fmtT(L.minInterval(0).a));
-  assert.equal(pv['x1-b'], L.fmtT(L.minInterval(0).b));
+  assert.equal(pv['x1-a'], L.minInterval(0).a.toFixed(3));
+  assert.equal(pv['x1-b'], L.minInterval(0).b.toFixed(3));
+  // "just above 5": the step ends above 5 but below 5.01.
+  assert.ok(L.minInterval(0).b > 5 && L.minInterval(0).b < 5.01);
+  assert.equal(pv['x1-b'], '5.001');
   assert.equal(pv['best-d'], String(b));
   assert.equal(pv['best-test'], L.pct(rows[b - 1].test));
   assert.equal(pv['best-test'], '82.5%');
@@ -361,10 +364,20 @@ test('trees page values match the computations', () => {
   assert.equal(rc.byFeature[0].feature, 0);
   assert.match(html, /x₁ &lt; 5|x₁ < 5/);
   assert.match(html, /\(2, 8\)/);
+  // Step 1: "yes gives class 0, no gives class 1".
+  const st = L.stump(0, L.T_GUESS);
+  assert.deepEqual([st.left.cls, st.right.cls], [0, 1]);
+  assert.match(html, /yes gives class 0, no gives class 1/);
+  assert.equal(L.readout(0)[0], 'x₁ < 5.00?');
+  // Step 5 maths: no two training cases share a value of x₁ or of x₂.
+  const tx = L.trainData().X;
+  for (const f of [0, 1]) assert.equal(new Set(tx.map((x) => x[f])).size, tx.length);
+  assert.match(html, /no two training cases share a value of x₁ or of x₂/);
+  assert.doesNotMatch(html, /not globally optimal/);
   assert.deepEqual(L.Q0, [2, 8]);
   assert.match(html, /James, Witten, Hastie &amp; Tibshirani,/);
   assert.doesNotMatch(html, /Taylor/);
-  assert.match(html, /not globally optimal|not the best possible/);
+  assert.match(html, /not always the best overall/);
   assert.equal(L.pct(1), '100%');
 });
 
