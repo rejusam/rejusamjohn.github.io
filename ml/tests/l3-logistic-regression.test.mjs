@@ -227,3 +227,32 @@ test('logistic page values match the computations', () => {
   assert.equal(L.num(-0.004, 2), '0.00');
   assert.equal(L.pct(1), '100%');
 });
+
+test('logistic wording constants are computed', () => {
+  const pv = L.pageValues();
+  assert.equal(pv['pen-half'], (-Math.log(0.5)).toFixed(2));
+  assert.equal(pv['pen-half'], '0.69');
+  assert.equal(pv['pen-hundredth'], (-Math.log(0.01)).toFixed(1));
+  assert.equal(pv['pen-hundredth'], '4.6');
+  assert.equal(pv['pen-max'], String(L.PEN_MAX));
+  assert.equal(pv['grid'], `${L.GRID[0]} × ${L.GRID[1]}`);
+  // The precision dip: consecutive slider values, precision falls, and the one
+  // student who leaves the predicted passes really passed (TP down by 1, FP unchanged).
+  const [t0, t1] = L.precisionDip();
+  assert.ok(Math.abs(t1 - t0 - 0.05) < 1e-12);
+  assert.ok(L.THRESHOLDS.includes(t0) && L.THRESHOLDS.includes(t1));
+  const a = L.confusionAt(t0);
+  const b = L.confusionAt(t1);
+  assert.ok(b.precision < a.precision);
+  assert.equal(a.tp - b.tp, 1);
+  assert.equal(a.fp, b.fp);
+  assert.equal(pv['dip-p0'], L.pct(a.precision));
+  assert.equal(pv['dip-p1'], L.pct(b.precision));
+  assert.equal(pv['dip-t0'], '0.20');
+  assert.equal(pv['dip-t1'], '0.25');
+  assert.equal(pv['gd-eta'], '0.25');
+  // No hand-typed copies of these values outside their spans.
+  assert.doesNotMatch(html, /costs 0\.69/);
+  assert.doesNotMatch(html, /grid of 60 × 56/);
+  assert.doesNotMatch(html, /η = 0\.25/);
+});

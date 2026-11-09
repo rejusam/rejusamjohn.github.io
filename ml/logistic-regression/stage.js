@@ -14,6 +14,8 @@ export const ETA = 0.25;
 export const GD_STEPS = 3000;
 // Threshold slider: 0.05 to 0.95 in steps of 0.05.
 export const THRESHOLDS = Array.from({ length: 19 }, (_, i) => Number(((i + 1) * 0.05).toFixed(2)));
+// The 2D probability map's grid.
+export const GRID = [60, 56];
 // Where the sliders start in steps 2 and 3.
 export const START = { b: -2, w: 0.4 };
 
@@ -91,6 +93,14 @@ export function cutoffHours(t) {
 }
 
 const p2 = (r) => { const f = fit2D(); return sigmoid(f.w0 + f.w[0] * r[0] + f.w[1] * r[1]); };
+// The first slider move up where precision falls: [t before, t after].
+export function precisionDip() {
+  for (let k = 1; k < THRESHOLDS.length; k++) {
+    if (confusionAt(THRESHOLDS[k]).precision < confusionAt(THRESHOLDS[k - 1]).precision) return [THRESHOLDS[k - 1], THRESHOLDS[k]];
+  }
+  return null;
+}
+
 export const acc2D = () => accuracy(B2.y, B2.X.map((r) => (p2(r) >= 0.5 ? 1 : 0)));
 
 // A share as a percentage: one decimal place, but exactly 1 is "100%".
@@ -141,6 +151,7 @@ export function pageValues() {
   const c5 = confusionAt(0.5);
   const c8 = confusionAt(0.8);
   const f2 = fit2D();
+  const dip = precisionDip();
   return {
     'n': String(N),
     'n-pass': String(n1),
@@ -178,6 +189,14 @@ export function pageValues() {
     'w2': num(f2.w[1], 2),
     'b2': num(f2.w0, 2),
     'acc-2d': pct(acc2D()),
+    'pen-half': num(-Math.log(0.5), 2),
+    'pen-hundredth': num(-Math.log(0.01), 1),
+    'pen-max': String(PEN_MAX),
+    'grid': `${GRID[0]} × ${GRID[1]}`,
+    'dip-t0': num(dip[0], 2),
+    'dip-t1': num(dip[1], 2),
+    'dip-p0': pct(confusionAt(dip[0]).precision),
+    'dip-p1': pct(confusionAt(dip[1]).precision),
   };
 }
 
@@ -201,7 +220,7 @@ const P_DOM = [-0.3, 1.3];
 // The penalty strip under it (step 3).
 const SB = 300;
 const ST = 222;
-const PEN_MAX = 3;
+export const PEN_MAX = 3;
 // Read-out box and loss chart on the right.
 const RX0 = 404;
 const BOX_Y = 8;
@@ -284,7 +303,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const QX = linearScale(X2_DOM, [QX0, QX1]);
   const QY = linearScale(Y2_DOM, [QY0, QY1]);
   const f2 = fit2D();
-  const region = regionMap(twoG, QX, QY, (a, c) => sigmoid(f2.w0 + f2.w[0] * a + f2.w[1] * c), { nx: 60, ny: 56, mode: 'prob' });
+  const region = regionMap(twoG, QX, QY, (a, c) => sigmoid(f2.w0 + f2.w[0] * a + f2.w[1] * c), { nx: GRID[0], ny: GRID[1], mode: 'prob' });
   // The exact straight boundary is drawn below instead of the grid's staircase.
   region.g.querySelector('.boundary').style.display = 'none';
   axes(twoG, QX, QY, { xLabel: 'feature 1', yLabel: 'feature 2' });
