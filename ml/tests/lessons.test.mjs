@@ -956,3 +956,121 @@ test('lesson8 closed-form count equals gdRun on moderately conditioned data', ()
   // Wider, further-from-zero x is worse conditioned, so it needs more steps.
   assert.ok(counts[0] < counts[1] && counts[1] < counts[2], String(counts));
 });
+
+// ---------------------------------------------------------------- shared sine data (lessons 9 and 10)
+import { mulberry32 as rngS, uniform as uniformS, randn as randnS, mse as mseS, polyFit as polyFitS, polyEval as polyEvalS, trainTestSplit as splitS } from '../assets/maths.js';
+import { sineData } from '../assets/sine-data.js';
+
+test('sineData: same seed gives the same data, x in [−1, 1], n respected, x drawn before y', () => {
+  const a = sineData({ n: 40, seed: 3 });
+  const b = sineData({ n: 40, seed: 3 });
+  assert.deepEqual(a, b);
+  assert.equal(a.xs.length, 40);
+  assert.equal(a.ys.length, 40);
+  assert.equal(sineData({ n: 7, seed: 9 }).xs.length, 7);
+  for (const x of a.xs) assert.ok(x >= -1 && x <= 1, `x out of range: ${x}`);
+  assert.notDeepEqual(sineData({ n: 40, seed: 4 }).xs, a.xs);
+  // For each point in turn: x ~ Uniform(−1, 1), then y = sin(πx) + sd·randn.
+  const rng = rngS(3);
+  for (let i = 0; i < 40; i++) {
+    const x = uniformS(rng, -1, 1);
+    const y = Math.sin(Math.PI * x) + 0.25 * randnS(rng);
+    assert.equal(a.xs[i], x);
+    assert.equal(a.ys[i], y);
+  }
+  // sd is honoured, and sd = 0 puts every point on the curve.
+  const c = sineData({ n: 10, sd: 0, seed: 5 });
+  c.xs.forEach((x, i) => assert.equal(c.ys[i], Math.sin(Math.PI * x)));
+});
+
+// ---------------------------------------------------------------- lesson 9
+import * as lesson9 from '../train-test/stage.js';
+
+test('lesson9 train MSE <= test MSE on the default seed', () => {
+  const d = lesson9.lessonData();
+  assert.deepEqual(d, sineData({ n: 40, seed: 3 }));
+  assert.equal(lesson9.SPLIT_SEED, 3);
+  const sp = lesson9.splitFor(lesson9.SPLIT_SEED);
+  assert.deepEqual(sp, splitS(40, 0.3, rngS(3)));
+  assert.equal(sp.train.length, 28);
+  assert.equal(sp.test.length, 12);
+  const s = lesson9.score(d, sp, 3);
+  const pick = (arr, idx) => idx.map((i) => arr[i]);
+  const fit = polyFitS(pick(d.xs, sp.train), pick(d.ys, sp.train), 3);
+  assert.ok(fit.ok);
+  const yhat = (idx) => pick(d.xs, idx).map((x) => polyEvalS(fit.coef, x));
+  assert.ok(Math.abs(s.train - mseS(pick(d.ys, sp.train), yhat(sp.train))) < 1e-12);
+  assert.ok(Math.abs(s.test - mseS(pick(d.ys, sp.test), yhat(sp.test))) < 1e-12);
+  assert.ok(s.train <= s.test, `${s.train} vs ${s.test}`);
+});
+
+test('lesson9 join-the-dots scores zero on its own points; the true curve does not', () => {
+  const d = lesson9.lessonData();
+  const f = lesson9.joinDots(d.xs, d.ys);
+  assert.ok(mseS(d.ys, d.xs.map(f)) < 1e-24);
+  const t = lesson9.stepOneScores(d);
+  assert.ok(t.dots < 1e-24 && t.truth > 0.01);
+  assert.ok(Math.abs(t.truth - mseS(d.ys, d.xs.map((x) => Math.sin(Math.PI * x)))) < 1e-12);
+  // Between two neighbouring points it is the straight line joining them.
+  const o = d.xs.map((x, i) => [x, d.ys[i]]).sort((p, q) => p[0] - q[0]);
+  const m = (o[3][0] + o[4][0]) / 2;
+  assert.ok(Math.abs(f(m) - (o[3][1] + o[4][1]) / 2) < 1e-12);
+});
+
+test('lesson9 some splits put the training MSE above the test MSE, and the page can say so', () => {
+  const d = lesson9.lessonData();
+  const rows = [];
+  for (let seed = lesson9.SPLIT_SEED; seed < lesson9.SPLIT_SEED + lesson9.STRIP_N; seed++) rows.push(lesson9.score(d, lesson9.splitFor(seed), 3));
+  const below = rows.filter((r) => r.train < r.test).length;
+  assert.ok(below > 0 && below < rows.length, String(below));
+  const st = lesson9.splitStats(d, 200);
+  assert.ok(st.below > 100 && st.below < 200, String(st.below));
+  assert.ok(st.meanTrain < st.meanTest);
+});
+
+test('lesson9 k-fold: every training point validates once, the test points never', () => {
+  const d = lesson9.lessonData();
+  const sp = lesson9.splitFor(lesson9.SPLIT_SEED);
+  const folds = lesson9.folds(sp.train, lesson9.K);
+  assert.equal(folds.length, 5);
+  const all = folds.flat().sort((a, b) => a - b);
+  assert.deepEqual(all, [...sp.train].sort((a, b) => a - b));
+  for (const f of folds) assert.ok(f.length === 5 || f.length === 6);
+  for (const t of sp.test) assert.ok(!all.includes(t));
+  const cv = lesson9.cvTable(d, sp);
+  assert.deepEqual(cv.scores.map((r) => r.degree), lesson9.CANDIDATES);
+  const min = Math.min(...cv.scores.map((r) => r.cv));
+  assert.equal(cv.scores.find((r) => r.degree === cv.best).cv, min);
+  // Each score is the mean over the k rounds of the validation MSE.
+  const pick = (arr, idx) => idx.map((i) => arr[i]);
+  const deg = 2;
+  let tot = 0;
+  for (const v of folds) {
+    const tr = sp.train.filter((i) => !v.includes(i));
+    const fit = polyFitS(pick(d.xs, tr), pick(d.ys, tr), deg);
+    tot += mseS(pick(d.ys, v), pick(d.xs, v).map((x) => polyEvalS(fit.coef, x)));
+  }
+  assert.ok(Math.abs(cv.scores.find((r) => r.degree === deg).cv - tot / 5) < 1e-12);
+  // The test score is the chosen degree refitted on all the training points.
+  assert.ok(Math.abs(cv.test - lesson9.score(d, sp, cv.best).test) < 1e-12);
+});
+
+test('lesson9 read-out rows and page', () => {
+  const html = readFileSync(new URL('../train-test/index.html', import.meta.url), 'utf8');
+  for (let step = 0; step < 5; step++) {
+    for (const seed of [3, 4, 11, 40, 150]) {
+      for (const r of lesson9.readout(step, { seed })) {
+        assert.ok(!/NaN|undefined|Infinity/.test(r), r);
+        assert.ok(r.length <= 24, r);
+      }
+    }
+  }
+  assert.equal((html.match(/<li class="step"/g) || []).length, 5);
+  assert.match(html, /<title>Train, validate, test · ML Explorer<\/title>/);
+  assert.match(html, /seed 3/);
+  assert.match(html, /href="\/ml\/overfitting\/"/);
+  const pv = lesson9.pageValues(lesson9.SPLIT_SEED);
+  for (const [, key] of html.matchAll(/data-value="([^"]+)"/g)) assert.ok(key in pv, key);
+  for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+  assert.equal(lesson9.stepOneScores(lesson9.lessonData()).dots < 1e-24, true);
+});
