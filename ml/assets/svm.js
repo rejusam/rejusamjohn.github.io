@@ -87,6 +87,7 @@ export function svmFit(X, y, {C, tol = 1e-9, maxIter = 100000}) {
     : Number.isFinite(lo) && Number.isFinite(hi) ? (lo + hi) / 2
     : Number.isFinite(lo) ? lo : Number.isFinite(hi) ? hi : 0;
   const sv = alpha.flatMap((a, k) => (a > 1e-8 ? [k] : []));
+  // With w = 0 (no steps taken, or one class only) there is no margin: null.
   const wn = norm(w);
-  return {ok, w, b, alpha, sv, margin: wn > 0 ? 2 / wn : Infinity, kkt: kktViolation(X, y, C, alpha, b), iters};
+  return {ok, w, b, alpha, sv, margin: wn > 0 ? 2 / wn : null, kkt: kktViolation(X, y, C, alpha, b), iters};
 }

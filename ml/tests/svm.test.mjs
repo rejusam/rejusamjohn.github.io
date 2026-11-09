@@ -68,12 +68,51 @@ test('svmFit satisfies KKT at the C slider\'s ends', () => {
 });
 
 test('large C reproduces the hard margin', () => {
-  const {X, y} = separable();
-  const a = svmFit(X, y, {C: 1e6}), b = svmFit(X, y, {C: 1e8});
-  assert.ok(a.ok && b.ok);
-  near(a.w[0], b.w[0], 1e-6); near(a.w[1], b.w[1], 1e-6);
-  near(a.b, b.b, 1e-6);
-  margins(X, y, a.w, a.b).forEach(m => assert.ok(m >= 1 - 1e-6, `y f = ${m}`));
+  const {X, y} = separable(), C = 1e6;
+  const r = svmFit(X, y, {C});
+  assert.equal(r.ok, true);
+  assert.ok(r.kkt < 1e-6, `kkt ${r.kkt}`);
+  const maxA = Math.max(...r.alpha);
+  assert.ok(maxA < C, 'no slack: the box never binds');
+  const m = margins(X, y, r.w, r.b);
+  r.sv.forEach(i => near(m[i], 1, 1e-6));
+  near(Math.min(...m), 1, 1e-6);
+  m.forEach(v => assert.ok(v >= 1 - 1e-6, `y f = ${v}`));
+
+  // Independent check: search unit directions u(θ) for the widest gap between
+  // the classes, min over +1 of u·x minus max over −1 of u·x. The best gap sits
+  // at a kink, so the error is linear in the step: a coarse grid, then a fine one.
+  const gapAt = t => {
+    const u = [Math.cos(t), Math.sin(t)];
+    let lo = Infinity, hi = -Infinity;
+    X.forEach((x, i) => {
+      const p = dot(u, x);
+      if (y[i] === 1) lo = Math.min(lo, p); else hi = Math.max(hi, p);
+    });
+    return lo - hi;
+  };
+  const search = (from, to, N) => {
+    let best = -Infinity, bestT = from;
+    for (let k = 0; k <= N; k++) {
+      const t = from + ((to - from) * k) / N, g = gapAt(t);
+      if (g > best) { best = g; bestT = t; }
+    }
+    return {best, bestT};
+  };
+  const h = (2 * Math.PI) / 20000;
+  const coarse = search(-Math.PI, Math.PI, 20000);
+  const {best, bestT} = search(coarse.bestT - 2 * h, coarse.bestT + 2 * h, 20000);
+  near(best, r.margin, 1e-6);
+  const tw = Math.atan2(r.w[1], r.w[0]);
+  near(bestT, tw, 1e-6);
+
+  // Any C above the largest α gives this same solution, since the box never binds.
+  // Below it the box binds and the soft margin differs.
+  const s = svmFit(X, y, {C: maxA / 2});
+  assert.equal(s.ok, true);
+  assert.ok(s.kkt < 1e-6);
+  assert.ok(s.alpha.some(a => a === maxA / 2));
+  assert.ok(Math.abs(s.w[0] - r.w[0]) + Math.abs(s.w[1] - r.w[1]) > 1e-3);
 });
 
 test('moving a non-support vector changes nothing', () => {
@@ -98,4 +137,14 @@ test('svmFit returns ok:false and finite values when maxIter is hit', () => {
   assert.equal(r.ok, false);
   assert.equal(r.iters, 1);
   for (const v of [...r.w, r.b, ...r.alpha, r.margin, r.kkt]) assert.ok(Number.isFinite(v), `${v}`);
+});
+
+test('svmFit with maxIter 0 returns w = 0 and margin null', () => {
+  const {X, y} = overlapping();
+  const r = svmFit(X, y, {C: 1, maxIter: 0});
+  assert.equal(r.ok, false);
+  assert.equal(r.iters, 0);
+  assert.deepEqual(r.w, [0, 0]);
+  assert.equal(r.margin, null);
+  assert.ok(Number.isFinite(r.b) && Number.isFinite(r.kkt));
 });
