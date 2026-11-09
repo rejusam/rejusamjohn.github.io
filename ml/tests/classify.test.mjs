@@ -2,8 +2,11 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {
   blobs2, sigmoid, logLoss, logisticFit, logisticGD, knnPredict,
-  accuracy, confusion, gaussianNB, nbPosterior
+  accuracy, confusion, gaussianNB, nbPosterior,
+  gini, bestSplit, growTree, predictTree, treeStats, bootstrapIdx, forest, stumpFit, boost
 } from '../assets/classify.js';
+import {mulberry32, centralDiff, mean} from '../assets/maths.js';
+import {sineData} from '../assets/sine-data.js';
 
 const near = (a, b, tol) => assert.ok(Math.abs(a - b) <= tol, `${a} vs ${b} (tol ${tol})`);
 
@@ -111,4 +114,110 @@ test('nbPosterior is stable far from both classes', () => {
   const p = nbPosterior(m, [50, -50]);
   assert.ok(p.every(Number.isFinite));
   near(p[0] + p[1], 1, 1e-12);
+});
+
+test('gini values', () => {
+  near(gini([5, 5]), 0.5, 1e-15);
+  assert.equal(gini([10, 0]), 0);
+  assert.equal(gini([]), 0);
+  near(gini([1, 3]), 0.375, 1e-15);
+});
+
+test('bestSplit equals brute force', () => {
+  const {X, y} = blobs2({n0: 30, n1: 30, mu0: [0, 0], mu1: [1.2, 0.8], sd: 1, seed: 5});
+  const idx = X.map((_, i) => i), n = idx.length;
+  let best = null;
+  for (let f = 0; f < 2; f++) {
+    const v = [...new Set(X.map(r => r[f]))].sort((a, b) => a - b);
+    for (let k = 0; k + 1 < v.length; k++) {
+      const t = (v[k] + v[k + 1]) / 2, c = [[0, 0], [0, 0]];
+      X.forEach((r, i) => c[r[f] < t ? 0 : 1][y[i]]++);
+      const imp = (c[0][0] + c[0][1]) / n * gini(c[0]) + (c[1][0] + c[1][1]) / n * gini(c[1]);
+      if (!best || imp < best.imp - 1e-12) best = {f, t, imp};
+    }
+  }
+  const s = bestSplit(X, y, idx);
+  assert.equal(s.feature, best.f);
+  near(s.threshold, best.t, 1e-12);
+  near(s.impurity, best.imp, 1e-12);
+  assert.equal(s.left.length + s.right.length, n);
+  assert.ok(s.left.every(i => X[i][s.feature] < s.threshold));
+  assert.ok(s.right.every(i => X[i][s.feature] >= s.threshold));
+  assert.equal(bestSplit(X, y, idx.filter(i => y[i] === 0)), null);
+});
+
+test('growTree with no depth limit fits the training data', () => {
+  const {X, y} = blobs2({n0: 40, n1: 40, mu0: [0, 0], mu1: [1, 1], sd: 1, seed: 8});
+  const seen = new Map();
+  X.forEach((r, i) => { const k = r.join(','); assert.ok(!seen.has(k) || seen.get(k) === y[i]); seen.set(k, y[i]); });
+  const tree = growTree(X, y);
+  X.forEach((r, i) => assert.equal(predictTree(tree, r), y[i]));
+});
+
+test('growTree respects maxDepth', () => {
+  const {X, y} = blobs2({n0: 60, n1: 60, mu0: [0, 0], mu1: [1, 1], sd: 1, seed: 3});
+  for (let d = 1; d <= 4; d++) {
+    const st = treeStats(growTree(X, y, {maxDepth: d}));
+    assert.ok(st.depth <= d, `depth ${st.depth} > ${d}`);
+    assert.ok(st.leaves >= 2);
+  }
+});
+
+test('bootstrap leaves out about 1/e', () => {
+  const n = 100000, idx = bootstrapIdx(n, mulberry32(11));
+  assert.equal(idx.length, n);
+  near(new Set(idx).size / n, 1 - (1 - 1 / n) ** n, 0.005);
+});
+
+test('forest prefix property', () => {
+  const {X, y} = blobs2({n0: 40, n1: 40, mu0: [0, 0], mu1: [1.2, 0.8], sd: 1, seed: 2});
+  const big = forest(X, y, {B: 7, mtry: 1, seed: 4}), small = forest(X, y, {B: 3, mtry: 1, seed: 4});
+  for (let i = 0; i < 10; i++) assert.equal(big.votes(X[i], 3), small.votes(X[i]));
+});
+
+test('forest OOB uses only trees that left the row out', () => {
+  const {X, y} = blobs2({n0: 40, n1: 40, mu0: [0, 0], mu1: [1.2, 0.8], sd: 1, seed: 6});
+  const f = forest(X, y, {B: 15, maxDepth: 3, mtry: 1, seed: 9}), o = f.oob();
+  let covered = 0, right = 0;
+  X.forEach((r, i) => {
+    const ts = f.trees.filter((_, t) => !f.samples[t].includes(i));
+    if (ts.length === 0) { assert.equal(o.pred[i], null); return; }
+    const frac = ts.filter(t => predictTree(t, r) === 1).length / ts.length;
+    assert.equal(o.pred[i], frac > 0.5 ? 1 : 0);
+    covered++; if (o.pred[i] === y[i]) right++;
+  });
+  assert.equal(o.covered, covered);
+  near(o.accuracy, right / covered, 1e-15);
+});
+
+test('stumpFit finds the least-squares split', () => {
+  const xs = [1, 2, 3, 4, 5, 6], r = [1, 1.2, 0.8, 5, 5.2, 4.8];
+  const s = stumpFit(xs, r);
+  near(s.threshold, 3.5, 1e-12); near(s.left, 1, 1e-12); near(s.right, 5, 1e-12);
+  near(s.sse, 0.16, 1e-12);
+});
+
+test('boost residuals are the negative gradient', () => {
+  const {xs: x, ys: y} = sineData({n: 30, seed: 4}), eta = 0.3;
+  const b = boost(x, y, {M: 6, eta});
+  for (let m = 1; m <= 6; m++) {
+    const res = x.map((xi, i) => {
+      const F = b.predict(xi, m - 1);
+      const res = -centralDiff(f => 0.5 * (y[i] - f) ** 2, F);
+      near(res, y[i] - F, 1e-8);
+      return res;
+    });
+    const st = b.stumps[m - 1];
+    near(st.left, mean(res.filter((_, i) => x[i] < st.threshold)), 1e-10);
+    near(st.right, mean(res.filter((_, i) => x[i] >= st.threshold)), 1e-10);
+  }
+});
+
+test('boost train MSE never rises', () => {
+  const {xs: x, ys: y} = sineData({n: 40, seed: 9});
+  for (const eta of [0.1, 1, 1.5]) {
+    const b = boost(x, y, {M: 200, eta});
+    assert.equal(b.trainMSE.length, 201);
+    for (let m = 1; m <= 200; m++) assert.ok(b.trainMSE[m] <= b.trainMSE[m - 1] + 1e-12, `eta ${eta} m ${m}`);
+  }
 });

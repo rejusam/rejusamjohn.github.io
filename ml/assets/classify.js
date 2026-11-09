@@ -1,6 +1,6 @@
 // Classification numerics for the ML Explorer: k-NN, logistic regression, Naive Bayes.
 // Pure functions on plain arrays. X is rows of numbers, y is 0 or 1.
-import {mulberry32, randn, euclidean} from './maths.js';
+import {mulberry32, randn, euclidean, mean} from './maths.js';
 
 // Two Gaussian clouds; class 0 rows first. sd is a number or [sx, sy].
 export function blobs2({n0, n1, mu0, mu1, sd, rho = 0, seed}) {
@@ -165,4 +165,152 @@ export function nbPosterior(model, x) {
   });
   const m = Math.max(...lp), z = m + Math.log(lp.reduce((s, v) => s + Math.exp(v - m), 0));
   return lp.map(v => Math.exp(v - z));
+}
+
+// ---- Trees, forests, boosting ----
+
+// Gini impurity of class counts: 1 - sum (c/n)^2. Empty gives 0.
+export function gini(counts) {
+  const n = counts.reduce((s, c) => s + c, 0);
+  return n === 0 ? 0 : 1 - counts.reduce((s, c) => s + (c / n) ** 2, 0);
+}
+
+const countsOf = (y, idx) => {
+  const c = [0, 0];
+  for (const i of idx) c[y[i]]++;
+  return c;
+};
+
+// Best split on the rows in idx. Thresholds sit midway between consecutive distinct values;
+// left is x < threshold. Lowest weighted Gini wins; ties go to the lower feature, then the
+// lower threshold. null if the node is pure or no split gains more than 1e-12.
+// minLeaf (default 1) rejects splits that leave fewer rows on either side.
+export function bestSplit(X, y, idx, {features = null, minLeaf = 1} = {}) {
+  const n = idx.length, tot = countsOf(y, idx), parent = gini(tot);
+  if (n < 2 || tot[0] === 0 || tot[1] === 0) return null;
+  const feats = features ?? X[0].map((_, j) => j);
+  let best = null;
+  for (const f of feats) {
+    const order = [...idx].sort((a, b) => X[a][f] - X[b][f]);
+    const cl = [0, 0];
+    for (let k = 0; k + 1 < n; k++) {
+      cl[y[order[k]]]++;
+      const a = X[order[k]][f], b = X[order[k + 1]][f];
+      if (a === b) continue;
+      const nl = k + 1, nr = n - nl;
+      if (nl < minLeaf || nr < minLeaf) continue;
+      const cr = [tot[0] - cl[0], tot[1] - cl[1]];
+      const imp = (nl * gini(cl) + nr * gini(cr)) / n;
+      if (!best || imp < best.impurity - 1e-12) best = {feature: f, threshold: (a + b) / 2, impurity: imp};
+    }
+  }
+  if (!best || parent - best.impurity <= 1e-12) return null;
+  const left = idx.filter(i => X[i][best.feature] < best.threshold);
+  const right = idx.filter(i => X[i][best.feature] >= best.threshold);
+  return {...best, gain: parent - best.impurity, left, right};
+}
+
+// Grow a tree. Leaf class is the majority, a tie goes to class 0.
+// With mtry and rng, each split looks at mtry features drawn without replacement.
+export function growTree(X, y, {maxDepth = Infinity, minLeaf = 1, mtry = null, rng = null, idx = null} = {}) {
+  const d = X[0].length;
+  const grow = (rows, depth) => {
+    const counts = countsOf(y, rows);
+    const node = {leaf: true, counts, cls: counts[1] > counts[0] ? 1 : 0, depth, n: rows.length};
+    if (depth >= maxDepth) return node;
+    let features = null;
+    if (mtry !== null && mtry < d) {
+      const pool = Array.from({length: d}, (_, j) => j);
+      for (let k = 0; k < mtry; k++) {
+        const j = k + Math.floor(rng() * (d - k));
+        [pool[k], pool[j]] = [pool[j], pool[k]];
+      }
+      features = pool.slice(0, mtry).sort((a, b) => a - b);
+    }
+    const s = bestSplit(X, y, rows, {features, minLeaf});
+    if (!s) return node;
+    return {...node, leaf: false, feature: s.feature, threshold: s.threshold,
+      left: grow(s.left, depth + 1), right: grow(s.right, depth + 1)};
+  };
+  return grow(idx ?? X.map((_, i) => i), 0);
+}
+
+export function predictTree(node, x) {
+  while (!node.leaf) node = x[node.feature] < node.threshold ? node.left : node.right;
+  return node.cls;
+}
+
+export function treeStats(node) {
+  if (node.leaf) return {depth: node.depth, leaves: 1};
+  const a = treeStats(node.left), b = treeStats(node.right);
+  return {depth: Math.max(a.depth, b.depth), leaves: a.leaves + b.leaves};
+}
+
+// n draws with replacement.
+export const bootstrapIdx = (n, rng) => Array.from({length: n}, () => Math.floor(rng() * n));
+
+// Random forest. One rng stream, in tree order (bootstrap, then that tree's feature draws),
+// so the first b trees of a B-forest are the b-forest. A vote tie goes to class 0.
+export function forest(X, y, {B, maxDepth = Infinity, mtry = null, seed}) {
+  const rng = mulberry32(seed), trees = [], samples = [];
+  for (let t = 0; t < B; t++) {
+    const idx = bootstrapIdx(X.length, rng);
+    samples.push(idx);
+    trees.push(growTree(X, y, {maxDepth, mtry, rng, idx}));
+  }
+  const votes = (x, b = B) => trees.slice(0, b).reduce((s, t) => s + predictTree(t, x), 0) / b;
+  const predict = (x, b = B) => votes(x, b) > 0.5 ? 1 : 0;
+  const oob = (b = B) => {
+    const pred = [];
+    let right = 0, covered = 0;
+    X.forEach((x, i) => {
+      const vs = [];
+      for (let t = 0; t < b; t++) if (!samples[t].includes(i)) vs.push(predictTree(trees[t], x));
+      if (vs.length === 0) { pred.push(null); return; }
+      const p = mean(vs) > 0.5 ? 1 : 0;
+      pred.push(p); covered++;
+      if (p === y[i]) right++;
+    });
+    return {pred, accuracy: covered ? right / covered : null, covered};
+  };
+  return {trees, samples, votes, predict, oob};
+}
+
+// Best one-split fit to r by least squares: left is x < threshold, each side takes its mean.
+export function stumpFit(xs, r) {
+  const n = xs.length, order = xs.map((_, i) => i).sort((a, b) => xs[a] - xs[b]);
+  const total = r.reduce((s, v) => s + v, 0);
+  let bestK = -1, bestScore = -Infinity, sl = 0;
+  for (let k = 0; k + 1 < n; k++) {
+    sl += r[order[k]];
+    if (xs[order[k]] === xs[order[k + 1]]) continue;
+    const score = sl * sl / (k + 1) + (total - sl) ** 2 / (n - k - 1);
+    if (score > bestScore + 1e-12) { bestScore = score; bestK = k; }
+  }
+  if (bestK < 0) {
+    const m = mean(r);
+    return {threshold: -Infinity, left: m, right: m, sse: r.reduce((s, v) => s + (v - m) ** 2, 0)};
+  }
+  const threshold = (xs[order[bestK]] + xs[order[bestK + 1]]) / 2;
+  const L = r.filter((_, i) => xs[i] < threshold), R = r.filter((_, i) => xs[i] >= threshold);
+  const left = mean(L), right = mean(R);
+  const sse = L.reduce((s, v) => s + (v - left) ** 2, 0) + R.reduce((s, v) => s + (v - right) ** 2, 0);
+  return {threshold, left, right, sse};
+}
+
+// Gradient boosting with stumps on squared error. F0 is the mean; each round fits a stump
+// to the residuals and adds eta times it. trainMSE[0] is F0 alone.
+export function boost(xs, ys, {M, eta}) {
+  const f0 = mean(ys), stumps = [], F = ys.map(() => f0);
+  const mseNow = () => mean(ys.map((v, i) => (v - F[i]) ** 2));
+  const trainMSE = [mseNow()];
+  for (let m = 0; m < M; m++) {
+    const s = stumpFit(xs, ys.map((v, i) => v - F[i]));
+    stumps.push(s);
+    xs.forEach((x, i) => { F[i] += eta * (x < s.threshold ? s.left : s.right); });
+    trainMSE.push(mseNow());
+  }
+  const predict = (x, m = M) =>
+    stumps.slice(0, m).reduce((s, st) => s + eta * (x < st.threshold ? st.left : st.right), f0);
+  return {f0, stumps, predict, trainMSE};
 }
