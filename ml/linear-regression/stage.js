@@ -159,8 +159,17 @@ const HALO = { stroke: SURFACE, 'stroke-width': 4, 'paint-order': 'stroke', 'str
 
 // Scatter plot on the left; the side panel on the right holds the read-out
 // box and, in steps 4 and 6, a pair of bars.
-const PX0 = 56;
-const PX1 = 372;
+export const PX0 = 56;
+export const PX1 = 372;
+// The x axis runs past the data on both sides, so step 5 can show the line
+// continuing (dashed) where no data back it up.
+export const X_DOMAIN = [-2, 12];
+
+// Width in pixels of the dashed parts of the line in step 5, left and right.
+export function extrapolationPx(xs) {
+  const px = (x) => PX0 + ((x - X_DOMAIN[0]) / (X_DOMAIN[1] - X_DOMAIN[0])) * (PX1 - PX0);
+  return [px(Math.min(...xs)) - px(X_DOMAIN[0]), px(X_DOMAIN[1]) - px(Math.max(...xs))];
+}
 const PY0 = 290;
 const PY1 = 20;
 const SX0 = 438;
@@ -187,9 +196,10 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   let x0 = X0_START;
   let from = 'line';
 
-  const X = linearScale([0, 10], [PX0, PX1]);
+  const X = linearScale(X_DOMAIN, [PX0, PX1]);
   const Y = linearScale([Y_LO, Y_HI], [PY0, PY1]);
   const unit = PY0 - Y(1);
+  const lineEnds = (l) => ({ x1: X(X_DOMAIN[0]), x2: X(X_DOMAIN[1]), y1: Y(predict(l, X_DOMAIN[0])), y2: Y(predict(l, X_DOMAIN[1])) });
 
   svg.replaceChildren();
   svg.setAttribute('role', 'group');
@@ -212,10 +222,10 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const CAND = [0.6, 1.4, 2.4];
   for (const b of CAND) {
     const l = { a: ybar - b * xbar, b };
-    el('line', { x1: X(0), x2: X(10), y1: Y(predict(l, 0)), y2: Y(predict(l, 10)), stroke: MUTED, 'stroke-width': 1.4, 'stroke-dasharray': '5 5' }, candG);
+    el('line', { ...lineEnds(l), stroke: MUTED, 'stroke-width': 1.4, 'stroke-dasharray': '5 5' }, candG);
   }
   const squaresG = el('g', { 'clip-path': 'url(#l6-sq)' }, svg);
-  const sq = xs.map(() => el('rect', { fill: CYAN, 'fill-opacity': 0.1, stroke: CYAN, 'stroke-width': 1 }, squaresG));
+  const sq = xs.map(() => el('rect', { fill: CYAN, 'fill-opacity': 0.06, stroke: CYAN, 'stroke-width': 1 }, squaresG));
   const meanG = el('g', {}, svg);
   el('line', { x1: PX0, x2: PX1, y1: Y(ybar), y2: Y(ybar), stroke: VIOLET, 'stroke-width': 1.6, 'stroke-dasharray': '6 4' }, meanG);
   const sticksG = el('g', {}, svg);
@@ -332,7 +342,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const set = (node, attrs) => {
     for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, typeof v === 'number' ? v.toFixed(2) : v);
   };
-  const lineAttrs = (l, x1 = 0, x2 = 10) => ({ x1: X(x1), x2: X(x2), y1: Y(predict(l, x1)), y2: Y(predict(l, x2)) });
+  const lineAttrs = (l, x1 = X_DOMAIN[0], x2 = X_DOMAIN[1]) => ({ x1: X(x1), x2: X(x2), y1: Y(predict(l, x1)), y2: Y(predict(l, x2)) });
 
   function barPair(vals, names, styles) {
     const top = Math.max(...vals) || 1;
@@ -359,8 +369,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
     // The main line, and the reader's line as a ghost in step 4.
     set(main, step === 4 ? lineAttrs(l, xMin, xMax) : lineAttrs(l));
-    set(extL, lineAttrs(l, 0, xMin));
-    set(extR, lineAttrs(l, xMax, 10));
+    set(extL, lineAttrs(l, X_DOMAIN[0], xMin));
+    set(extR, lineAttrs(l, xMax, X_DOMAIN[1]));
     op(extL, step === 4 ? s.line : 0);
     op(extR, step === 4 ? s.line : 0);
     op(main, s.line);

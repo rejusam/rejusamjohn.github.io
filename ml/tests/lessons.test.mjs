@@ -610,3 +610,17 @@ test('lesson6 read-out rows and page', () => {
   const p = lesson6.pageValues(xs, ys);
   for (const [, key] of lesson6Html.matchAll(/data-value="([^"]+)"/g)) assert.ok(key in p, key);
 });
+
+test('lesson6 step 5 dashed extrapolation segments are clearly visible', () => {
+  const { xs, ys } = lesson6.regressionData();
+  const [left, right] = lesson6.extrapolationPx(xs);
+  assert.ok(left >= 40 && right >= 40, `dashed ends ${left} px and ${right} px`);
+  // The extended least-squares line still fits inside the y range.
+  const ols = lesson6.fitLine(xs, ys);
+  for (const x of lesson6.X_DOMAIN) {
+    const y = lesson6.predict(ols, x);
+    assert.ok(y >= lesson6.Y_LO && y <= lesson6.Y_HI, `ŷ(${x}) = ${y}`);
+  }
+  // x = 0 (the intercept marker) and both handles sit inside the axis.
+  for (const x of [0, ...lesson6.HX]) assert.ok(x > lesson6.X_DOMAIN[0] && x < lesson6.X_DOMAIN[1]);
+});
