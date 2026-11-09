@@ -173,6 +173,11 @@ test('forest prefix property', () => {
   const {X, y} = blobs2({n0: 40, n1: 40, mu0: [0, 0], mu1: [1.2, 0.8], sd: 1, seed: 2});
   const big = forest(X, y, {B: 7, mtry: 1, seed: 4}), small = forest(X, y, {B: 3, mtry: 1, seed: 4});
   for (let i = 0; i < 10; i++) assert.equal(big.votes(X[i], 3), small.votes(X[i]));
+  for (const b of [1, 2, 3, 5]) {
+    const f = forest(X, y, {B: b, mtry: 1, seed: 4});
+    assert.deepEqual(f.trees, big.trees.slice(0, b));
+    assert.deepEqual(f.samples, big.samples.slice(0, b));
+  }
 });
 
 test('growTree with mtry keeps searching when the sampled features give no split', () => {

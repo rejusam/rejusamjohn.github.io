@@ -189,7 +189,7 @@ export function readout(step, { bi = 3 } = {}) {
   if (step === 0) return ['one full tree, all rows', `test accuracy: ${pct(fullTreeTest())}`];
   if (step === 1) {
     const s = bootstrapStats();
-    return [`distinct rows: ${s.distinct} of ${N_TRAIN}`, `this sample: ${pct(s.share)}`, `expected: ${pct(s.expected)}`, `mean of ${B_MAX}: ${pct(s.meanShare)}`];
+    return [`distinct rows: ${s.distinct} of ${N_TRAIN}`, `this sample: ${pct(s.share)}`, `expected: ${pct(s.expected)}`, `bagged mean: ${pct(s.meanShare)}`];
   }
   const bag = testTable('bag').find((r) => r.B === B);
   const rf = testTable('rf').find((r) => r.B === B);

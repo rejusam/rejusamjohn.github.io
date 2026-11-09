@@ -255,7 +255,10 @@ test('wording claims hold', () => {
   assert.ok(L.forestOf('bag').trees.every((t) => !t.leaf));
   // Numbers typed in the text are the lesson's constants.
   assert.match(html, /Of the 101 bagged trees/);
-  assert.match(html, /Across all 101 samples/);
+  assert.match(html, /Across all 101 samples drawn for the bagged trees/);
+  assert.match(L.readout(1)[3], /^bagged mean: /);
+  assert.match(html, /but not the first\. Lowering the correlation/);
+  assert.doesNotMatch(html, /but the first stays/);
   assert.equal(L.forestOf('bag').trees.length, 101);
   assert.match(html, /1 − \(1 − 1\/80\)⁸⁰/);
   assert.equal(L.N_TRAIN, 80);
