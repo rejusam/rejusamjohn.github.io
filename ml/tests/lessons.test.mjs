@@ -1174,26 +1174,62 @@ test('lesson10 λ slider: log scale from 1e-6 to 10, and the shown value agrees 
   assert.deepEqual([-2, -1, 0, 1, 2, 4].map(lesson10.logTick), ['0.01', '0.1', '1', '10', '10²', '10⁴']);
 });
 
-test('lesson10 bias² + variance from the many training sets add up', () => {
+test('lesson10 bias² and variance: corrected for the noisy average, shown without false precision', () => {
+  const M = lesson10.BV_SETS;
   for (const p of lesson10.BV_DEGREES) {
     const bv = lesson10.biasVariance(p);
     const f0 = Math.sin(Math.PI * lesson10.X0);
     const preds = bv.preds;
-    assert.equal(preds.length, lesson10.BV_SETS);
+    assert.equal(preds.length, M);
     const m = mean10(preds);
-    assert.ok(Math.abs(bv.bias2 - (f0 - m) ** 2) < 1e-12);
+    assert.ok(Math.abs(bv.gap2 - (f0 - m) ** 2) < 1e-12);
     assert.ok(Math.abs(bv.variance - variance10(preds, { sample: false })) < 1e-12);
+    // The mean squared deviation from f splits exactly into gap² + variance.
     const direct = mean10(preds.map((v) => (f0 - v) ** 2));
-    assert.ok(Math.abs(direct - (bv.bias2 + bv.variance)) <= 1e-9 * Math.max(1, direct));
+    assert.ok(Math.abs(direct - (bv.gap2 + bv.variance)) <= 1e-9 * Math.max(1, direct));
+    // E[(f − mean)²] = bias² + Var/M, so the estimate subtracts Var/M, floored at 0.
+    assert.ok(Math.abs(bv.bias2 - Math.max(0, bv.gap2 - bv.variance / M)) < 1e-15);
+    assert.equal(bv.measurable, bv.gap2 > 2 * bv.variance / M);
     assert.equal(bv.sigma2, 0.0625);
   }
   const lo = lesson10.biasVariance(1);
   const mid = lesson10.biasVariance(3);
-  const hi = lesson10.biasVariance(lesson10.BV_DEGREES[2]);
-  assert.ok(lo.bias2 > mid.bias2 * 10, 'degree 1 should miss the bend');
-  assert.ok(hi.variance > mid.variance * 10, 'the flexible fit should vary more');
+  const hi = lesson10.biasVariance(7);
+  assert.ok(lo.measurable && lo.bias2 > 0.1, 'degree 1 should clearly miss the bend');
+  assert.equal(lesson10.fmtBias(lo), '0.26');
+  // Degrees 3 and 7: the squared gap is within the noise of the average.
+  assert.equal(mid.measurable, false);
+  assert.equal(hi.measurable, false);
+  assert.equal(lesson10.fmtBias(mid, true), 'too small to measure with 200 sets');
+  // Variance: two significant figures below 1, one ("about") from 1 up.
+  assert.equal(lesson10.fmtVar(hi.variance), 'about 2');
+  assert.equal(lesson10.fmtVar(mid.variance), '0.017');
+  // Degree 7's variance is far above degree 3's in every block of seeds,
+  // and its spread across blocks is what the page quotes.
+  for (const b of lesson10.BV_BLOCKS) {
+    const v7 = lesson10.biasVariance(7, b).variance;
+    const v3 = lesson10.biasVariance(3, b).variance;
+    assert.ok(v7 > 10 * v3, `block ${b}: ${v7} vs ${v3}`);
+  }
+  assert.ok([301, 501].every((b) => lesson10.BV_BLOCKS.includes(b)));
+  const sp = lesson10.varianceSpread(7);
+  const pv = lesson10.pageValues();
+  assert.equal(pv['bv7-var-lo'], '0.5');
+  assert.equal(pv['bv7-var-hi'], '9');
+  assert.ok(Math.abs(sp.lo - 0.5) < 0.05 && Math.abs(sp.hi - 9) < 0.5);
   // Degree 12's fits spread further still (the page says so).
   assert.ok(lesson10.biasVariance(12).variance > hi.variance * 100);
+  // Step 3's framing: the widest gap between training x values sits near −0.2,
+  // and nearly all of degree 12's test error comes from past the last training point.
+  assert.equal(pv['gap-mid'], '−0.2');
+  assert.equal(pv['d12-maxabs'], '35,000');
+  const c12 = lesson10.degreeTable()[12].coef;
+  const te = lesson10.testData();
+  const xmax = Math.max(...lesson10.trainData().xs);
+  const sq = te.xs.map((x, i) => [x, (te.ys[i] - polyEvalS(c12, x)) ** 2]);
+  const total = sq.reduce((t, [, e]) => t + e, 0);
+  const right = sq.filter(([x]) => x > xmax).reduce((t, [, e]) => t + e, 0);
+  assert.ok(right / total > 0.9, String(right / total));
 });
 
 test('lesson10 read-out rows and page', () => {

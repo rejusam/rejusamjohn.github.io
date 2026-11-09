@@ -365,7 +365,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       const best = r.degree === cv.best;
       cvBars[k].setAttribute('fill-opacity', best ? 0.6 : 0.2);
       cvVals[k].textContent = best ? fmt(r.cv) : '';
-      set(cvVals[k], { x: CX[k] + CW / 2, y: y - 28 });
+      set(cvVals[k], { x: CX[k] + CW / 2, y: y - 32 });
     });
     const k = CANDIDATES.indexOf(cv.best);
     const y = B(cv.scores[k].cv);

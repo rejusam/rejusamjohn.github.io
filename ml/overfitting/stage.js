@@ -69,6 +69,14 @@ export function insideTest(p) {
   return { n: idx.length, mse: mse(idx.map((i) => te.ys[i]), idx.map((i) => polyEval(coef, te.xs[i]))) };
 }
 
+// Midpoint of the widest gap between neighbouring training x values.
+export function gapMid() {
+  const xs = [...trainData().xs].sort((a, b) => a - b);
+  let best = 1;
+  for (let i = 2; i < xs.length; i++) if (xs[i] - xs[i - 1] > xs[best] - xs[best - 1]) best = i;
+  return (xs[best] + xs[best - 1]) / 2;
+}
+
 export function lambdaFromSlider(t) {
   const k = -60 + Math.round(t);
   // Whole powers of ten exactly, so the ends are exactly 1e-6 and 10.
@@ -115,26 +123,43 @@ export function ridgeTable(p = MAX_DEGREE) {
   });
 }
 
-// Fits of degree p to BV_SETS fresh training sets; bias² and variance of
-// their predictions at X0 (population variance over the sets).
+// Fits of degree p to BV_SETS fresh training sets (seeds seed0 … seed0 + 199);
+// bias² and variance of their predictions at X0 (population variance over the
+// sets). The squared gap of the average, (f − mean)², overstates bias² by
+// about variance/BV_SETS on average, so the estimate subtracts that; when the
+// gap is under twice that floor, bias² is reported as too small to measure.
 const bvCache = new Map();
-export function biasVariance(p) {
-  if (bvCache.has(p)) return bvCache.get(p);
+export function biasVariance(p, seed0 = BV_SEED0) {
+  const key = `${p}:${seed0}`;
+  if (bvCache.has(key)) return bvCache.get(key);
   const fits = [];
   for (let k = 0; k < BV_SETS; k++) {
-    const d = sineData({ n: N_TRAIN, sd: SD, seed: BV_SEED0 + k });
+    const d = sineData({ n: N_TRAIN, sd: SD, seed: seed0 + k });
     fits.push(ridgeFit(d.xs, d.ys, p));
   }
   const preds = fits.map((c) => polyEval(c, X0));
   const m = mean(preds);
+  const gap2 = (truth(X0) - m) ** 2;
+  const v = variance(preds, { sample: false });
+  const floor = v / BV_SETS;
   const out = {
     degree: p, fits, preds, mean: m,
-    bias2: (truth(X0) - m) ** 2,
-    variance: variance(preds, { sample: false }),
+    gap2,
+    variance: v,
+    floor,
+    bias2: Math.max(0, gap2 - floor),
+    measurable: gap2 > 2 * floor,
     sigma2: SD * SD,
   };
-  bvCache.set(p, out);
+  bvCache.set(key, out);
   return out;
+}
+
+// Other blocks of 200 training sets, for the spread of degree 7's variance.
+export const BV_BLOCKS = [101, 301, 501, 701, 901, 1101];
+export function varianceSpread(p) {
+  const vs = BV_BLOCKS.map((b) => biasVariance(p, b).variance);
+  return { lo: Math.min(...vs), hi: Math.max(...vs) };
 }
 
 // MSE for display: 3 decimals below 10, 1 below 1,000, then whole with commas.
@@ -143,8 +168,14 @@ export function fmtMSE(v) {
   if (v < 1000) return v.toFixed(1);
   return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
-// Bias² and variance: 4 decimals below 1, so small values do not read as 0.
-export const fmtBV = (v) => (v < 1 ? v.toFixed(4) : fmtMSE(v));
+// Bias² to two significant figures, or "too small" below the noise floor.
+export const fmtBias = (b, long = false) => (b.measurable ? Number(b.bias2.toPrecision(2)).toString() : long ? 'too small to measure with 200 sets' : 'too small');
+// Variance: two significant figures below 1; one, with "about", from 1 up.
+export const fmtVar = (v) => (v >= 1 ? `about ${Number(v.toPrecision(1))}` : v.toPrecision(2));
+// Round to one significant figure, for a quoted range.
+export const sig1 = (v) => String(Number(v.toPrecision(1)));
+// A large number to two significant figures, with commas.
+export const round2 = (v) => Number(v.toPrecision(2)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 export function fmt(v, dp = 2) {
   const s = Math.abs(v).toFixed(dp);
   return (v < 0 && Number(s) !== 0 ? '−' : '') + s;
@@ -159,7 +190,7 @@ export function readout(step, { degree = 3, t = T_START, bv = 1 } = {}) {
   }
   if (step === 4) {
     const b = biasVariance(bv);
-    return [`degree ${bv}, at x₀ = ${X0}`, `bias²: ${fmtBV(b.bias2)}`, `variance: ${fmtBV(b.variance)}`, `σ²: ${fmtBV(b.sigma2)}`];
+    return [`degree ${bv}, at x₀ = ${X0}`, `bias²: ${fmtBias(b)}`, `variance: ${fmtVar(b.variance)}`, `σ²: ${b.sigma2}`];
   }
   const r = ridgeTable()[t];
   return [`λ = ${lambdaText(r.lambda)}`, `train MSE: ${fmtMSE(r.train)}`, `test MSE: ${fmtMSE(r.test)}`, `largest |θⱼ|: ${fmt(r.maxAbs)}`];
@@ -173,6 +204,7 @@ export function pageValues() {
   const tr = trainData();
   const inside = insideTest(MAX_DEGREE);
   const inside3 = insideTest(3);
+  const spread7 = varianceSpread(7);
   const out = {
     'best-degree': String(best),
     'best-test': fmtMSE(rows[best].test),
@@ -180,7 +212,10 @@ export function pageValues() {
     'inside-n': String(inside.n),
     'inside-12': fmtMSE(inside.mse),
     'inside-3': fmtMSE(inside3.mse),
-    'd12-maxabs': fmtMSE(Math.max(...rows[12].coef.slice(1).map(Math.abs))),
+    'd12-maxabs': round2(Math.max(...rows[12].coef.slice(1).map(Math.abs))),
+    'gap-mid': fmt(gapMid(), 1),
+    'bv7-var-lo': sig1(spread7.lo),
+    'bv7-var-hi': sig1(spread7.hi),
     'ridge-start': lambdaText(ridge[0].lambda),
     'ridge-start-test': fmtMSE(ridge[0].test),
     'ridge-best-lambda': lambdaText(rb.lambda),
@@ -196,8 +231,8 @@ export function pageValues() {
   }
   for (const p of BV_DEGREES) {
     const b = biasVariance(p);
-    out[`bv${p}-bias2`] = fmtBV(b.bias2);
-    out[`bv${p}-var`] = fmtBV(b.variance);
+    out[`bv${p}-bias2`] = fmtBias(b, true);
+    out[`bv${p}-var`] = fmtVar(b.variance);
   }
   return out;
 }
@@ -455,7 +490,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     }
     if (i === 4) {
       const b = biasVariance(bvDeg);
-      return `Degree ${bvDeg}, fitted to ${BV_SETS} training sets. At x nought ${X0}: bias squared ${fmtBV(b.bias2)}, variance ${fmtBV(b.variance)}.`;
+      return `Degree ${bvDeg}, fitted to ${BV_SETS} training sets. At x nought ${X0}: bias squared ${fmtBias(b, true)}, variance ${fmtVar(b.variance)}.`;
     }
     const r = ridge[t];
     return `Degree 12, lambda ${lambdaSpoken(r.lambda)}. Training MSE ${fmtMSE(r.train)}, test MSE ${fmtMSE(r.test)}.`;
