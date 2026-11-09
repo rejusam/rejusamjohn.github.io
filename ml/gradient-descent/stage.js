@@ -52,28 +52,36 @@ export const K = 25;
 export const ETA_DEFAULT = 0.03;
 export const ETA_MIN = 0.001;
 export const SLIDER_MAX = 1000;
-export function etaFromSlider(t, a) {
-  const hi = 2.5 / a;
-  if (t <= 0) return ETA_MIN;
-  if (t >= SLIDER_MAX) return hi;
-  return ETA_MIN * (hi / ETA_MIN) ** (t / SLIDER_MAX);
-}
+// The two slider positions nearest the boundaries 1/(2a) and 1/a give
+// exactly those values, so both boundary cases can be reached.
 export function sliderFromEta(eta, a) {
   const hi = 2.5 / a;
   return Math.round((SLIDER_MAX * Math.log(eta / ETA_MIN)) / Math.log(hi / ETA_MIN));
 }
+export const snapPositions = (a) => ({ half: sliderFromEta(1 / (2 * a), a), one: sliderFromEta(1 / a, a) });
+export function etaFromSlider(t, a) {
+  const hi = 2.5 / a;
+  if (t <= 0) return ETA_MIN;
+  if (t >= SLIDER_MAX) return hi;
+  const snap = snapPositions(a);
+  if (t === snap.half) return 1 / (2 * a);
+  if (t === snap.one) return 1 / a;
+  return ETA_MIN * (hi / ETA_MIN) ** (t / SLIDER_MAX);
+}
 
-// Each step multiplies the distance to w* by r = 1 − 2aη.
+// Each step multiplies w − w* by q = 1 − 2aη.
 export const rate = (eta, a) => 1 - 2 * a * eta;
 export function regime(eta, a) {
   const r = rate(eta, a);
   if (Math.abs(r + 1) < 1e-12) return 'never';
   if (r < -1) return 'diverges';
-  if (r < 0 && Math.abs(r) >= 1e-12) return 'zigzag';
+  if (Math.abs(r) < 1e-12) return 'onestep';
+  if (r < 0) return 'zigzag';
   return 'steady';
 }
 export const REGIME_LABEL = {
   steady: 'steady',
+  onestep: 'lands in one step',
   zigzag: 'zig-zags but settles',
   never: 'never settles',
   diverges: 'diverges',
@@ -131,6 +139,23 @@ export function fmt(v, dp = 2) {
 }
 // Learning rates to three significant figures, without trailing zeros.
 export const fmtEta = (eta) => String(Number(eta.toPrecision(3)));
+// The learning rate as the stage shows it: three significant figures, or more
+// near a boundary, so the shown value is never the shown boundary (unless η is
+// that boundary) and sits on the same side of it as η itself.
+export function etaText(eta, a) {
+  const bounds = [1 / (2 * a), 1 / a];
+  let str = fmtEta(eta);
+  for (let dp = 3; dp <= 10; dp++) {
+    str = String(Number(eta.toPrecision(dp)));
+    const ok = bounds.every((b) => {
+      if (eta === b) return true;
+      const shownB = Number(fmtEta(b));
+      return Number(str) !== shownB && (Number(str) < shownB) === (eta < b);
+    });
+    if (ok) return str;
+  }
+  return str;
+}
 
 const DIR_ROW = { 1: 'negative: go right', [-1]: 'positive: go left', 0: 'zero: flat here' };
 
@@ -141,13 +166,13 @@ export function readout(step, { d, eta, w, trail }) {
   const m = lossSlope(p, w);
   if (step === 0) return [`w = ${fmt(w)}`, `L(w) = ${fmt(loss(p, w))}`];
   if (step === 1) return [`w = ${fmt(w)}`, `slope = ${fmt(m)}`, DIR_ROW[downhillDir(m)]];
-  if (step === 2) return [`η = ${fmtEta(eta)}`, `w = ${fmt(w)}`, `slope = ${fmt(m)}`, `next w = ${fmt(w - eta * m)}`];
+  if (step === 2) return [`η = ${etaText(eta, p.a)}`, `w = ${fmt(w)}`, `slope = ${fmt(m)}`, `next w = ${fmt(w - eta * m)}`];
   if (step === 3) {
     const k = trail.length - 1;
     const last = trail[k];
     const rows = [`step ${k} of ${K}`, `w = ${fmt(last)}`];
     rows.push(k > 0 ? `last step: ${fmt(Math.abs(last - trail[k - 1]), 3)}` : 'no step yet');
-    rows.push(`Lesson 6 b̂ = ${fmt(p.wStar)}`);
+    rows.push(`Lesson 6 slope: ${fmt(p.wStar)}`);
     return rows;
   }
   if (step === 4) {
@@ -155,7 +180,7 @@ export function readout(step, { d, eta, w, trail }) {
     const last = trail[trail.length - 1];
     const off = ballView(last).clamped;
     return [
-      `η = ${fmtEta(eta)}`,
+      `η = ${etaText(eta, p.a)}`,
       REGIME_LABEL[reg],
       `settles if η < ${fmtEta(1 / p.a)}`,
       off ? 'w: off the chart' : `w after ${trail.length - 1}: ${fmt(last)}`,
@@ -275,7 +300,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   // The bottom of the bowl.
   const minG = el('g', {}, svg);
   el('line', { x1: X(p.wStar), x2: X(p.wStar), y1: Y(p.c), y2: PY0, stroke: MUTED, 'stroke-width': 1.2, 'stroke-dasharray': '3 3' }, minG);
-  el('text', { class: 'stage-text', x: X(p.wStar) + 6, y: PY0 - 6, text: 'w* (lowest)', ...HALO }, minG);
+  // Named below the axis, between the tick labels 1 and 2, clear of the ball and tangent.
+  el('text', { class: 'stage-text', x: X(p.wStar), y: PY0 + 18, 'text-anchor': 'middle', text: 'w*' }, minG);
 
   // Past positions and the hops between them.
   const trailG = el('g', { 'clip-path': 'url(#l7-plot)' }, svg);
@@ -504,8 +530,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
     wOut.textContent = fmt(wDrag);
     wInput.setAttribute('aria-valuetext', `w ${say2(wDrag)}, loss ${say2(L(wDrag))}, slope ${say2(lossSlope(p, wDrag))}`);
-    etaOut.textContent = fmtEta(eta);
-    etaInput.setAttribute('aria-valuetext', `η ${fmtEta(eta)}, ${REGIME_LABEL[regime(eta, p.a)]}`);
+    etaOut.textContent = etaText(eta, p.a);
+    etaInput.setAttribute('aria-valuetext', `η ${etaText(eta, p.a)}, ${REGIME_LABEL[regime(eta, p.a)]}`);
   }
 
   // The ball, at w or partway along a hop.
@@ -581,7 +607,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       const last = list[list.length - 1];
       const reg = regime(eta, p.a);
       const where = ballView(last).clamped ? 'w has run off the chart' : `w is ${say2(last)}`;
-      return `Learning rate ${fmtEta(eta)}: ${REGIME_LABEL[reg]}. After ${list.length - 1} steps ${where}.${reg === 'diverges' ? ' Diverged: the steps grow instead of shrinking.' : ''}`;
+      return `Learning rate ${etaText(eta, p.a)}: ${REGIME_LABEL[reg]}. After ${list.length - 1} steps ${where}.${reg === 'diverges' ? ' Diverged: the steps grow instead of shrinking.' : ''}`;
     }
     return `The ball rests at the bottom, w ${say2(conv.w)}, where the slope is 0. Beside it, a different bumpy curve: there, gradient descent stops in the higher dip.`;
   };

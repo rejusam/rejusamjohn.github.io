@@ -670,7 +670,7 @@ test('lesson7 regime boundaries', () => {
   for (const [w] of st.path) assert.ok(w < wStar);
   // The labels follow r = 1 − 2aη.
   assert.equal(lesson7.regime(0.4 / a, a), 'steady');
-  assert.equal(lesson7.regime(0.5 / a, a), 'steady');
+  assert.equal(lesson7.regime(0.5 / a, a), 'onestep');
   assert.equal(lesson7.regime(0.75 / a, a), 'zigzag');
   assert.equal(lesson7.regime(1 / a, a), 'never');
   assert.equal(lesson7.regime(1.01 / a, a), 'diverges');
@@ -685,7 +685,8 @@ test('lesson7 regime boundaries', () => {
     const eta = lesson7.etaFromSlider(t, a);
     const r = 1 - 2 * a * eta;
     const lab = lesson7.regime(eta, a);
-    if (lab === 'steady') assert.ok(r >= 0 && r < 1);
+    if (lab === 'steady') assert.ok(r > 0 && r < 1);
+    else if (lab === 'onestep') assert.ok(Math.abs(r) < 1e-12);
     else if (lab === 'zigzag') assert.ok(r < 0 && r > -1);
     else if (lab === 'diverges') assert.ok(r < -1);
     else assert.ok(Math.abs(r + 1) < 1e-9);
@@ -775,4 +776,40 @@ test('lesson7 slider, downhill cue, bumpy inset, read-out rows and page', () => 
   const pv = lesson7.pageValues();
   for (const [, key] of lesson7Html.matchAll(/data-value="([^"]+)"/g)) assert.ok(key in pv, key);
   for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+});
+
+test('lesson7 slider stops on both boundaries, and the shown η agrees with its label', () => {
+  const d = lesson7.centredData();
+  const { a, wStar } = lesson7.lossParams(d.cx, d.cy);
+  const snap = lesson7.snapPositions(a);
+  assert.ok(snap.half > 0 && snap.one > snap.half && snap.one < lesson7.SLIDER_MAX);
+  // The stop at 1/(2a) lands on w* in one step; the stop at 1/a never settles.
+  assert.equal(lesson7.etaFromSlider(snap.half, a), 1 / (2 * a));
+  assert.equal(lesson7.regime(lesson7.etaFromSlider(snap.half, a), a), 'onestep');
+  assert.equal(lesson7.REGIME_LABEL.onestep, 'lands in one step');
+  const one = lesson7.runPath(lesson7.etaFromSlider(snap.half, a), d, 3);
+  assert.ok(Math.abs(one.path[1][0] - wStar) < 1e-9);
+  assert.equal(lesson7.etaFromSlider(snap.one, a), 1 / a);
+  assert.equal(lesson7.regime(lesson7.etaFromSlider(snap.one, a), a), 'never');
+  const pv = lesson7.pageValues();
+  const half = Number(pv['eta-half']);
+  const inv = Number(pv['eta-one']);
+  for (let t = 0; t <= lesson7.SLIDER_MAX; t++) {
+    const eta = lesson7.etaFromSlider(t, a);
+    const q = 1 - 2 * a * eta;
+    const lab = lesson7.regime(eta, a);
+    const shown = Number(lesson7.etaText(eta, a));
+    // The label follows q from the actual η ...
+    const want = Math.abs(q + 1) < 1e-12 ? 'never' : q < -1 ? 'diverges' : Math.abs(q) < 1e-12 ? 'onestep' : q < 0 ? 'zigzag' : 'steady';
+    assert.equal(lab, want, `t = ${t}`);
+    // ... and the shown η reads the same way against the boundaries the page shows.
+    if (lab === 'steady') assert.ok(shown < half, `t = ${t}: ${shown}`);
+    if (lab === 'onestep') assert.equal(shown, half);
+    if (lab === 'zigzag') assert.ok(shown > half && shown < inv, `t = ${t}: ${shown}`);
+    if (lab === 'never') assert.equal(shown, inv);
+    if (lab === 'diverges') assert.ok(shown > inv, `t = ${t}: ${shown}`);
+    for (const r of lesson7.readout(4, { d, eta, w: lesson7.W0, trail: lesson7.runPath(eta, d).path.map(([w]) => w) })) {
+      assert.ok(r.length <= 22, r);
+    }
+  }
 });
