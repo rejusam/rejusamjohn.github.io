@@ -175,6 +175,37 @@ test('forest prefix property', () => {
   for (let i = 0; i < 10; i++) assert.equal(big.votes(X[i], 3), small.votes(X[i]));
 });
 
+test('growTree with mtry keeps searching when the sampled features give no split', () => {
+  // Feature 0 is constant, so it can never split; feature 1 separates the classes.
+  const X = [[1, 0], [1, 1], [1, 2], [1, 3]], y = [0, 0, 1, 1];
+  // rng() = 0 always samples feature 0.
+  const tree = growTree(X, y, {mtry: 1, rng: () => 0});
+  assert.equal(tree.leaf, false);
+  assert.equal(tree.feature, 1);
+  assert.equal(tree.threshold, 1.5);
+  X.forEach((r, i) => assert.equal(predictTree(tree, r), y[i]));
+  // The fallback takes no extra draws: one draw per node (root and two leaves).
+  let draws = 0;
+  growTree(X, y, {mtry: 1, rng: () => { draws++; return 0; }});
+  assert.equal(draws, 3);
+  // A node that no feature can split is still a leaf.
+  const flat = growTree([[1, 1], [1, 1]], [0, 1], {mtry: 1, rng: () => 0});
+  assert.equal(flat.leaf, true);
+});
+
+test('forest OOB matches a direct count with a Set per tree', () => {
+  const {X, y} = blobs2({n0: 30, n1: 30, mu0: [0, 0], mu1: [1, 1], sd: 1, seed: 12});
+  const f = forest(X, y, {B: 9, mtry: 1, seed: 3});
+  for (const b of [1, 4, 9]) {
+    const o = f.oob(b);
+    X.forEach((r, i) => {
+      const ts = f.trees.slice(0, b).filter((_, t) => !f.samples[t].includes(i));
+      if (ts.length === 0) return assert.equal(o.pred[i], null);
+      assert.equal(o.pred[i], ts.filter(t => predictTree(t, r) === 1).length / ts.length > 0.5 ? 1 : 0);
+    });
+  }
+});
+
 test('forest OOB uses only trees that left the row out', () => {
   const {X, y} = blobs2({n0: 40, n1: 40, mu0: [0, 0], mu1: [1.2, 0.8], sd: 1, seed: 6});
   const f = forest(X, y, {B: 15, maxDepth: 3, mtry: 1, seed: 9}), o = f.oob();

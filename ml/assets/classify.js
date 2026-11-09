@@ -212,6 +212,8 @@ export function bestSplit(X, y, idx, {features = null, minLeaf = 1} = {}) {
 
 // Grow a tree. Leaf class is the majority, a tie goes to class 0.
 // With mtry and rng, each split looks at mtry features drawn without replacement.
+// If none of them gives a split, the rest are tried one at a time in ascending
+// order (no further draws), as in standard random forests.
 export function growTree(X, y, {maxDepth = Infinity, minLeaf = 1, mtry = null, rng = null, idx = null} = {}) {
   const d = X[0].length;
   const grow = (rows, depth) => {
@@ -227,7 +229,12 @@ export function growTree(X, y, {maxDepth = Infinity, minLeaf = 1, mtry = null, r
       }
       features = pool.slice(0, mtry).sort((a, b) => a - b);
     }
-    const s = bestSplit(X, y, rows, {features, minLeaf});
+    let s = bestSplit(X, y, rows, {features, minLeaf});
+    if (!s && features) {
+      for (let j = 0; j < d && !s; j++) {
+        if (!features.includes(j)) s = bestSplit(X, y, rows, {features: [j], minLeaf});
+      }
+    }
     if (!s) return node;
     return {...node, leaf: false, feature: s.feature, threshold: s.threshold,
       left: grow(s.left, depth + 1), right: grow(s.right, depth + 1)};
@@ -258,6 +265,7 @@ export function forest(X, y, {B, maxDepth = Infinity, mtry = null, seed}) {
     samples.push(idx);
     trees.push(growTree(X, y, {maxDepth, mtry, rng, idx}));
   }
+  const inBag = samples.map(idx => new Set(idx));
   const votes = (x, b = B) => trees.slice(0, b).reduce((s, t) => s + predictTree(t, x), 0) / b;
   const predict = (x, b = B) => votes(x, b) > 0.5 ? 1 : 0;
   const oob = (b = B) => {
@@ -265,7 +273,7 @@ export function forest(X, y, {B, maxDepth = Infinity, mtry = null, seed}) {
     let right = 0, covered = 0;
     X.forEach((x, i) => {
       const vs = [];
-      for (let t = 0; t < b; t++) if (!samples[t].includes(i)) vs.push(predictTree(trees[t], x));
+      for (let t = 0; t < b; t++) if (!inBag[t].has(i)) vs.push(predictTree(trees[t], x));
       if (vs.length === 0) { pred.push(null); return; }
       const p = mean(vs) > 0.5 ? 1 : 0;
       pred.push(p); covered++;
