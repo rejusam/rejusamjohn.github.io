@@ -207,6 +207,13 @@ test('k-means page values match the computations and the page contract', () => {
   assert.match(html, /fixed point/);
   assert.match(html, /not an average/);
   assert.match(html, /a hint, not a rule/);
+  // Only the best (lowest found) inertia is claimed to fall as K grows.
+  assert.match(html, /<p class="lede">With more clusters the best inertia you can reach is always lower, so inertia alone cannot choose K\./);
+  assert.match(html, /the best inertia keeps falling as K grows, and the elbow is only a hint/);
+  assert.match(html, /value="no"> No: the best inertia keeps falling as K grows, whatever the data, so it cannot choose K on its own/);
+  assert.doesNotMatch(html, /[Ii]nertia always falls|always means a lower inertia|inertia falls as K grows/);
+  // Single runs can rise with K: a K = 3 start stops above the K = 2 best.
+  assert.ok(Math.max(...rows[2].inertias) > rows[1].best);
   assert.match(html, /keeps its centre/);
   // Outside the quoted misconceptions, never claim the best answer is guaranteed.
   const prose = html.replace(/<ul class="misconceptions">[^]*?<\/ul>/, '');
