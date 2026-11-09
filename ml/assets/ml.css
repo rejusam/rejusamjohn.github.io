@@ -383,6 +383,11 @@ button {
   margin-top: var(--ml-s3);
 }
 
+.overview p + h2,
+.overview ul + h2 {
+  margin-top: var(--ml-s5);
+}
+
 .overview h2,
 .quiz > h2,
 .complete h2,
@@ -1019,6 +1024,7 @@ html:not(.js) .why {
 }
 
 .next-lesson {
+  display: inline-block;
   font-weight: 600;
 }
 
@@ -1312,6 +1318,14 @@ html:not(.js) .coffee-line {
   .ml-dot {
     width: 28px;
     height: 44px;
+  }
+
+  /* The 600-unit stage shrinks to about 0.6x on a phone; larger user-unit
+     text keeps labels near 9-10px on screen. */
+  #stage-svg text,
+  #stage-svg .value,
+  #stage-svg .note {
+    font-size: 15px;
   }
 
   .coffee-float {
