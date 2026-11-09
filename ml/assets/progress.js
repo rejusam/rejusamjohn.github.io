@@ -2,7 +2,13 @@
 // Every read and write is wrapped: the pages must work when storage is
 // missing, full, blocked or holding something unexpected.
 
+import { PATH } from './path.js';
+
 const KEY = 'rsj-ml:v1';
+
+// Only lessons on the current path count towards progress, so a renamed or
+// retired lesson left in storage never inflates the total.
+const LIVE = new Set(PATH.flatMap((level) => level.lessons.map((l) => l.slug)));
 
 const blank = () => ({ v: 1, lessons: {} });
 
@@ -71,7 +77,8 @@ export function createProgress(storage = defaultStorage()) {
     },
     doneCount() {
       try {
-        return Object.values(load().lessons).filter((l) => cleanLesson(l).done).length;
+        return Object.entries(load().lessons)
+          .filter(([slug, l]) => LIVE.has(slug) && cleanLesson(l).done).length;
       } catch {
         return 0;
       }

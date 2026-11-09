@@ -13,13 +13,19 @@ export function nextIndex(i, delta, count) {
   return Math.min(count - 1, Math.max(0, i + delta));
 }
 
-const KEY_OWNERS = new Set(['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'SUMMARY']);
+// Fields own every key. Buttons and summaries own Space (it activates
+// them) but have no use for the left and right arrows, so those still step.
+const FIELDS = new Set(['INPUT', 'SELECT', 'TEXTAREA']);
+const ACTIVATORS = new Set(['BUTTON', 'SUMMARY']);
+const ARROWS = new Set(['ArrowLeft', 'ArrowRight']);
 
-// Keys typed into a control belong to that control, not to the lesson.
-export function shouldHandleKey(target) {
+export function shouldHandleKey(target, key) {
   if (!target) return true;
   if (target.isContentEditable) return false;
-  return !KEY_OWNERS.has(String(target.tagName || '').toUpperCase());
+  const tag = String(target.tagName || '').toUpperCase();
+  if (FIELDS.has(tag)) return false;
+  if (ACTIVATORS.has(tag)) return ARROWS.has(key);
+  return true;
 }
 
 const PLAY_MS = 2500;
@@ -145,7 +151,12 @@ export async function startLesson(main, { progress, reduced = false, stageModule
   const stageBox = main.querySelector('.stage');
   const svg = main.querySelector('#stage-svg');
   const controls = stageBox && stageBox.querySelector('.controls');
-  if (!count || !stageBox || !svg || !controls) return null;
+  if (!count) return null;
+  if (!stageBox || !svg || !controls) {
+    // No stage markup: keep every step readable.
+    main.classList.add('stage-failed');
+    return null;
+  }
 
   steps.forEach((li, i) => shapeStep(li, i, count));
 
@@ -222,6 +233,16 @@ export async function startLesson(main, { progress, reduced = false, stageModule
     play.setAttribute('aria-pressed', 'false');
   }
 
+  function writeStepHash() {
+    const want = `#step-${current + 1}`;
+    if (location.hash === want) return;
+    try {
+      history.replaceState(history.state, '', want);
+    } catch {
+      // Some sandboxed frames refuse; the lesson still works.
+    }
+  }
+
   function go(i, { animate = true, writeHash = true } = {}) {
     const target = nextIndex(i, 0, count);
     if (target === current) return;
@@ -236,13 +257,7 @@ export async function startLesson(main, { progress, reduced = false, stageModule
     back.disabled = current === 0;
     next.disabled = current === count - 1;
 
-    if (writeHash) {
-      try {
-        history.replaceState(history.state, '', `#step-${current + 1}`);
-      } catch {
-        // Some sandboxed frames refuse; the lesson still works.
-      }
-    }
+    if (writeHash) writeStepHash();
 
     const li = steps[current];
     live.textContent = `Step ${current + 1} of ${count}: ${textOf(li.querySelector('h2'))}. ${textOf(li.querySelector('.lede'))}`;
@@ -302,7 +317,7 @@ export async function startLesson(main, { progress, reduced = false, stageModule
 
   document.addEventListener('keydown', (e) => {
     if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
-    if (!shouldHandleKey(e.target)) return;
+    if (!shouldHandleKey(e.target, e.key)) return;
     if (e.target instanceof Element && e.target.closest('[role="dialog"], .ml-path')) return;
     if (e.key === 'ArrowRight') userGo(current + 1);
     else if (e.key === 'ArrowLeft') userGo(current - 1);
@@ -315,7 +330,9 @@ export async function startLesson(main, { progress, reduced = false, stageModule
   window.addEventListener('hashchange', () => {
     if (/^#step-\d+$/.test(location.hash)) {
       stopPlay();
-      go(stepFromHash(location.hash, count), { writeHash: false });
+      go(stepFromHash(location.hash, count));
+      // An out-of-range #step-N falls back to step 1; show that in the URL.
+      writeStepHash();
     }
   });
 
@@ -323,6 +340,7 @@ export async function startLesson(main, { progress, reduced = false, stageModule
   const hasHash = /^#step-\d+$/.test(location.hash);
   const first = hasHash ? stepFromHash(location.hash, count) : nextIndex(saved.step, 0, count);
   go(first, { animate: false, writeHash: hasHash || first > 0 });
+  main.classList.add('is-live');
 
   // The stage module is loaded after the text is in place, so a slow or
   // failing visual never hides the lesson.

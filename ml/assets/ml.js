@@ -8,6 +8,7 @@ import { startLesson } from './engine.js';
 import { prefersReducedMotion } from './plot.js';
 
 const root = document.documentElement;
+// js-flag.js normally sets this first; kept here in case a page lacks it.
 root.classList.add('js');
 
 const progress = createProgress();
@@ -22,6 +23,8 @@ function make(tag, className, text) {
 }
 
 // --- The path sidebar ---
+
+let drawerClose = null;
 
 function renderPath(nav) {
   const cap = make('p', 'ml-cap', 'The path');
@@ -59,7 +62,7 @@ function renderPath(nav) {
     levels.appendChild(li);
   }
 
-  nav.replaceChildren(cap, levels);
+  nav.replaceChildren(...(drawerClose ? [drawerClose] : []), cap, levels);
 }
 
 // --- Top bar progress ---
@@ -95,6 +98,12 @@ function initDrawer(top, nav) {
   if (brand) brand.after(toggle);
   else top.prepend(toggle);
 
+  // The drawer's own close button; the page behind it is inert while open.
+  drawerClose = make('button', 'ml-path-close', 'Close');
+  drawerClose.type = 'button';
+  nav.prepend(drawerClose);
+  const behind = () => [top, document.querySelector('main'), document.querySelector('.coffee-float')].filter(Boolean);
+
   const scrim = make('div', 'ml-scrim');
   scrim.hidden = true;
   document.body.appendChild(scrim);
@@ -105,8 +114,9 @@ function initDrawer(top, nav) {
     root.classList.toggle('path-open', open);
     toggle.setAttribute('aria-expanded', String(open));
     scrim.hidden = !open;
+    for (const n of behind()) n.inert = open;
     if (open) {
-      const first = nav.querySelector('a, button');
+      const first = nav.querySelector('a');
       if (first) first.focus();
     } else if (restoreFocus) {
       toggle.focus();
@@ -115,6 +125,7 @@ function initDrawer(top, nav) {
 
   toggle.addEventListener('click', () => setOpen(!root.classList.contains('path-open')));
   scrim.addEventListener('click', () => setOpen(false));
+  drawerClose.addEventListener('click', () => setOpen(false));
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && root.classList.contains('path-open')) setOpen(false);
   });
@@ -149,13 +160,19 @@ if (top && nav) initDrawer(top, nav);
 initCoffee(document);
 
 if (lessonMain) {
+  // The engine builds the controls synchronously, before it waits for
+  // stage.js, so the bar height can be measured straight after the call.
   startLesson(lessonMain, {
     progress,
     reduced: prefersReducedMotion(),
-    stageModuleUrl: new URL('stage.js', location.href).href,
+    stageModuleUrl: new URL(`${lessonHref(here)}stage.js`, location.origin).href,
     onDone() {
       if (top) renderProgress(top);
       if (nav) renderPath(nav);
     },
-  }).then(trackControlsHeight);
+  }).catch((err) => {
+    console.error(err);
+    lessonMain.classList.add('stage-failed');
+  });
+  trackControlsHeight();
 }

@@ -34,7 +34,7 @@ test('progress store resets on invalid JSON', () => {
 });
 
 test('progress store ignores a wrong version or shape', () => {
-  const s = { getItem: () => JSON.stringify({ v: 2, lessons: { a: { done: true } } }), setItem() {} };
+  const s = { getItem: () => JSON.stringify({ v: 2, lessons: { slopes: { done: true } } }), setItem() {} };
   assert.equal(createProgress(s).doneCount(), 0);
   const t = { getItem: () => JSON.stringify({ v: 1, lessons: { a: { step: 'x', done: 'yes', quiz: 3 } } }), setItem() {} };
   assert.deepEqual(createProgress(t).get('a'), { step: 0, done: false, quiz: {} });
@@ -43,15 +43,24 @@ test('progress store ignores a wrong version or shape', () => {
 test('progress round-trips', () => {
   const s = memoryStorage();
   const p = createProgress(s);
-  p.set('a', { done: true });
+  p.set('slopes', { done: true });
   assert.equal(p.doneCount(), 1);
-  p.set('b', { step: 3, quiz: { q1: 'left' } });
-  p.set('b', { quiz: { q2: 'right' } });
+  p.set('overfitting', { step: 3, quiz: { q1: 'left' } });
+  p.set('overfitting', { quiz: { q2: 'right' } });
   const again = createProgress(s);
-  assert.deepEqual(again.get('a'), { step: 0, done: true, quiz: {} });
-  assert.deepEqual(again.get('b'), { step: 3, done: false, quiz: { q1: 'left', q2: 'right' } });
+  assert.deepEqual(again.get('slopes'), { step: 0, done: true, quiz: {} });
+  assert.deepEqual(again.get('overfitting'), { step: 3, done: false, quiz: { q1: 'left', q2: 'right' } });
   assert.equal(again.doneCount(), 1);
   const raw = JSON.parse(s.dump().get('rsj-ml:v1'));
   assert.equal(raw.v, 1);
-  assert.ok(raw.lessons.a.done);
+  assert.ok(raw.lessons.slopes.done);
+});
+
+test('doneCount ignores lessons no longer on the path', () => {
+  const s = memoryStorage();
+  const p = createProgress(s);
+  p.set('an-old-lesson', { done: true });
+  p.set('what-is-a-model', { done: true });
+  assert.equal(p.doneCount(), 1);
+  assert.equal(p.get('an-old-lesson').done, true);
 });

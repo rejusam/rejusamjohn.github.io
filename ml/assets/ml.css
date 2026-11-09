@@ -198,7 +198,8 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
-.ml-path-toggle {
+.ml-path-toggle,
+.ml-path-close {
   display: none;
 }
 
@@ -653,8 +654,8 @@ html:not(.js) .steps {
 }
 
 .ml-dot {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -677,14 +678,21 @@ html:not(.js) .steps {
   background: var(--ml-muted);
 }
 
+/* The current step is larger and ringed, not only cyan. */
 .ml-dot[aria-current='step']::before {
+  width: 11px;
+  height: 11px;
   background: var(--ml-cyan);
   border-color: var(--ml-cyan);
-  transform: scale(1.15);
+  box-shadow: 0 0 0 2px var(--ml-surface), 0 0 0 3.5px var(--ml-cyan);
 }
 
 .ml-dot:hover::before {
   border-color: var(--ml-ink);
+}
+
+.ml-dot:focus-visible {
+  outline-offset: 0;
 }
 
 /* SVG primitives lessons can share. */
@@ -751,75 +759,103 @@ html:not(.js) .steps {
   cursor: grabbing;
 }
 
-/* ---------- Lesson layout with JS ---------- */
+/* ---------- Lesson layout with JS ----------
+   Three states on main.lesson:
+   - html.js only (js-flag.js ran, ml.js not yet): the grid with the stage box
+     reserved and step 1's title showing, so nothing jumps when the engine starts.
+   - .is-live (the engine is running): one step at a time.
+   - .stage-failed (no stage, or ml.js never went live; js-flag.js sets it at
+     DOMContentLoaded): the plain reading list, every step visible. */
 
-.js .lesson {
+.js .lesson:not(.stage-failed) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
   grid-template-areas:
     'head  head'
-    'over  over'
     'smain side'
     'stage side'
+    'over  over'
     'quiz  quiz'
     'done  done';
   column-gap: var(--ml-s5);
   align-items: start;
 }
 
-.js .lesson-head {
+.js .lesson:not(.stage-failed) > .lesson-head {
   grid-area: head;
 }
 
-.js .overview {
+.js .lesson:not(.stage-failed) > .overview {
   grid-area: over;
+  margin-top: var(--ml-s7);
 }
 
-.js .lesson .stage {
+.js .lesson:not(.stage-failed) > .stage {
   grid-area: stage;
 }
 
-.js .steps {
-  display: contents;
+.js .lesson:not(.stage-failed) > .quiz {
+  grid-area: quiz;
 }
 
-.js .step {
+.js .lesson:not(.stage-failed) > .complete {
+  grid-area: done;
+}
+
+/* Before the engine is live: steps sit in the title slot, step 1 only. */
+.js .lesson:not(.is-live):not(.stage-failed) > .steps {
+  grid-area: smain;
+  margin: var(--ml-s5) 0 var(--ml-s4);
+  padding-top: calc(var(--ml-t-label) * 1.6 + var(--ml-s2));
+}
+
+.js .lesson:not(.is-live):not(.stage-failed) .step:not(:first-child),
+.js .lesson:not(.is-live):not(.stage-failed) .step > .happening,
+.js .lesson:not(.is-live):not(.stage-failed) .step > .maths {
   display: none;
 }
 
-.js .step.is-current {
+/* Live: only the current step, its parts placed by the grid. */
+.lesson.is-live:not(.stage-failed) .steps {
   display: contents;
 }
 
-.js .step-main {
-  grid-area: smain;
-  scroll-margin-top: var(--ml-s4);
-  margin-top: var(--ml-s7);
-  margin-bottom: var(--ml-s4);
+.lesson.is-live:not(.stage-failed) .step {
+  display: none;
 }
 
-.js .step-count {
+.lesson.is-live:not(.stage-failed) .step.is-current {
+  display: contents;
+}
+
+.lesson.is-live:not(.stage-failed) .step-main {
+  grid-area: smain;
+  margin: var(--ml-s5) 0 var(--ml-s4);
+  scroll-margin-top: var(--ml-s4);
+}
+
+.lesson.is-live:not(.stage-failed) .step-count {
   margin-bottom: var(--ml-s2);
 }
 
-.js .step-side {
+.lesson.is-live:not(.stage-failed) .step-side {
   grid-area: side;
-  margin-top: var(--ml-s7);
+  margin-top: var(--ml-s5);
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.js .step-side > .happening,
-.js .step-side > .maths {
+.lesson.is-live:not(.stage-failed) .step-side > .happening,
+.lesson.is-live:not(.stage-failed) .step-side > .maths {
   padding: 14px var(--ml-s4);
   background: var(--ml-surface);
   border: 1px solid var(--ml-line);
   border-radius: var(--ml-radius);
 }
 
-.js .step.is-current .step-main,
-.js .step.is-current .step-side {
+.lesson.is-live:not(.stage-failed) .step.is-current .step-main,
+.lesson.is-live:not(.stage-failed) .step.is-current .step-side {
   animation: ml-step-in var(--ml-mid) var(--ml-ease);
 }
 
@@ -832,39 +868,16 @@ html:not(.js) .steps {
   }
 }
 
-.js .quiz {
-  grid-area: quiz;
-}
-
-.js .complete {
-  grid-area: done;
-}
-
-/* Without JS, or when the visual fails, fall back to the reading list. */
-.js .lesson.stage-failed {
-  display: block;
-}
-
-.js .stage-failed .steps {
-  display: block;
+/* The reading-list fallback after the engine has shaped the steps. */
+.stage-failed .steps {
   margin-top: var(--ml-s6);
 }
 
-.js .stage-failed .step {
-  display: block;
-}
-
-.js .stage-failed .step-main,
-.js .stage-failed .step-side {
-  margin: 0;
-  animation: none;
-}
-
-.js .stage-failed .step-side {
+.stage-failed .step-side {
   margin-top: var(--ml-s4);
 }
 
-.js .stage-failed .step-count {
+.stage-failed .step-count {
   display: none;
 }
 
@@ -1155,19 +1168,19 @@ html:not(.js) .coffee-line {
 /* ---------- Below 1100px: the info panels stack under the stage ---------- */
 
 @media (max-width: 1100px) {
-  .js .lesson {
+  .js .lesson:not(.stage-failed) {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       'head'
-      'over'
       'smain'
       'stage'
       'side'
+      'over'
       'quiz'
       'done';
   }
 
-  .js .step-side {
+  .lesson.is-live:not(.stage-failed) .step-side {
     margin-top: 14px;
   }
 }
@@ -1238,6 +1251,22 @@ html:not(.js) .coffee-line {
     transition: transform var(--ml-mid) var(--ml-ease);
   }
 
+  .js .ml-path-close {
+    position: absolute;
+    top: var(--ml-s3);
+    right: var(--ml-s3);
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--ml-line);
+    border-radius: var(--ml-radius-sm);
+    background: transparent;
+    font-family: var(--ml-mono);
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
   .ml-scrim {
     position: fixed;
     inset: 0;
@@ -1247,10 +1276,6 @@ html:not(.js) .coffee-line {
 
   .ml-scrim[hidden] {
     display: none;
-  }
-
-  .js .step-main {
-    margin-top: var(--ml-s6);
   }
 
   .stage {
@@ -1263,7 +1288,7 @@ html:not(.js) .coffee-line {
   }
 
   /* The step controls become a bar fixed to the bottom of the screen. */
-  .js .lesson:not(.stage-failed) .controls {
+  .lesson.is-live:not(.stage-failed) .controls {
     position: fixed;
     left: 0;
     right: 0;
