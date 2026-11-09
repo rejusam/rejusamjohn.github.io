@@ -155,6 +155,10 @@ test('knn page values match the computations', () => {
   assert.equal(pv['u-raw'], '85.7%');
   assert.equal(pv['u-x100'], L.pct(u.x100));
   assert.equal(pv['u-std'], L.pct(u.std));
+  assert.equal(pv['u-std'], '84.0%');
+  // Quiz 2 explanation: the numbers come from spans, and "a few cases" is 5 of 300.
+  assert.match(html, /data-for="always">[^<]*<span data-value="u-raw"><\/span> against <span data-value="u-std"><\/span>/);
+  assert.equal(Math.round((u.raw - u.std) * L.testData().X.length), 5);
   assert.equal(pv['u-changed'], String(u.changed));
   assert.equal(pv['q3-votes0'], '2');
   assert.equal(pv['q3-votes1'], '1');
@@ -185,5 +189,8 @@ test('knn wording claims hold', () => {
   // The page's fixed facts.
   assert.match(html, new RegExp(`${L.GRID[0]} × ${L.GRID[1]}`));
   assert.match(html, /\(3\.5, 2\.5\)/);
+  assert.match(html, /James, Witten, Hastie &amp; Tibshirani,/);
+  assert.doesNotMatch(html, /Taylor/);
+  assert.doesNotMatch(html, /it is guaranteed/);
   assert.deepEqual(L.Q0, [3.5, 2.5]);
 });
