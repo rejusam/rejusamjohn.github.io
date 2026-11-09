@@ -176,3 +176,184 @@ export function draggable(node, { onDrag, bounds }) {
     move(nx, ny);
   });
 }
+
+// ---------- Classification plots ----------
+
+// Equilateral triangle centred (centroid) on (cx, cy) with the area of a circle of radius r.
+export function trianglePoints(cx, cy, r) {
+  const s = r * Math.sqrt((4 * Math.PI) / Math.sqrt(3));
+  const h = (Math.sqrt(3) / 2) * s;
+  return [[cx, cy - (2 * h) / 3], [cx - s / 2, cy + h / 3], [cx + s / 2, cy + h / 3]];
+}
+
+// Class 0 circle, class 1 triangle, class 2 square (all the same area), null unlabelled.
+export function classMarker(parent, cx, cy, cls, { r = 5 } = {}) {
+  if (cls === 1) {
+    const d = trianglePoints(cx, cy, r).map(([x, y], k) => `${k ? 'L' : 'M'}${Number(x.toFixed(2))},${Number(y.toFixed(2))}`).join('') + 'Z';
+    return el('path', { class: 'mk mk-1', d }, parent);
+  }
+  if (cls === 2) {
+    const s = r * Math.sqrt(Math.PI);
+    return el('rect', { class: 'mk mk-2', x: cx - s / 2, y: cy - s / 2, width: s, height: s }, parent);
+  }
+  return el('circle', { class: cls === 0 ? 'mk mk-0' : 'mk mk-u', cx, cy, r }, parent);
+}
+
+// nx × ny cells over the plot, row j = 0 at the top. (x, y) is the cell centre in data units.
+export function regionCells(nx, ny, xs, ys) {
+  const [dx0, dx1] = xs.domain;
+  const [dy0, dy1] = ys.domain;
+  const [px0, px1] = xs.range;
+  const top = Math.min(...ys.range);
+  const w = Math.abs(px1 - px0) / nx;
+  const h = Math.abs(ys.range[1] - ys.range[0]) / ny;
+  const left = Math.min(px0, px1);
+  const yHi = ys(dy0) < ys(dy1) ? dy0 : dy1;
+  const yLo = yHi === dy0 ? dy1 : dy0;
+  const cells = [];
+  for (let j = 0; j < ny; j++) {
+    for (let i = 0; i < nx; i++) {
+      cells.push({
+        i, j,
+        x: dx0 + ((i + 0.5) / nx) * (dx1 - dx0),
+        y: yHi + ((j + 0.5) / ny) * (yLo - yHi),
+        px: left + i * w,
+        py: top + j * h,
+        w, h,
+      });
+    }
+  }
+  return cells;
+}
+
+// Unit edges between neighbouring cells of different class, in grid units.
+// grid[j][i]; a vertical edge sits at x = i + 1, a horizontal one at y = j + 1.
+export function boundarySegments(grid) {
+  const segs = [];
+  const ny = grid.length;
+  for (let j = 0; j < ny; j++) {
+    const row = grid[j];
+    for (let i = 0; i + 1 < row.length; i++) {
+      if (row[i] !== row[i + 1]) segs.push([[i + 1, j], [i + 1, j + 1]]);
+    }
+  }
+  for (let j = 0; j + 1 < ny; j++) {
+    for (let i = 0; i < grid[j].length; i++) {
+      if (grid[j][i] !== grid[j + 1][i]) segs.push([[i, j + 1], [i + 1, j + 1]]);
+    }
+  }
+  return segs;
+}
+
+// In prob mode v is p̂ for class 1: the side is p̂ ≥ 0.5, the tint grows with |2p̂ − 1|.
+export function regionFill(v, mode = 'class') {
+  if (mode === 'prob') return { cls: v >= 0.5 ? 1 : 0, strength: Math.abs(2 * v - 1) };
+  return { cls: v, strength: 1 };
+}
+
+// Tint per class, as a percentage of the class colour over the plot surface.
+// Kept low so muted 11px text stays at 4.5:1 over any region. Matches ml.css.
+const TINT = [10, 14, 12];
+
+export function regionMap(parent, xs, ys, f, { nx = 60, ny = 40, mode = 'class' } = {}) {
+  const g = el('g', { class: 'region' }, parent);
+  const cells = regionCells(nx, ny, xs, ys);
+  // A little overlap hides hairline seams between opaque cells.
+  const rects = cells.map((c) => el('rect', { x: c.px, y: c.py, width: c.w + 0.5, height: c.h + 0.5 }, g));
+  const line = el('path', { class: 'boundary' }, g);
+  const update = (fn) => {
+    const grid = Array.from({ length: ny }, () => new Array(nx));
+    cells.forEach((c, k) => {
+      const { cls, strength } = regionFill(fn(c.x, c.y), mode);
+      grid[c.j][c.i] = cls;
+      const r = rects[k];
+      r.setAttribute('class', `r-${cls}`);
+      if (mode === 'prob') {
+        const pct = Math.round(TINT[cls] * strength);
+        r.style.fill = `color-mix(in srgb, var(--mk-${cls}) ${pct}%, var(--region-base))`;
+      }
+    });
+    const { w, h } = cells[0];
+    const left = cells[0].px;
+    const top = cells[0].py;
+    const P = (v) => Number(v.toFixed(2));
+    line.setAttribute('d', boundarySegments(grid).map(([[a, b], [c, d]]) => `M${P(left + a * w)},${P(top + b * h)}L${P(left + c * w)},${P(top + d * h)}`).join(''));
+  };
+  update(f);
+  return { update, g };
+}
+
+// Leaves get x = 0, 1, 2, ... in left-to-right order; a split sits midway over its two children.
+export function treeLayout(root) {
+  const nodes = [];
+  const links = [];
+  let next = 0;
+  let depth = 0;
+  const walk = (node, d) => {
+    const k = nodes.length;
+    const p = { node, depth: d, x: 0 };
+    nodes.push(p);
+    depth = Math.max(depth, d);
+    if (node.leaf) {
+      p.x = next++;
+    } else {
+      const a = walk(node.left, d + 1);
+      const b = walk(node.right, d + 1);
+      links.push([k, a], [k, b]);
+      p.x = (nodes[a].x + nodes[b].x) / 2;
+    }
+    return k;
+  };
+  walk(root, 0);
+  return { nodes, links, leaves: next, depth };
+}
+
+// Boxes for splits ("x₁ < 3.2", yes to the left) and leaves (predicted class marker,
+// then the counts as class 0 · class 1), drawn inside the box (x, y, w, h).
+// Box widths allow 9 units a character: 15-unit mono text on a phone.
+export function treeDiagram(parent, node, { x, y, w, h, names = ['x₁', 'x₂'], fmt: f = (v) => fmt(Number(v.toPrecision(3))) }) {
+  const g = el('g', { class: 'tree' }, parent);
+  const lay = treeLayout(node);
+  const boxH = 40;
+  const CH = 9;
+  const colW = w / lay.leaves;
+  const rowH = lay.depth ? (h - boxH) / lay.depth : 0;
+  const cx = (p) => x + (p.x + 0.5) * colW;
+  const ty = (p) => y + p.depth * rowH;
+  const linkG = el('g', {}, g);
+  for (const [a, b] of lay.links) {
+    const pa = lay.nodes[a];
+    const pb = lay.nodes[b];
+    el('line', { class: 'tree-link', x1: cx(pa), y1: ty(pa) + boxH, x2: cx(pb), y2: ty(pb) }, linkG);
+  }
+  lay.nodes.forEach((p, k) => {
+    const n = p.node;
+    const ng = el('g', { class: n.leaf ? 'tree-node tree-leaf' : 'tree-node tree-split' }, g);
+    const mid = cx(p);
+    const top = ty(p);
+    const [c0, c1] = n.counts;
+    if (n.leaf) {
+      const label = `${c0} · ${c1}`;
+      // A leaf has its own column; a split has at least two below it.
+      const bw = Math.min(colW - 6, Math.max(44, label.length * CH + 12));
+      el('title', { text: `Leaf: ${c0} of class 0 (circle), ${c1} of class 1 (triangle); predicts class ${n.cls}` }, ng);
+      el('rect', { class: 'tree-box', x: mid - bw / 2, y: top, width: bw, height: boxH, rx: 4 }, ng);
+      classMarker(ng, mid, top + 11, n.cls, { r: 4.5 });
+      el('text', { class: 'tree-text', x: mid, y: top + 28, 'text-anchor': 'middle', text: label }, ng);
+    } else {
+      const label = `${names[n.feature] ?? `x${n.feature + 1}`} < ${f(n.threshold)}`;
+      const bw = Math.min(2 * colW - 6, label.length * CH + 14);
+      el('title', { text: `Split: ${label}? Yes goes left, no goes right. ${c0} of class 0, ${c1} of class 1 reach it.` }, ng);
+      el('rect', { class: 'tree-box', x: mid - bw / 2, y: top, width: bw, height: boxH, rx: 4 }, ng);
+      el('text', { class: 'tree-text', x: mid, y: top + boxH / 2, 'text-anchor': 'middle', text: label }, ng);
+      const kids = lay.links.filter(([a]) => a === k).map(([, b]) => lay.nodes[b]);
+      kids.forEach((q, side) => {
+        // At the middle of the link, just outside it.
+        const lx = (mid + cx(q)) / 2 + (side ? 5 : -5);
+        const ly = (top + boxH + ty(q)) / 2 + 4;
+        el('text', { class: 'tree-yn', x: lx, y: ly, 'text-anchor': side ? 'start' : 'end', text: side ? 'no' : 'yes' }, ng);
+      });
+    }
+  });
+  return g;
+}
