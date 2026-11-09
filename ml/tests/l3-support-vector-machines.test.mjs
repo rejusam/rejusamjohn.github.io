@@ -182,6 +182,21 @@ test('moving or removing a point that is not a support vector changes nothing', 
   const g = L.dragFit({ [L.POINT_B]: [xb[0] + 0.5, xb[1] + 0.5] });
   assert.equal(L.lineMoved(g), true);
   assert.ok(g.margin > f.margin);
+  // Sliding B along its edge of the street can leave the line where it was.
+  const wn = Math.hypot(...f.w);
+  const along = [-f.w[1] / wn, f.w[0] / wn];
+  for (const t of [-0.3, 0.3, 1]) {
+    assert.equal(L.lineMoved(L.dragFit({ [L.POINT_B]: [xb[0] + t * along[0], xb[1] + t * along[1]] })), false, String(t));
+  }
+  // A moved into the street (to f = 0.5): it becomes a support vector, the line
+  // moves, and other points stop being support vectors.
+  const xa = X[L.POINT_A];
+  const fa = dot(f.w, xa) + f.b;
+  const k = (fa - 0.5) / (wn * wn);
+  const h = L.dragFit({ [L.POINT_A]: [xa[0] - k * f.w[0], xa[1] - k * f.w[1]] });
+  assert.equal(L.lineMoved(h), true);
+  assert.ok(h.sv.includes(L.POINT_A));
+  assert.ok(f.sv.some((i) => !h.sv.includes(i)));
 });
 
 test('dragged fits converge everywhere on the plot', () => {

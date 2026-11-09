@@ -206,12 +206,12 @@ export function readout(step, { tilt = START.tilt, shift = START.shift, fit = nu
   if (step === 3) {
     const g = fit || fitSep();
     const s = stats(g, g.X || SEP.X, SEP.y);
-    return [`street width: ${width(g.margin)}`, `support vectors: ${s.sv}`, `margin violations: ${s.violations}`, `line moved: ${lineMoved(g) ? 'yes' : 'no'}`];
+    return [`margin 2/‖w‖: ${width(g.margin)}`, `support vectors: ${s.sv}`, `margin violations: ${s.violations}`, `line moved: ${lineMoved(g) ? 'yes' : 'no'}`];
   }
   if (step === 4) {
     const C = C_GRID[clamp(cIdx, 0, C_GRID.length - 1)];
     const s = overStats(C);
-    return [`C = ${cText(C)}`, `street width: ${width(s.margin)}`, `support vectors: ${s.sv}`, `margin violations: ${s.violations}`, `wrong side: ${s.wrong}`, `total hinge: ${num(s.hinge, 2)}`];
+    return [`C = ${cText(C)}`, `margin 2/‖w‖: ${width(s.margin)}`, `support vectors: ${s.sv}`, `margin violations: ${s.violations}`, `wrong side: ${s.wrong}`, `total hinge: ${num(s.hinge, 2)}`];
   }
   if (!lifted) return ['straight line', `right: ${pct(circleLineAcc())}`];
   return ['flat plane, 3 features', `right: ${pct(liftedAcc())}`, `street width: ${width(fitLifted().margin)}`];
@@ -357,10 +357,11 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   // Key above the plot.
   const keyG = el('g', {}, svg);
-  classMarker(keyG, PX0 + 6, 16, 0, { r: 5 });
-  el('text', { class: 'stage-text', x: PX0 + 16, y: 20, text: 'class 0, y = −1' }, keyG);
-  classMarker(keyG, PX0 + 166, 16, 1, { r: 5 });
-  el('text', { class: 'stage-text', x: PX0 + 176, y: 20, text: 'class 1, y = +1' }, keyG);
+  // Two rows, so the labels stay clear of each other at the phone text size.
+  classMarker(keyG, PX0 + 6, 9, 0, { r: 5 });
+  el('text', { class: 'stage-text', x: PX0 + 16, y: 14, text: 'class 0, y = −1' }, keyG);
+  classMarker(keyG, PX0 + 6, 25, 1, { r: 5 });
+  el('text', { class: 'stage-text', x: PX0 + 16, y: 30, text: 'class 1, y = +1' }, keyG);
 
   // Line key under the read-out.
   const lineKey = el('g', {}, svg);
@@ -396,12 +397,12 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   }
   const leftPts = el('g', {}, sixG);
   CIRC.X.forEach((x, i) => classMarker(leftPts, LXs(x[0]), LYs(x[1]), CIRC.cls[i], { r: 4 }));
-  const caption = (x, text) => el('text', { class: 'stage-text', x, y: 40, text }, sixG);
+  const caption = (x, text) => el('text', { class: 'stage-text', x, y: 43, text }, sixG);
   caption(LX0, 'the data, x₁ and x₂');
   const rightG = el('g', {}, sixG);
   const sideAxes = axes(rightG, UX, ZY, { xLabel: 'across, seen side-on', yLabel: 'x₁² + x₂²' });
   sideAxes.setAttribute('aria-hidden', 'true');
-  el('text', { class: 'stage-text', x: QX0, y: 40, text: 'side view' }, rightG);
+  el('text', { class: 'stage-text', x: QX0, y: 43, text: 'side view' }, rightG);
   const sideLines = el('g', { 'clip-path': 'url(#l34-right)' }, rightG);
   const fl = fitLifted();
   const sideLine = (k) => {
