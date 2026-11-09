@@ -1822,6 +1822,13 @@ html:not(.js) .coffee-line {
     font-size: 1.0625rem;
   }
 
+  /* One button per row, so a long "Continue: …" label never changes the
+     number of rows after load. */
+  .hub-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .hub-level,
   .hub .sym {
     grid-template-columns: minmax(0, 1fr);
