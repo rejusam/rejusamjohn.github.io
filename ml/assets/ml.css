@@ -1729,6 +1729,18 @@ html:not(.js) .coffee-line {
   color: var(--ml-muted);
 }
 
+.hub .sym-group > ul {
+  margin-top: var(--ml-s2);
+  max-width: 68ch;
+  padding-left: 1.25em;
+  font-size: var(--ml-t-info);
+  color: var(--ml-muted);
+}
+
+.hub .sym-group > ul li + li {
+  margin-top: var(--ml-s1);
+}
+
 .hub .sym-list {
   margin: var(--ml-s4) 0 0;
   border-bottom: 1px solid var(--ml-line);
