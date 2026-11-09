@@ -624,3 +624,155 @@ test('lesson6 step 5 dashed extrapolation segments are clearly visible', () => {
   // x = 0 (the intercept marker) and both handles sit inside the axis.
   for (const x of [0, ...lesson6.HX]) assert.ok(x > lesson6.X_DOMAIN[0] && x < lesson6.X_DOMAIN[1]);
 });
+
+// ---------------------------------------------------------------- lesson 7
+
+import { gdRun as gdRun7, mse as mse7, mean as mean7 } from '../assets/maths.js';
+import * as lesson7 from '../gradient-descent/stage.js';
+
+const lesson7Html = readFileSync(new URL('../gradient-descent/index.html', import.meta.url), 'utf8');
+
+test('lesson7 loss on centred data is a(w − w*)² + c, with w* the OLS slope', () => {
+  const d = lesson7.centredData();
+  const { xs, ys } = lesson6.regressionData();
+  assert.ok(Math.abs(mean7(d.cx)) < 1e-12 && Math.abs(mean7(d.cy)) < 1e-12);
+  assert.equal(d.xbar, mean7(xs));
+  assert.equal(d.ybar, mean7(ys));
+  const p = lesson7.lossParams(d.cx, d.cy);
+  assert.ok(Math.abs(p.a - mean7(d.cx.map((x) => x * x))) < 1e-12);
+  assert.ok(Math.abs(p.wStar - lesson6.fitLine(xs, ys).b) < 1e-12);
+  for (let w = -1; w <= 4; w += 0.25) {
+    const direct = mse7(d.cy, d.cx.map((x) => w * x));
+    assert.ok(Math.abs(lesson7.loss(p, w) - direct) < 1e-9, `w = ${w}`);
+    const g = lesson7.gradOf(d)([w])[0];
+    assert.ok(Math.abs(lesson7.lossSlope(p, w) - g) < 1e-9, `w = ${w}`);
+  }
+  // The minimum loss is Lesson 6's MSE of the least-squares line.
+  assert.ok(Math.abs(p.c - lesson6.sse(xs, ys, lesson6.fitLine(xs, ys)) / xs.length) < 1e-9);
+});
+
+test('lesson7 regime boundaries', () => {
+  const d = lesson7.centredData();
+  const { a, wStar } = lesson7.lossParams(d.cx, d.cy);
+  const grad = lesson7.gradOf(d);
+  const run = (eta) => gdRun7({ grad, init: [lesson7.W0], eta, steps: 20000 });
+  assert.equal(run(0.98 / a).status, 'converged');
+  assert.equal(run(1.02 / a).status, 'diverged');
+  // Between 1/(2a) and 1/a the iterate lands on alternate sides of w*.
+  const zz = gdRun7({ grad, init: [lesson7.W0], eta: 0.75 / a, steps: 30, tol: 0 });
+  for (let k = 1; k < zz.path.length; k++) {
+    const e0 = zz.path[k - 1][0] - wStar;
+    const e1 = zz.path[k][0] - wStar;
+    assert.ok(e0 * e1 < 0, `step ${k}: ${e0}, ${e1}`);
+  }
+  // Below 1/(2a) it stays on the starting side.
+  const st = gdRun7({ grad, init: [lesson7.W0], eta: 0.25 / a, steps: 30, tol: 0 });
+  for (const [w] of st.path) assert.ok(w < wStar);
+  // The labels follow r = 1 − 2aη.
+  assert.equal(lesson7.regime(0.4 / a, a), 'steady');
+  assert.equal(lesson7.regime(0.5 / a, a), 'steady');
+  assert.equal(lesson7.regime(0.75 / a, a), 'zigzag');
+  assert.equal(lesson7.regime(1 / a, a), 'never');
+  assert.equal(lesson7.regime(1.01 / a, a), 'diverges');
+  assert.equal(lesson7.regime(2.5 / a, a), 'diverges');
+  assert.equal(lesson7.REGIME_LABEL.never, 'never settles');
+  assert.equal(lesson7.REGIME_LABEL.diverges, 'diverges');
+  // Exactly at 1/a the distance to w* never changes.
+  const nv = lesson7.runPath(1 / a, d, 20);
+  for (const [w] of nv.path) assert.ok(Math.abs(Math.abs(w - wStar) - Math.abs(lesson7.W0 - wStar)) < 1e-9);
+  // Every slider position gets a label that matches the maths.
+  for (let t = 0; t <= lesson7.SLIDER_MAX; t++) {
+    const eta = lesson7.etaFromSlider(t, a);
+    const r = 1 - 2 * a * eta;
+    const lab = lesson7.regime(eta, a);
+    if (lab === 'steady') assert.ok(r >= 0 && r < 1);
+    else if (lab === 'zigzag') assert.ok(r < 0 && r > -1);
+    else if (lab === 'diverges') assert.ok(r < -1);
+    else assert.ok(Math.abs(r + 1) < 1e-9);
+  }
+});
+
+test('lesson7 converges to OLS slope', () => {
+  const d = lesson7.centredData();
+  const { xs, ys } = lesson6.regressionData();
+  const ols = lesson6.fitLine(xs, ys);
+  const c = lesson7.converge(d, lesson7.ETA_DEFAULT);
+  assert.equal(c.status, 'converged');
+  assert.ok(Math.abs(c.w - ols.b) < 1e-6, `${c.w} vs ${ols.b}`);
+  // The intercept recovered from the centring gives Lesson 6's line.
+  assert.ok(Math.abs(lesson7.intercept(d, c.w) - ols.a) < 1e-6);
+  // Any η in the stable range reaches the same slope.
+  const { a } = lesson7.lossParams(d.cx, d.cy);
+  for (const eta of [0.1 / a, 0.5 / a, 0.9 / a]) assert.ok(Math.abs(lesson7.converge(d, eta).w - ols.b) < 1e-6);
+});
+
+test('lesson7 divergence at η = 2.5/a: label, clamped ball, no NaN', () => {
+  const d = lesson7.centredData();
+  const { a } = lesson7.lossParams(d.cx, d.cy);
+  const etaMax = lesson7.etaFromSlider(lesson7.SLIDER_MAX, a);
+  assert.equal(etaMax, 2.5 / a);
+  assert.equal(lesson7.etaFromSlider(0, a), lesson7.ETA_MIN);
+  assert.equal(lesson7.regime(etaMax, a), 'diverges');
+  const run = lesson7.runPath(etaMax, d, lesson7.K);
+  assert.equal(run.status, 'diverged');
+  for (const [w] of run.path) assert.ok(Number.isFinite(w));
+  const ball = lesson7.ballView(run.path[run.path.length - 1][0]);
+  assert.equal(ball.clamped, true);
+  assert.ok(ball.w === lesson7.W_DOMAIN[0] || ball.w === lesson7.W_DOMAIN[1]);
+  const rows = lesson7.readout(4, { d, eta: etaMax, w: lesson7.W0, trail: run.path.map(([w]) => w) });
+  assert.ok(rows.join(' ').includes('diverges'));
+  for (const r of rows) assert.ok(!/NaN|undefined|Infinity/.test(r), r);
+  // In the stable range the ball is not clamped.
+  const ok = lesson7.runPath(lesson7.ETA_DEFAULT, d, lesson7.K);
+  assert.equal(lesson7.ballView(ok.path[ok.path.length - 1][0]).clamped, false);
+});
+
+test('lesson7 slider, downhill cue, bumpy inset, read-out rows and page', () => {
+  const d = lesson7.centredData();
+  const p = lesson7.lossParams(d.cx, d.cy);
+  // The log slider round-trips and starts at the default.
+  const t0 = lesson7.sliderFromEta(lesson7.ETA_DEFAULT, p.a);
+  assert.ok(Math.abs(lesson7.etaFromSlider(t0, p.a) / lesson7.ETA_DEFAULT - 1) < 0.01);
+  assert.equal(lesson7.regime(lesson7.ETA_DEFAULT, p.a), 'steady');
+  // The downhill arrow points against the slope's sign everywhere on the axis.
+  for (let w = lesson7.W_DOMAIN[0]; w <= lesson7.W_DOMAIN[1]; w += 0.01) {
+    const dir = lesson7.downhillDir(lesson7.lossSlope(p, w));
+    if (dir === 0) {
+      assert.ok(Math.abs(w - p.wStar) < 0.01);
+      continue;
+    }
+    assert.ok(lesson7.loss(p, w + dir * 1e-3) < lesson7.loss(p, w), `w = ${w}`);
+  }
+  // The data-driven ranges fit the plot.
+  assert.ok(p.wStar > lesson7.W_DOMAIN[0] && p.wStar < lesson7.W_DOMAIN[1]);
+  for (const w of lesson7.W_DOMAIN) assert.ok(lesson7.loss(p, w) < lesson7.L_HI);
+  // The bumpy inset: a run stops in the higher dip, not the lowest one.
+  const b = lesson7.bumpyRun();
+  assert.equal(b.status, 'converged');
+  const g = lesson7.bumpyLowest();
+  assert.ok(Math.abs(lesson7.bumpyPrime(b.u)) < 1e-6);
+  assert.ok(lesson7.bumpy(b.u) > lesson7.bumpy(g) + 0.3, `${b.u} vs ${g}`);
+  assert.ok(Math.abs(b.u - g) > 1);
+  // Read-out rows are finite and short for every step and a range of η.
+  for (let i = 0; i < 6; i++) {
+    for (const t of [0, 300, t0, 700, 800, lesson7.SLIDER_MAX]) {
+      const eta = lesson7.etaFromSlider(t, p.a);
+      const run = lesson7.runPath(eta, d, lesson7.K);
+      for (const w of [lesson7.W_DOMAIN[0], lesson7.W0, p.wStar, lesson7.W_DOMAIN[1]]) {
+        for (const r of lesson7.readout(i, { d, eta, w, trail: run.path.map(([v]) => v) })) {
+          assert.ok(!/NaN|undefined|Infinity/.test(r), r);
+          assert.ok(r.length <= 22, `row too long for a phone: "${r}"`);
+        }
+      }
+    }
+  }
+  assert.equal(lesson7Html.match(/class="step"/g).length, 6);
+  const answer = (id) => lesson7Html.match(new RegExp(`<form class="q" id="${id}" data-answer="([^"]+)"`))[1];
+  assert.equal(answer('q1'), 'overshoot');
+  assert.equal(answer('q2'), 'slope');
+  const note = lesson7Html.match(/<p class="data-note">([\s\S]*?)<\/p>/)[1];
+  assert.match(note, /seed 11/);
+  const pv = lesson7.pageValues();
+  for (const [, key] of lesson7Html.matchAll(/data-value="([^"]+)"/g)) assert.ok(key in pv, key);
+  for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+});
