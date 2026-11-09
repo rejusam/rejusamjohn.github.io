@@ -48,8 +48,10 @@ export function el(tag, attrs, parent) {
   return node;
 }
 
-function fmt(v) {
-  return String(Number(v.toPrecision(6)));
+// Tick label: up to six significant figures, with a true minus sign (U+2212).
+export function fmt(v) {
+  const s = String(Number(v.toPrecision(6)));
+  return s.startsWith('-') ? '\u2212' + s.slice(1) : s;
 }
 
 export function axes(parent, xs, ys, { xLabel, yLabel, ticks = 5 } = {}) {

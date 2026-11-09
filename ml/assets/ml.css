@@ -444,6 +444,21 @@ button {
   margin-top: var(--ml-s2);
 }
 
+/* While the stage is live it draws the table, so the copy in the side card
+   is kept for screen readers only. Without JS, or if the stage fails, it shows. */
+.lesson.is-live:not(.stage-failed) .data-table {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* A small data table inside a step's side card. */
 .data-table {
   margin-top: var(--ml-s3);
