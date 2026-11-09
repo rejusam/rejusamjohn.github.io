@@ -1,0 +1,17 @@
+/* Bagging and random forests: lesson-only styles, loaded after ml.css. */
+
+/* "×2" beside a row drawn more than once in the bootstrap sample. */
+#stage-svg .rf-count {
+  fill: var(--ml-strong);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  paint-order: stroke;
+  stroke: var(--ml-bg);
+  stroke-width: 3px;
+}
+
+@media (max-width: 760px) {
+  #stage-svg .rf-count {
+    font-size: 13px;
+  }
+}
