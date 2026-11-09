@@ -1,0 +1,32 @@
+/* Decision trees: lesson-only styles, loaded after ml.css. */
+
+/* Stub boxes stand for splits below the drawn levels. */
+#stage-svg .dt-stub {
+  stroke: var(--ml-muted);
+  stroke-dasharray: 4 3;
+}
+
+/* The followed point's path through the tree. */
+#stage-svg .tree-box.dt-on {
+  stroke: var(--ml-strong);
+  stroke-width: 2.2;
+}
+
+#stage-svg .tree-link.dt-on {
+  stroke: var(--ml-strong);
+  stroke-width: 2.4;
+}
+
+/* Leaf boxes: the outline of every region, under the class boundary. */
+#stage-svg .dt-region rect {
+  stroke: var(--ml-line);
+  stroke-width: 1;
+}
+
+/* Tree boxes in stage.js are sized for 13-unit text on a phone (eight
+   bottom boxes across the panel), a little under the shared 15. */
+@media (max-width: 760px) {
+  #stage-svg .dt-tree .tree-text {
+    font-size: 13px;
+  }
+}
