@@ -46,12 +46,13 @@ test('shouldHandleKey ignores form controls', () => {
 
 import { PATH, TOTAL_LIVE, findLesson, nextLesson, lessonHref } from '../assets/path.js';
 
-test('path lists seven levels and ten live lessons', () => {
+test('path lists seven levels and nineteen live lessons', () => {
   assert.deepEqual(PATH.map((l) => l.level), ['L0', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6']);
   const live = PATH.flatMap((l) => l.lessons);
   assert.equal(live.length, TOTAL_LIVE);
+  assert.equal(TOTAL_LIVE, 19);
   assert.equal(new Set(live.map((l) => l.slug)).size, TOTAL_LIVE);
-  for (const l of PATH.slice(3)) {
+  for (const l of PATH.slice(4)) {
     assert.equal(l.soon, true);
     assert.deepEqual(l.lessons, []);
   }
@@ -64,7 +65,8 @@ test('findLesson and nextLesson walk the path', () => {
   assert.equal(findLesson('nope'), null);
   assert.equal(nextLesson('what-is-a-model').slug, 'data-as-numbers');
   assert.equal(nextLesson('slopes').slug, 'linear-regression');
-  assert.equal(nextLesson('overfitting'), null);
+  assert.equal(nextLesson('overfitting').slug, 'k-nearest-neighbours');
+  assert.equal(nextLesson('pca'), null);
   assert.equal(nextLesson('nope'), null);
   assert.equal(lessonHref('slopes'), '/ml/slopes/');
 });

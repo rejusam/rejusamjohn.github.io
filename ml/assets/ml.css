@@ -495,6 +495,70 @@ button {
   color: var(--ml-muted);
 }
 
+/* Confusion matrix. Expected markup:
+   <table class="ml-confusion">
+     <caption>…</caption>
+     <thead>
+       <tr><td colspan="2"></td><th scope="colgroup" colspan="2">Predicted</th></tr>
+       <tr><td colspan="2"></td><th scope="col">0</th><th scope="col">1</th></tr>
+     </thead>
+     <tbody>
+       <tr><th scope="rowgroup" rowspan="2">Actual</th><th scope="row">0</th><td class="hit">TN</td><td>FP</td></tr>
+       <tr><th scope="row">1</th><td>FN</td><td class="hit">TP</td></tr>
+     </tbody>
+   </table>
+   Correct cells (the diagonal) carry class "hit": a cyan edge as well as a
+   tint, so they differ by more than colour. */
+.ml-confusion {
+  margin-top: var(--ml-s3);
+  border-collapse: separate;
+  border-spacing: 4px;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.ml-confusion caption {
+  text-align: left;
+  white-space: nowrap;
+  padding-bottom: var(--ml-s1);
+  color: var(--ml-muted);
+}
+
+.ml-confusion th {
+  padding: 2px 6px;
+  color: var(--ml-muted);
+  font-weight: 400;
+  text-align: center;
+}
+
+.ml-confusion tbody th[scope='rowgroup'] {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 0 2px;
+}
+
+.ml-confusion td {
+  min-width: 3.5em;
+  padding: 8px 10px;
+  text-align: center;
+  color: var(--ml-strong);
+  background: var(--ml-bg);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+}
+
+.ml-confusion thead td,
+.ml-confusion td:empty {
+  background: none;
+  border: 0;
+}
+
+.ml-confusion td.hit {
+  background: color-mix(in srgb, var(--ml-cyan) 10%, var(--ml-bg));
+  border-color: var(--ml-cyan-2);
+}
+
 .maths {
   font-size: var(--ml-t-info);
 }
@@ -828,6 +892,93 @@ html:not(.js) .steps {
 
 #stage-svg .handle:active {
   cursor: grabbing;
+}
+
+/* Classes in L3 plots: shape and colour together, never colour alone.
+   Class 0 cyan circle, class 1 violet triangle, class 2 ink square,
+   unlabelled points muted circles. The dark ring keeps a marker clear of
+   the region tint under it. */
+:root {
+  --mk-0: var(--ml-cyan);
+  --mk-1: var(--ml-violet);
+  --mk-2: var(--ml-ink);
+  --region-base: var(--ml-surface);
+}
+
+.mk {
+  stroke: var(--ml-bg);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.mk-0 {
+  fill: var(--mk-0);
+}
+
+.mk-1 {
+  fill: var(--mk-1);
+}
+
+.mk-2 {
+  fill: var(--mk-2);
+}
+
+.mk-u {
+  fill: var(--ml-muted);
+}
+
+/* Region tints are opaque mixes over the stage surface (10, 14 and 12 per
+   cent, as in plot.js). At these levels muted text keeps 4.5:1 over any
+   region and ink keeps 8:1. A region map always draws its boundary. */
+.region {
+  shape-rendering: crispEdges;
+}
+
+.region .r-0 {
+  fill: color-mix(in srgb, var(--mk-0) 10%, var(--region-base));
+}
+
+.region .r-1 {
+  fill: color-mix(in srgb, var(--mk-1) 14%, var(--region-base));
+}
+
+.region .r-2 {
+  fill: color-mix(in srgb, var(--ml-muted) 12%, var(--region-base));
+}
+
+.region .boundary {
+  fill: none;
+  stroke: var(--ml-ink);
+  stroke-width: 1.5;
+  stroke-linecap: square;
+  shape-rendering: auto;
+}
+
+/* Tree diagram. */
+.tree-box {
+  fill: var(--ml-bg);
+  stroke: var(--ml-line);
+  stroke-width: 1;
+}
+
+.tree-link {
+  stroke: var(--ml-muted);
+  stroke-width: 1.2;
+}
+
+#stage-svg .tree-text,
+.tree-text {
+  fill: var(--ml-ink);
+  font-family: var(--ml-mono);
+  font-size: 12px;
+  dominant-baseline: central;
+}
+
+#stage-svg .tree-yn,
+.tree-yn {
+  fill: var(--ml-muted);
+  font-family: var(--ml-mono);
+  font-size: 11px;
 }
 
 /* ---------- Lesson layout with JS ----------
@@ -1404,6 +1555,23 @@ html:not(.js) .coffee-line {
   #stage-svg .note,
   #stage-svg .stage-text {
     font-size: 15px;
+  }
+
+  /* Tree boxes are sized in plot.js for 15-unit text. */
+  #stage-svg .tree-text {
+    font-size: 15px;
+  }
+
+  #stage-svg .tree-yn {
+    font-size: 13px;
+  }
+
+  /* Markers grow too, so a circle and a triangle stay easy to tell apart.
+     They are placed by cx/cy or path data, never by a transform attribute. */
+  #stage-svg .mk {
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(1.4);
   }
 
   /* Room to scroll the last lines clear of the coffee cup. */

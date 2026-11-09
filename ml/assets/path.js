@@ -1,4 +1,4 @@
-// The full learning path. L0 to L2 are live; L3 to L6 show the road ahead
+// The full learning path. L0 to L3 are live; L4 to L6 show the road ahead
 // without links. Lesson pages live at /ml/<slug>/.
 
 export const PATH = [
@@ -28,13 +28,27 @@ export const PATH = [
       { slug: 'overfitting', title: 'Overfitting and regularisation' },
     ],
   },
-  { level: 'L3', name: 'Classic ML', lessons: [], soon: true, topics: 'Logistic regression, k-NN, trees, ensembles, k-means, PCA' },
+  {
+    level: 'L3',
+    name: 'Classic ML',
+    lessons: [
+      { slug: 'k-nearest-neighbours', title: 'k-nearest neighbours' },
+      { slug: 'logistic-regression', title: 'Logistic regression' },
+      { slug: 'naive-bayes', title: 'Naive Bayes' },
+      { slug: 'support-vector-machines', title: 'Support vector machines' },
+      { slug: 'decision-trees', title: 'Decision trees' },
+      { slug: 'random-forests', title: 'Bagging and random forests' },
+      { slug: 'gradient-boosting', title: 'Gradient boosting' },
+      { slug: 'k-means', title: 'k-means clustering' },
+      { slug: 'pca', title: 'Principal component analysis' },
+    ],
+  },
   { level: 'L4', name: 'Deep learning', lessons: [], soon: true, topics: 'Neurons, backprop, optimisers, CNNs, RNNs' },
   { level: 'L5', name: 'Modern AI', lessons: [], soon: true, topics: 'Attention, transformers, LLMs, embeddings' },
   { level: 'L6', name: 'In practice', lessons: [], soon: true, topics: 'Evaluation, calibration, interpretability, fairness' },
 ];
 
-export const TOTAL_LIVE = 10;
+export const TOTAL_LIVE = PATH.flatMap((l) => l.lessons).length;
 
 export const lessonHref = (slug) => `/ml/${slug}/`;
 

@@ -35,3 +35,95 @@ test('tick labels use a true minus sign', () => {
   const labels = linearScale([-1.8, 1.8], [0, 100]).ticks(5).map(fmt);
   assert.deepEqual(labels, ['\u22121', '0', '1']);
 });
+
+import { regionCells, boundarySegments, treeLayout, regionFill, trianglePoints } from '../assets/plot.js';
+
+test('boundarySegments handles three classes', () => {
+  const segs = boundarySegments([[0, 1, 2]]);
+  assert.equal(segs.length, 2);
+  assert.deepEqual(segs, [[[1, 0], [1, 1]], [[2, 0], [2, 1]]]);
+});
+
+test('boundarySegments on a 2×2 grid', () => {
+  const segs = boundarySegments([[0, 1], [0, 1]]);
+  assert.deepEqual(segs, [[[1, 0], [1, 1]], [[1, 1], [1, 2]]]);
+});
+
+test('boundarySegments finds horizontal edges', () => {
+  const segs = boundarySegments([[0, 0], [1, 1]]);
+  assert.deepEqual(segs, [[[0, 1], [1, 1]], [[1, 1], [2, 1]]]);
+});
+
+test('boundarySegments empty for one class', () => {
+  assert.deepEqual(boundarySegments([[1, 1, 1], [1, 1, 1]]), []);
+});
+
+test('regionCells covers the plot once, top row first', () => {
+  const xs = linearScale([0, 6], [40, 640]);
+  const ys = linearScale([0, 4], [400, 0]);
+  const cells = regionCells(60, 40, xs, ys);
+  assert.equal(cells.length, 2400);
+  const first = cells[0];
+  assert.equal(first.i, 0);
+  assert.equal(first.j, 0);
+  assert.ok(Math.abs(first.x - 0.05) < 1e-12);
+  assert.ok(Math.abs(first.y - 3.95) < 1e-12);
+  assert.equal(first.px, 40);
+  assert.equal(first.py, 0);
+  assert.equal(first.w, 10);
+  assert.equal(first.h, 10);
+  const last = cells[2399];
+  assert.ok(Math.abs(last.x - 5.95) < 1e-12);
+  assert.ok(Math.abs(last.y - 0.05) < 1e-12);
+  assert.equal(last.px + last.w, 640);
+  assert.equal(last.py + last.h, 400);
+});
+
+test('regionFill: class mode keeps the class, prob mode thresholds at 0.5', () => {
+  assert.deepEqual(regionFill(2, 'class'), { cls: 2, strength: 1 });
+  assert.deepEqual(regionFill(0.5, 'prob'), { cls: 1, strength: 0 });
+  assert.deepEqual(regionFill(0, 'prob'), { cls: 0, strength: 1 });
+  assert.deepEqual(regionFill(0.75, 'prob'), { cls: 1, strength: 0.5 });
+  assert.equal(regionFill(0.25, 'prob').cls, 0);
+});
+
+test('triangle marker has the area of the circle', () => {
+  const r = 5;
+  const [[ax, ay], [bx, by], [cx, cy]] = trianglePoints(10, 20, r);
+  const area = Math.abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay)) / 2;
+  assert.ok(Math.abs(area - Math.PI * r * r) < 1e-9);
+  assert.ok(Math.abs((ax + bx + cx) / 3 - 10) < 1e-12);
+  assert.ok(Math.abs((ay + by + cy) / 3 - 20) < 1e-12);
+});
+
+test('treeLayout puts leaves left to right', () => {
+  const leaf = (c) => ({ leaf: true, counts: c, cls: c[1] > c[0] ? 1 : 0, n: c[0] + c[1] });
+  const tree = {
+    leaf: false, feature: 0, threshold: 3, counts: [6, 6], cls: 0, n: 12,
+    left: { leaf: false, feature: 1, threshold: 1, counts: [5, 1], cls: 0, n: 6, left: leaf([4, 0]), right: leaf([1, 1]) },
+    right: { leaf: false, feature: 1, threshold: 2, counts: [1, 5], cls: 1, n: 6, left: leaf([1, 2]), right: leaf([0, 3]) },
+  };
+  const lay = treeLayout(tree);
+  assert.equal(lay.leaves, 4);
+  assert.equal(lay.depth, 2);
+  assert.equal(lay.nodes.length, 7);
+  const leaves = lay.nodes.filter((p) => p.node.leaf);
+  assert.deepEqual(leaves.map((p) => p.x), [0, 1, 2, 3]);
+  assert.ok(leaves.every((p) => p.depth === 2));
+  for (const [a, b] of lay.links) assert.equal(lay.nodes[b].depth, lay.nodes[a].depth + 1);
+  for (const p of lay.nodes.filter((q) => !q.node.leaf)) {
+    const kids = lay.links.filter(([a]) => lay.nodes[a] === p).map(([, b]) => lay.nodes[b]);
+    assert.equal(kids.length, 2);
+    assert.equal(p.x, (kids[0].x + kids[1].x) / 2);
+  }
+  assert.equal(lay.nodes[0].node, tree);
+  assert.equal(lay.nodes[0].x, 1.5);
+});
+
+test('treeLayout of a single leaf', () => {
+  const lay = treeLayout({ leaf: true, counts: [3, 1], cls: 0, n: 4 });
+  assert.equal(lay.leaves, 1);
+  assert.equal(lay.depth, 0);
+  assert.deepEqual(lay.links, []);
+  assert.equal(lay.nodes[0].x, 0);
+});
