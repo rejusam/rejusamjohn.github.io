@@ -13,7 +13,7 @@ const LIVE = new Set(PATH.flatMap((level) => level.lessons.map((l) => l.slug)));
 const blank = () => ({ v: 1, lessons: {} });
 
 function cleanLesson(raw) {
-  const out = { step: 0, done: false, quiz: {} };
+  const out = { step: 0, done: false, quiz: Object.create(null) };
   if (!raw || typeof raw !== 'object') return out;
   if (Number.isInteger(raw.step) && raw.step >= 0) out.step = raw.step;
   if (raw.done === true) out.done = true;

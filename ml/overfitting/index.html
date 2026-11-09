@@ -14,7 +14,8 @@
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -130,7 +131,7 @@
                 <p>Bias is how far the average fit sits from the true curve (dotted). With degree 1 the fits agree with one another, but all of them miss the bend.</p>
                 <p>Variance is how much the fits disagree with one another. With degree 7 each fit follows its own noise, so they spread widely. Degree 12's fits spread much further still, too far to draw usefully. Degree 3 keeps both small.</p>
                 <p hidden data-fill>At x₀ = <span data-value="bv-x0"></span>, the dashed line: degree 1 has bias² <span data-value="bv1-bias2"></span> and variance <span data-value="bv1-var"></span>. Degree 3 has variance <span data-value="bv3-var"></span>, and its bias² is <span data-value="bv3-bias2"></span>. Degree 7 has variance <span data-value="bv7-var"></span>, and its bias² is <span data-value="bv7-bias2"></span>. These are estimates from the <span data-value="bv-sets"></span> training sets.</p>
-                <p hidden data-fill>A few wild fits dominate degree 7's variance. Another <span data-value="bv-sets"></span> training sets can give anywhere from about <span data-value="bv7-var-lo"></span> to <span data-value="bv7-var-hi"></span>, but always far above degree 3's.</p>
+                <p hidden data-fill>A few wild fits dominate degree 7's variance. In six blocks of <span data-value="bv-sets"></span> training sets it ranged from about <span data-value="bv7-var-lo"></span> to <span data-value="bv7-var-hi"></span>, but was always far above degree 3's.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>

@@ -1,5 +1,6 @@
 import test from 'node:test';
-import assert from 'node:assert/strict';
+// Loose deepEqual: cleaned quiz objects have a null prototype.
+import assert from 'node:assert';
 import { createProgress } from '../assets/progress.js';
 
 function memoryStorage() {
@@ -63,4 +64,16 @@ test('doneCount ignores lessons no longer on the path', () => {
   p.set('what-is-a-model', { done: true });
   assert.equal(p.doneCount(), 1);
   assert.equal(p.get('an-old-lesson').done, true);
+});
+
+test('a stored quiz with __proto__ and unknown keys does not pollute', () => {
+  const raw = '{"v":1,"lessons":{"slopes":{"step":1,"done":false,"quiz":{"__proto__":"x","polluted":"y","q1":"left"}}}}';
+  const t = { getItem: () => raw, setItem() {} };
+  const got = createProgress(t).get('slopes');
+  assert.strictEqual(Object.getPrototypeOf(got.quiz), null);
+  assert.equal({}.polluted, undefined);
+  assert.equal(Object.prototype.polluted, undefined);
+  const known = new Set(['q1', 'q2']);
+  const accepted = Object.keys(got.quiz).filter((id) => known.has(id));
+  assert.deepEqual(accepted, ['q1']);
 });

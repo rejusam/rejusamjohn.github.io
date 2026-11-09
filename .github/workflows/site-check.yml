@@ -2,9 +2,9 @@ name: Site check
 
 on:
   push:
-    branches: [main, ml-explorer]
+    branches: [main]
   pull_request:
-    branches: [main, ml-explorer]
+    branches: [main]
 
 jobs:
   html:

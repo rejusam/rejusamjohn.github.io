@@ -206,7 +206,7 @@ export async function startLesson(main, { progress, reduced = false, stageModule
   let timer = null;
   let reachedLast = saved.step >= count - 1;
   let done = saved.done;
-  let answered = new Set(Object.keys(saved.quiz));
+  let answered = new Set();
   let stage = null;
 
   const quizIds = bindQuiz(main, saved.quiz, (id, value) => {
@@ -214,6 +214,7 @@ export async function startLesson(main, { progress, reduced = false, stageModule
     progress.set(slug, { quiz: { [id]: value } });
     checkDone();
   });
+  for (const id of Object.keys(saved.quiz)) if (quizIds.includes(id)) answered.add(id);
 
   function checkDone() {
     if (done || !reachedLast) return;

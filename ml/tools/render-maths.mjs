@@ -1,8 +1,8 @@
 // Pre-renders maths in ML Explorer pages (author-time tool, not shipped logic).
 //
 // Usage:
-//   NODE_PATH=<scratchpad>/katex/node_modules node ml/tools/render-maths.mjs <file.html…>
-//   Fallback: KATEX_PATH=<scratchpad>/katex/node_modules (same folder).
+//   NODE_PATH=<katex-install-dir>/node_modules node ml/tools/render-maths.mjs <file.html…>
+//   Fallback: KATEX_PATH=<katex-install-dir>/node_modules (same folder).
 //
 // Author maths as <span class="tex" data-tex="\frac{a}{b}"></span>, add
 // data-display for display maths. The span's content is replaced with KaTeX

@@ -351,7 +351,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const CW = 22;
   const CX = CANDIDATES.map((_, k) => RX0 + 18 + k * 32);
   const cvBars = CANDIDATES.map(() => el('rect', { width: CW, fill: CYAN, 'fill-opacity': 0.25, stroke: CYAN, 'stroke-width': 1.4 }, cvG));
-  const cvVals = CANDIDATES.map(() => el('text', { class: 'stage-text cv-val', 'text-anchor': 'middle' }, cvG));
+  const cvVals = CANDIDATES.map(() => el('text', { class: 'stage-text cv-val', 'text-anchor': 'middle', stroke: BG, 'stroke-width': 4, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, cvG));
   CANDIDATES.forEach((deg, k) => el('text', { class: 'stage-text', x: CX[k] + CW / 2, y: CY0 + 16, 'text-anchor': 'middle', text: String(deg) }, cvG));
   el('text', { class: 'stage-text', x: (RX0 + RX1) / 2 + 6, y: CY0 + 34, 'text-anchor': 'middle', text: 'degree' }, cvG);
   const cvRing = el('rect', { fill: 'none', stroke: STRONG, 'stroke-width': 2, rx: 3 }, cvG);

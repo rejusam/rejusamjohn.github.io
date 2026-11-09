@@ -14,7 +14,8 @@
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -219,7 +220,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">â€
             </fieldset>
             <p class="why" data-for="mean">The mean gives the lowest MSE. Here the mean and the median differ, and the MAE is lowest at the median.</p>
             <p class="why" data-for="midrange">Halfway between the extremes looks at only two values. It makes the biggest single miss as small as possible, not the average miss.</p>
-            <p class="why" data-for="zero">Zero is best only when the median itself is zero. Here every y is above zero, so c = 0 misses every point by its whole value.</p>
+            <p class="why" data-for="zero">With these 11 points, zero would be best only if the median were zero. Here every y is above zero, so c = 0 misses every point by its whole value.</p>
             <p class="why" data-for="median">Right. Moving c towards the middle brings it closer to more points than it moves away from, so the MAE falls until c reaches the middle value. With 11 points that is a single value, the median.</p>
         </form>
     </section>
