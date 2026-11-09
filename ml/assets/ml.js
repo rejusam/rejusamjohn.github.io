@@ -1,7 +1,7 @@
 // Entry point for every ML Explorer page:
 // <script type="module" src="/ml/assets/ml.js"></script>
 
-import { PATH, TOTAL_LIVE, lessonHref, firstNotDone } from './path.js';
+import { PATH, TOTAL_LIVE, lessonHref, startLink } from './path.js';
 import { createProgress } from './progress.js';
 import { initCoffee } from './coffee.js';
 import { startLesson } from './engine.js';
@@ -166,18 +166,13 @@ function initHub(list) {
     a.appendChild(make('span', 'vh', ' (done)'));
   }
 
-  const actions = document.getElementById('hub-actions');
-  if (!actions || progress.doneCount() === 0) return;
-  const next = firstNotDone(isDone);
-  const start = actions.querySelector('.hub-start');
-  if (!next) {
-    actions.prepend(make('p', 'hub-all-done', `You have finished all ${TOTAL_LIVE} lessons.`));
-    return;
+  // Rewrite the existing start button in place, so nothing moves on load.
+  const start = document.querySelector('.hub-start');
+  if (start) {
+    const { label, href } = startLink(isDone);
+    start.textContent = label;
+    start.href = href;
   }
-  const go = make('a', 'hub-continue hub-btn is-primary', `Continue: ${next.title}`);
-  go.href = lessonHref(next.slug);
-  if (start) start.classList.remove('is-primary');
-  actions.prepend(go);
 }
 
 // --- Start ---

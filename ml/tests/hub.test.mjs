@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { PATH, TOTAL_LIVE, lessonHref, firstNotDone } from '../assets/path.js';
+import { PATH, TOTAL_LIVE, lessonHref, firstNotDone, startLink } from '../assets/path.js';
 import { mean, variance, sd, olsFit, mse, mae } from '../assets/maths.js';
 
 const ML = fileURLToPath(new URL('..', import.meta.url));
@@ -66,6 +66,22 @@ test('landing path shows every level; coming levels have topics and no links', (
       assert.ok(stripTags(chunk).includes(level.topics), `${level.level} lists its topics`);
     }
   });
+});
+
+test('startLink picks the one start button from progress', () => {
+  const first = LIVE[0];
+  assert.deepEqual(startLink(() => false), { label: `Start at L0: ${first.title}`, href: lessonHref(first.slug) });
+  const gap = new Set([LIVE[0].slug, LIVE[2].slug]);
+  assert.deepEqual(startLink((s) => gap.has(s)), { label: `Continue: ${LIVE[1].title}`, href: lessonHref(LIVE[1].slug) });
+  assert.deepEqual(startLink(() => true), { label: `Start again at L0: ${first.title}`, href: lessonHref(first.slug) });
+  // Slugs not on the path never count.
+  assert.deepEqual(startLink((s) => s === 'retired-lesson'), startLink(() => false));
+});
+
+test('landing static start button matches startLink with no progress', () => {
+  const m = /<a class="hub-start[^"]*" href="([^"]+)">([\s\S]*?)<\/a>/.exec(landing());
+  assert.deepEqual({ label: stripTags(m[2]), href: m[1] }, startLink(() => false));
+  assert.equal((landing().match(/class="hub-start/g) || []).length, 1, 'one start button');
 });
 
 test('landing start link goes to the first lesson', () => {
@@ -133,7 +149,7 @@ test('notation page covers the symbols the lessons use', () => {
   const has = (t) => [...tex].some((s) => s.includes(t));
   for (const t of [
     'x', 'y', '\\hat{y}', 'x_i', '\\mathbf{x}_i', 'x_{ij}', 'n', 'e_i = y_i - \\hat{y}_i', '\\varepsilon',
-    '\\mathbf{X}', '\\bar{x}', '\\mu', '\\sigma', 's^2', 'z', 'x_{(k)}', '\\mathbb{E}', '\\operatorname{Var}',
+    '\\mathbf{X}', '\\bar{x}', '\\bar{y}', '\\mathbf{y}', '\\mathbb{R}^2', '\\tilde{y}', '\\bar{f}(x_0)', 'df/dx', '\\lim', '\\boldsymbol{\\delta}', '\\cdot', 'I', 'w_j', 'x_1, \\dots, x_d', '\\mu', '\\sigma', 's^2', 'z', 'x_{(k)}', '\\mathbb{E}', '\\operatorname{Var}',
     '\\hat{a}', '\\hat{b}', '\\boldsymbol{\\theta}', '\\theta_j', 'w', '\\tilde{x}', 'a_z', 'w_z',
     '\\eta', 'w^*', '\\gamma_{\\max}', '\\kappa', '\\lambda', 'J(\\boldsymbol{\\theta})', 'H',
     '\\mathrm{MSE}', '\\mathrm{MAE}', '\\mathrm{RMSE}', '\\mathrm{SSE}', '\\mathrm{SST}', 'R^2', 'r',
@@ -182,6 +198,6 @@ test('notation worked examples match the computed values', () => {
   const tex = [...notation().matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1]));
   for (const t of expected) assert.ok(tex.includes(t), `notation page shows ${t}`);
   // The variance box quotes both versions in words.
-  const box = stripTags(/<aside class="callout"[\s\S]*?<\/aside>/.exec(notation())[0]);
+  const box = stripTags(/<section class="callout"[\s\S]*?<\/section>/.exec(notation())[0]);
   assert.ok(box.includes(`the population variance is about ${f2(variance(xs, { sample: false }))} and the sample variance is ${f2(variance(xs))}`));
 });

@@ -62,3 +62,16 @@ export function firstNotDone(isDone) {
   }
   return null;
 }
+
+// The landing page's one start button. With no lesson done it starts at L0;
+// part way through it continues at the first lesson not done; with every
+// lesson done it offers L0 again. isDone(slug) says whether a lesson is done.
+export function startLink(isDone) {
+  const all = PATH.flatMap((level) => level.lessons);
+  const first = all[0];
+  const atStart = { label: `Start at L0: ${first.title}`, href: lessonHref(first.slug) };
+  if (!all.some((l) => isDone(l.slug))) return atStart;
+  const next = firstNotDone(isDone);
+  if (!next) return { label: `Start again at L0: ${first.title}`, href: lessonHref(first.slug) };
+  return { label: `Continue: ${next.title}`, href: lessonHref(next.slug) };
+}

@@ -1466,7 +1466,7 @@ html:not(.js) .coffee-line {
 .hub-cap,
 .hub-n,
 .hub-soon,
-.sym-k {
+.hub .sym-k {
   font-family: var(--ml-mono);
   font-size: var(--ml-t-label);
   letter-spacing: 0.12em;
@@ -1505,10 +1505,15 @@ html:not(.js) .coffee-line {
   margin-top: var(--ml-s6);
 }
 
+/* One line each; a long "Continue: …" title is cut with an ellipsis, while the
+   link text (its accessible name) stays whole. */
 .hub-btn {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 26px;
   padding: 8px 18px;
   border: 1px solid var(--ml-line);
   border-radius: var(--ml-radius-sm);
@@ -1532,12 +1537,6 @@ html:not(.js) .coffee-line {
 .hub-btn.is-primary:hover {
   background: var(--ml-cyan-2);
   border-color: var(--ml-cyan-2);
-}
-
-.hub-all-done {
-  width: 100%;
-  color: var(--ml-strong);
-  font-weight: 600;
 }
 
 .hub-path-sec {
@@ -1648,6 +1647,14 @@ html:not(.js) .coffee-line {
   outline: none;
 }
 
+/* Without :has(), the ring goes back on the link itself. */
+@supports not selector(:has(*)) {
+  .hub-lesson a:focus-visible {
+    outline: 2px solid var(--ml-cyan);
+    outline-offset: 2px;
+  }
+}
+
 /* The whole row is the link's target. */
 .hub-lesson a::after {
   content: '';
@@ -1691,7 +1698,6 @@ html:not(.js) .coffee-line {
 
 .hub-soon {
   margin-top: 2px;
-  font-size: 0.625rem;
 }
 
 .hub-foot {
@@ -1702,7 +1708,7 @@ html:not(.js) .coffee-line {
 
 /* Notation page */
 
-.hub-toc {
+.hub .hub-toc {
   list-style: none;
   padding: 0;
   display: flex;
@@ -1712,23 +1718,23 @@ html:not(.js) .coffee-line {
   font-size: var(--ml-t-info);
 }
 
-.sym-group {
+.hub .sym-group {
   margin-top: 56px;
 }
 
-.sym-group > p {
+.hub .sym-group > p {
   margin-top: var(--ml-s2);
   max-width: 68ch;
   font-size: var(--ml-t-info);
   color: var(--ml-muted);
 }
 
-.sym-list {
+.hub .sym-list {
   margin: var(--ml-s4) 0 0;
   border-bottom: 1px solid var(--ml-line);
 }
 
-.sym {
+.hub .sym {
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);
   column-gap: var(--ml-s5);
@@ -1736,46 +1742,46 @@ html:not(.js) .coffee-line {
   border-top: 1px solid var(--ml-line);
 }
 
-.sym dt {
+.hub .sym dt {
   font-size: 1.125rem;
   color: var(--ml-strong);
 }
 
-.sym dd {
+.hub .sym dd {
   margin: 0;
   min-width: 0;
   max-width: 68ch;
 }
 
-.sym dd > p + p {
+.hub .sym dd > p + p {
   margin-top: 6px;
 }
 
-.sym-eg,
-.sym-where,
-.sym-diff {
+.hub .sym-eg,
+.hub .sym-where,
+.hub .sym-diff {
   font-size: var(--ml-t-info);
 }
 
-.sym-eg .katex {
+.hub .sym-eg .katex {
   color: var(--ml-strong);
 }
 
-.sym-k {
+.hub .sym-k {
   margin-right: var(--ml-s2);
 }
 
-.sym-where {
+.hub .sym-where {
   color: var(--ml-muted);
 }
 
-.sym-diff {
+.hub .sym-diff {
   padding-left: var(--ml-s3);
   border-left: 2px solid var(--ml-muted);
   color: var(--ml-ink);
 }
 
-.callout {
+.hub .callout {
   margin-top: 56px;
   max-width: 76ch;
   padding: var(--ml-s5);
@@ -1785,15 +1791,15 @@ html:not(.js) .coffee-line {
   border-radius: var(--ml-radius);
 }
 
-.callout > * + * {
+.hub .callout > * + * {
   margin-top: var(--ml-s3);
 }
 
-.callout ul {
+.hub .callout ul {
   padding-left: 1.25em;
 }
 
-.callout li + li {
+.hub .callout li + li {
   margin-top: var(--ml-s1);
 }
 
@@ -1817,7 +1823,7 @@ html:not(.js) .coffee-line {
   }
 
   .hub-level,
-  .sym {
+  .hub .sym {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -1842,7 +1848,7 @@ html:not(.js) .coffee-line {
       'promise';
   }
 
-  .sym dt {
+  .hub .sym dt {
     margin-bottom: var(--ml-s1);
   }
 }

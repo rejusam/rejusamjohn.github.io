@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ML Explorer · Reju Sam John</title>
-    <meta name="description" content="Short interactive lessons on how machine learning works, for students and complete beginners. Every number is computed live, and the maths is one click deeper.">
+    <meta name="description" content="Short interactive lessons on how machine learning works, for students and complete beginners. Every number in the pictures is computed live, and the maths is one click deeper.">
     <link rel="canonical" href="https://rejusamjohn.pages.dev/ml/">
     <meta property="og:title" content="ML Explorer">
-    <meta property="og:description" content="Short interactive lessons on how machine learning works, for students and complete beginners. Every number is computed live, and the maths is one click deeper.">
+    <meta property="og:description" content="Short interactive lessons on how machine learning works, for students and complete beginners. Every number in the pictures is computed live, and the maths is one click deeper.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rejusamjohn.pages.dev/ml/">
     <meta property="og:image" content="https://rejusamjohn.pages.dev/ml/og.png">
@@ -27,7 +27,7 @@
       "@context": "https://schema.org",
       "@type": "Course",
       "name": "ML Explorer",
-      "description": "Short interactive lessons on how machine learning works, for students and complete beginners. Every number is computed live in the browser.",
+      "description": "Short interactive lessons on how machine learning works, for students and complete beginners. Every number in the pictures is computed live in the browser.",
       "url": "https://rejusamjohn.pages.dev/ml/",
       "inLanguage": "en-NZ",
       "isAccessibleForFree": true,
@@ -109,7 +109,7 @@
         <h1>ML Explorer</h1>
         <p class="promise">How machine learning works, for students and complete beginners: from what a model is to fitting one, testing it fairly and keeping it from overfitting.</p>
         <div class="hub-intro">
-            <p>Each lesson shows one idea on a single picture, in a few short steps. Move the controls and watch what changes. Every number is computed in your browser from the lesson&#8217;s data as you go.</p>
+            <p>Each lesson shows one idea on a single picture, in a few short steps. Move the controls and watch what changes. Every number in the pictures is computed in your browser from the lesson&#8217;s data as you go.</p>
             <p>The main text needs no maths. The formulas, and the reasons behind them, sit one click deeper under &#8220;The maths&#8221;.</p>
         </div>
         <div class="hub-actions" id="hub-actions">
@@ -121,10 +121,13 @@
     <section class="hub-path-sec" id="path" aria-labelledby="path-title">
         <h2 id="path-title">The path</h2>
         <p class="hub-sub">Each lesson builds on the ones before it. L0 to L2 are ready; L3 to L6 are coming next. Your progress is kept in this browser only.</p>
-        <ol class="hub-path">
+        <!-- Safari drops list semantics when list-style is none; role="list" restores them. -->
+        <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
+        <ol class="hub-path" role="list">
             <li class="hub-level" data-level="L0">
                 <div class="hub-level-head"><span class="hub-lv">L0</span> <h3 class="hub-lt">Start here</h3></div>
-                <ol class="hub-lessons">
+                <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
+                <ol class="hub-lessons" role="list">
                     <li class="hub-lesson">
                         <p class="hub-n">Lesson 1 · About 8 min</p>
                         <a data-slug="what-is-a-model" href="/ml/what-is-a-model/"><span class="hub-title">What is a model?</span></a>
@@ -134,7 +137,8 @@
             </li>
             <li class="hub-level" data-level="L1">
                 <div class="hub-level-head"><span class="hub-lv">L1</span> <h3 class="hub-lt">Data &amp; intuition</h3></div>
-                <ol class="hub-lessons">
+                <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
+                <ol class="hub-lessons" role="list">
                     <li class="hub-lesson">
                         <p class="hub-n">Lesson 2 · About 10 min</p>
                         <a data-slug="data-as-numbers" href="/ml/data-as-numbers/"><span class="hub-title">Data as numbers</span></a>
@@ -159,7 +163,8 @@
             </li>
             <li class="hub-level" data-level="L2">
                 <div class="hub-level-head"><span class="hub-lv">L2</span> <h3 class="hub-lt">Learning from data</h3></div>
-                <ol class="hub-lessons">
+                <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
+                <ol class="hub-lessons" role="list">
                     <li class="hub-lesson">
                         <p class="hub-n">Lesson 6 · About 12 min</p>
                         <a data-slug="linear-regression" href="/ml/linear-regression/"><span class="hub-title">Linear regression</span></a>
