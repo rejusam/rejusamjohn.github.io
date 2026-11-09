@@ -25,13 +25,18 @@ test('lesson1 fitted slope is near the generating slope', () => {
 test('lesson1 stage numbers agree with the fitted rule', () => {
   const { xs, ys } = lesson1.lessonData();
   const fit = lesson1.fitRule(xs, ys);
-  // Least squares residuals sum to zero, and the fit beats any other line.
   const s = lesson1.missSummary(xs, ys, fit);
+  // With an intercept, least-squares residuals sum to zero.
   assert.ok(Math.abs(s.residuals.reduce((t, e) => t + e, 0)) < 1e-9);
-  const worse = lesson1.missSummary(xs, ys, { a: fit.a + 1, b: fit.b });
-  assert.ok(worse.mse > s.mse);
+  // Moving a or b either way from the fit raises the average squared miss.
+  for (const d of [-0.5, 0.5]) {
+    assert.ok(lesson1.missSummary(xs, ys, { a: fit.a + d, b: fit.b }).mse > s.mse);
+    assert.ok(lesson1.missSummary(xs, ys, { a: fit.a, b: fit.b + d }).mse > s.mse);
+  }
+  // The biggest miss is the largest absolute residual, at the reported index.
+  assert.equal(s.maxAbs, Math.max(...s.residuals.map(Math.abs)));
+  assert.equal(Math.abs(s.residuals[s.worst]), s.maxAbs);
   assert.equal(lesson1.predict(fit, 0), fit.a);
-  assert.ok(s.maxAbs >= Math.abs(s.residuals[s.worst]) - 1e-12);
-  assert.equal(lesson1.fmt(-2, 1), '−2.0');
+  assert.equal(lesson1.fmt(-2, 1), '\u22122.0');
   assert.equal(lesson1.fmt(34.264, 1), '34.3');
 });

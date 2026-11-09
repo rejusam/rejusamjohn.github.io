@@ -89,8 +89,9 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const stickLines = dx.map(() => el('line', { stroke: '#94a3b8', 'stroke-linecap': 'round' }, sticks));
   const ghost = el('line', { class: 'series-b' }, clipped);
   const line = el('line', { class: 'series-a' }, clipped);
-  const guideV = el('line', { class: 'grid', 'stroke-dasharray': '4 4', stroke: '#94a3b8' }, clipped);
-  const guideH = el('line', { class: 'grid', 'stroke-dasharray': '4 4', stroke: '#94a3b8' }, clipped);
+  const guide = { stroke: '#94a3b8', 'stroke-width': 1.2, 'stroke-dasharray': '4 4' };
+  const guideV = el('line', guide, clipped);
+  const guideH = el('line', guide, clipped);
 
   const pts = el('g', {}, svg);
   const dots = dx.map((x, i) => el('circle', { class: 'dot', cx: X(x), cy: Y(dy[i]), r: 5, stroke: '#0f172a', 'stroke-width': 1.5 }, pts));
@@ -106,14 +107,14 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   }, predictG);
   const predictLabel = el('text', { class: 'value', ...halo }, predictG);
 
-  // Read-out box, top left, where the data leaves room.
+  // Read-out box. It sits bottom right, where no point or line goes; on the
+  // prediction step it moves top left, out of the way of the guide lines.
   const box = el('g', {}, svg);
-  const boxRect = el('rect', { x: BOX.x, y: BOX.y, width: BOX.w, rx: 6, fill: '#1e293b', 'fill-opacity': 0.92, stroke: '#334155' }, box);
-  const rows = [0, 1, 2].map((k) => {
-    const cy = BOX.y + 8 + BOX.row * k + BOX.row / 2;
-    const sample = el('line', { x1: BOX.x + 12, x2: BOX.x + 32, y1: cy, y2: cy }, box);
-    const text = el('text', { y: cy + 5, class: 'value' }, box);
-    return { sample, text };
+  const boxRect = el('rect', { rx: 6, fill: '#1e293b', 'fill-opacity': 0.92, stroke: '#334155' }, box);
+  const rows = [0, 1, 2].map(() => {
+    const sample = el('line', {}, box);
+    const text = el('text', { class: 'value' }, box);
+    return { sample, text, off: 12 };
   });
 
   // --- Controls: the rule's sliders (step 2) and the new student's hours (step 4).
@@ -123,7 +124,10 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     const vh = make('span', { className: 'vh', textContent: hint });
     const input = make('input', { type: 'range', min, max, step, value });
     input.style.width = '96px';
+    // The output is hidden from assistive tech so the slider's name stays
+    // fixed; the value is read from aria-valuetext instead.
     const out = make('output');
+    out.setAttribute('aria-hidden', 'true');
     label.append(name, vh, ' ', input, ' ', out);
     return { label, input, out };
   };
@@ -156,7 +160,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   function setRow(k, text, sampleClass) {
     const r = rows[k];
     r.text.textContent = text || '';
-    r.text.setAttribute('x', BOX.x + (sampleClass ? 40 : 12));
+    r.off = sampleClass ? 40 : 12;
     if (sampleClass) {
       r.sample.setAttribute('class', sampleClass);
       r.sample.style.display = '';
@@ -263,21 +267,39 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       r.text.style.display = on ? '' : 'none';
       if (!on) r.sample.style.display = 'none';
     });
-    boxRect.setAttribute('height', 16 + BOX.row * n);
     // Fit the box to its longest row (fixed width if text can't be measured).
     let w = BOX.w;
     try {
       const lens = rows.slice(0, n).map((r) => r.text.getComputedTextLength());
-      if (lens.every((len) => len > 0)) {
-        w = Math.max(...rows.slice(0, n).map((r, k) => Number(r.text.getAttribute('x')) + lens[k])) - BOX.x + 12;
-      }
+      if (lens.every((len) => len > 0)) w = Math.max(...rows.slice(0, n).map((r, k) => r.off + lens[k])) + 12;
     } catch {
       // Keep the fixed width.
     }
+    const h = 16 + BOX.row * n;
+    const topLeft = step === 3;
+    const bx = topLeft ? BOX.x : X(10) - 8 - w;
+    const by = topLeft ? BOX.y : Y(0) - 8 - h;
+    boxRect.setAttribute('x', bx.toFixed(1));
+    boxRect.setAttribute('y', by);
     boxRect.setAttribute('width', w.toFixed(1));
+    boxRect.setAttribute('height', h);
+    rows.forEach((r, k) => {
+      const cy = by + 8 + BOX.row * k + BOX.row / 2;
+      r.text.setAttribute('x', (bx + r.off).toFixed(1));
+      r.text.setAttribute('y', cy + 5);
+      r.sample.setAttribute('x1', (bx + 12).toFixed(1));
+      r.sample.setAttribute('x2', (bx + 32).toFixed(1));
+      r.sample.setAttribute('y1', cy);
+      r.sample.setAttribute('y2', cy);
+    });
 
-    sa.out.textContent = fmt(guess.a, 1);
-    sb.out.textContent = fmt(guess.b, 2);
+    const show = (sl, text) => {
+      sl.out.textContent = text;
+      sl.input.setAttribute('aria-valuetext', text);
+    };
+    show(sa, fmt(guess.a, 1));
+    show(sb, fmt(guess.b, 2));
+    show(sh, `${hours.toFixed(1)} hours`);
     sh.out.textContent = hours.toFixed(1);
   }
 
