@@ -47,6 +47,25 @@ export function downhill(slope, tol = 0.005) {
   return slope < 0 ? 'right' : 'left';
 }
 
+// The downhill arrow drawn along the curve from x: it starts a little way
+// from the point and stops at or before the bottom, so it only ever runs
+// downhill. Null when the slope is flat or the bottom is too close to draw it.
+export const ARROW_GAP = 0.12;
+export const ARROW_MAX = 0.95;
+export const ARROW_MIN = 0.15;
+export function downhillArrow(x, n = 21) {
+  const d = downhill(fPrime(x));
+  if (d === 'flat') return null;
+  const dir = d === 'right' ? 1 : -1;
+  const len = Math.min(ARROW_MAX, Math.abs(vertex().x - x) - ARROW_GAP);
+  if (len < ARROW_MIN) return null;
+  const pts = Array.from({ length: n }, (_, j) => {
+    const t = x + dir * (ARROW_GAP + (j / (n - 1)) * len);
+    return [t, f(t)];
+  });
+  return { dir, pts };
+}
+
 // Fixed decimals with a true minus sign.
 export function fmt(v, dp = 2) {
   const s = Math.abs(v).toFixed(dp);
@@ -306,22 +325,26 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     set(tanLine, { x1: X(x1), y1: Y(f(x) + m * (x1 - x)), x2: X(x2), y2: Y(f(x) + m * (x2 - x)) });
     op(tanG, s.tan);
 
-    // Downhill arrow along the curve.
+    // Downhill arrow along the curve, drawn just above it.
     const d = downhill(m);
+    const arc = downhillArrow(x);
     if (d === 'flat') {
       arrow.setAttribute('d', '');
       arrowLabel.textContent = 'flat';
       arrowLabel.setAttribute('text-anchor', 'middle');
       set(arrowLabel, { x: X(x), y: Y(f(x)) + 24 });
+    } else if (!arc) {
+      // Too close to the bottom to draw; the box still gives the direction.
+      arrow.setAttribute('d', '');
+      arrowLabel.textContent = '';
     } else {
-      const dir = d === 'right' ? 1 : -1;
-      const pts = Array.from({ length: 21 }, (_, j) => x + dir * (0.12 + (j / 20) * 0.95)).map((t) => [t, f(t) + 0.45]);
+      const pts = arc.pts.map(([t, y]) => [t, y + 0.45]);
       arrow.setAttribute('d', pathFrom(pts, X, Y));
       const end = pts[pts.length - 1];
       arrowLabel.textContent = 'downhill';
       // Just beyond the arrowhead, on the side it points to.
-      arrowLabel.setAttribute('text-anchor', dir > 0 ? 'start' : 'end');
-      set(arrowLabel, { x: X(end[0]) + dir * 10, y: Y(end[1]) - 9 });
+      arrowLabel.setAttribute('text-anchor', arc.dir > 0 ? 'start' : 'end');
+      set(arrowLabel, { x: X(end[0]) + arc.dir * 10, y: Y(end[1]) - 9 });
     }
     op(downG, s.down);
 
@@ -477,6 +500,14 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       const to = target(i);
       let moved = Promise.resolve();
       // Step 5 is about the bottom, so x goes there; the slider can move it away again.
+      // Step 4 is about direction, so a flat start (from step 5) goes back to the start value.
+      if (i === 3 && downhill(fPrime(x)) === 'flat') {
+        if (animate) moved = animateX(X_START);
+        else {
+          xToken++;
+          setX(X_START);
+        }
+      }
       if (i === 4 && animate) moved = animateX(v.x);
       else if (i === 4) {
         xToken++;

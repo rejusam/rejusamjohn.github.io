@@ -476,3 +476,24 @@ test('lesson5 read-out rows and page', () => {
   assert.match(note, /0\.5x² − 2x \+ 3/);
   assert.equal(lesson5Html.match(/class="step"/g).length, 5);
 });
+
+test('lesson5 downhill arrow never ends higher than it starts', () => {
+  const v = lesson5.vertex();
+  for (let k = 0; k <= 700; k++) {
+    const x = lesson5.X_LO + k / 100;
+    const d = lesson5.downhill(lesson5.fPrime(x));
+    const arc = lesson5.downhillArrow(x);
+    if (d === 'flat') { assert.equal(arc, null); continue; }
+    if (arc === null) { assert.ok(Math.abs(v.x - x) < 0.12 + 0.15 + 1e-9, `hidden far from the bottom at x = ${x}`); continue; }
+    assert.equal(arc.dir, d === 'right' ? 1 : -1);
+    const [x0, y0] = arc.pts[0];
+    const [x1, y1] = arc.pts[arc.pts.length - 1];
+    assert.ok(y1 <= y0, `x = ${x}: ends at ${y1}, starts at ${y0}`);
+    // It never passes the bottom, so it runs downhill all the way.
+    assert.ok(arc.dir > 0 ? x1 <= v.x + 1e-12 : x1 >= v.x - 1e-12, `x = ${x}: passes the bottom`);
+    for (let j = 1; j < arc.pts.length; j++) assert.ok(arc.pts[j][1] <= arc.pts[j - 1][1] + 1e-12);
+    assert.ok(Math.sign(x1 - x0) === arc.dir);
+  }
+  assert.notEqual(lesson5.downhillArrow(0.5), null);
+  assert.equal(lesson5.downhillArrow(1.99), null);
+});

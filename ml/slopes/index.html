@@ -87,7 +87,7 @@
                 <p>The short line through the point is the tangent. It touches the curve there and heads the same way the curve does. Its slope is the curve's slope at that point. Step 3 shows how to work it out.</p>
                 <p>Move x with the slider. On the left the curve falls, so its slope is negative. On the right it climbs, so its slope is positive.</p>
                 <p>The chart on the right shows the slope at every x. It is no longer flat: the slope changes as x changes.</p>
-                <p>This is what Lesson 4 meant by "a slope at every point". The MSE curve is smooth, so it has one. The MAE curve has corners, and at a corner there is no single slope.</p>
+                <p>This is what Lesson 4 meant when it said the MSE curve "has a slope everywhere". It is smooth, so it has one at every point. The MAE curve has corners, and at a corner there is no single slope.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -128,11 +128,11 @@
             <h2>The sign tells you which way is downhill</h2>
             <p class="lede">A negative slope means the curve falls to the right, so downhill is to the right. A positive slope means downhill is to the left.</p>
             <div class="happening">
-                <p>Move x and watch the arrow. It always points down the curve.</p>
+                <p>Move x and watch the arrow. It always points down the curve. Very close to the bottom there is no room to draw it, but the box still gives the direction.</p>
                 <p>Left of the bottom, the slope is negative, and going right takes you down. Right of the bottom, the slope is positive, and going left takes you down.</p>
                 <p>So to go downhill, move x the opposite way to the slope's sign.</p>
                 <p>The size of the slope matters too. The steeper the curve, the further its slope is from 0, and the more the height changes for a small step.</p>
-                <p>The rule holds for small steps. Take too big a step and you can overshoot the bottom and end up higher on the other side. Lesson 7 builds gradient descent on this rule, and shows how to choose the step size.</p>
+                <p>The rule holds for small steps. Take too big a step and you can overshoot the bottom and end up higher on the other side. Lesson 7 builds gradient descent on this rule, and shows what the step size does.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -151,7 +151,7 @@
                 <p>So one way to find the bottom is to look for where the slope is 0. On this curve that happens at just one x.</p>
                 <p>A slope of 0 does not always mean a minimum. It can also be a peak, or a spot where the curve levels off and then carries on the same way. For this bowl-shaped curve, it is the minimum.</p>
                 <p>Move x away and the slope is no longer 0.</p>
-                <p>A look ahead. A function can have more than one input. Then you can take its slope along one input at a time, holding the others fixed. That is a partial derivative. Put the partial derivatives together, one per input, and you have the gradient. It points uphill, the way the function rises fastest. Lesson 8 uses it on a loss with two inputs.</p>
+                <p>A look ahead. A function can have more than one input. Then you can take its slope along one input at a time, holding the others fixed. That is a partial derivative. Put the partial derivatives together, one per input, and you have the gradient. Wherever it is not zero, it points uphill, the way the function rises fastest. Lesson 8 uses it on a loss with two inputs.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -184,7 +184,7 @@
 
         <form class="q" id="q2" data-answer="right">
             <fieldset>
-                <legend>For the same curve, which way is downhill at x = 0?</legend>
+                <legend>For the same curve, at x = 0 the slope is f′(0) = −2. Which way is downhill?</legend>
                 <label><input type="radio" name="q2" value="left"> To the left</label>
                 <label><input type="radio" name="q2" value="right"> To the right</label>
                 <label><input type="radio" name="q2" value="flat"> Neither: the curve is flat there</label>
@@ -221,7 +221,7 @@
             <li>Goodfellow, Bengio &amp; Courville, <cite>Deep Learning</cite>, Section 4.3, "Gradient-Based Optimization", which uses the sign of the derivative to move downhill, and explains why a slope of 0 can be a minimum, a maximum or neither.</li>
         </ol>
 
-        <p class="data-note"><strong>About the curve.</strong> This lesson uses no data, random or otherwise, so there is no seed. The curve is f(x) = 0.5x² − 2x + 3, drawn for x from −1 to 6. It was chosen because its numbers come out round: its slope is f′(x) = x − 2, and its lowest point is at x = 2, where f(x) = 1. The straight line in step 1 is y = 0.5 + 1.5x. In step 3, x stays at 3 and h runs from 0.01 to 2, so it never reaches 0. The stage shows values to two decimal places, and to three in step 3; the calculations use unrounded values.</p>
+        <p class="data-note"><strong>About the curve.</strong> This lesson uses no data, random or otherwise, so there is no seed. The curve is f(x) = 0.5x² − 2x + 3, drawn for x from −1 to 6. It was chosen because its numbers come out round: its slope is f′(x) = x − 2, and its lowest point is at x = 2, where f(x) = 1. The straight line in step 1 is y = 0.5 + 1.5x. In step 3, x stays at 3 and h runs from 0.01 to 2, so it never reaches 0. The stage shows the slope of the straight line in step 1 as it comes out, values to two decimal places in steps 2, 4 and 5, and to three in step 3; the calculations use unrounded values.</p>
 
         <p class="coffee-line">If this helped, you can <button type="button" data-coffee>buy me a coffee</button>.</p>
     </section>
