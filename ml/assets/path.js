@@ -53,3 +53,12 @@ export function nextLesson(slug) {
   const i = all.findIndex((l) => l.slug === slug);
   return i === -1 || i === all.length - 1 ? null : all[i + 1];
 }
+
+// The first lesson along the path that is not done, or null when all are.
+// isDone(slug) says whether a lesson is done.
+export function firstNotDone(isDone) {
+  for (const level of PATH) {
+    for (const lesson of level.lessons) if (!isDone(lesson.slug)) return lesson;
+  }
+  return null;
+}

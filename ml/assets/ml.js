@@ -1,7 +1,7 @@
 // Entry point for every ML Explorer page:
 // <script type="module" src="/ml/assets/ml.js"></script>
 
-import { PATH, TOTAL_LIVE, lessonHref } from './path.js';
+import { PATH, TOTAL_LIVE, lessonHref, firstNotDone } from './path.js';
 import { createProgress } from './progress.js';
 import { initCoffee } from './coffee.js';
 import { startLesson } from './engine.js';
@@ -149,6 +149,37 @@ function trackControlsHeight() {
   update();
 }
 
+// --- The landing page: ticks and a "Continue" link ---
+// The path itself is static HTML, so it works without JS; this only adds
+// what depends on the progress stored in this browser.
+
+function initHub(list) {
+  const isDone = (slug) => progress.get(slug).done;
+  for (const a of list.querySelectorAll('a[data-slug]')) {
+    if (!isDone(a.dataset.slug)) continue;
+    const card = a.closest('.hub-lesson');
+    if (card) {
+      card.classList.add('is-done');
+      const n = card.querySelector('.hub-n');
+      if (n) n.appendChild(make('span', 'hub-done', 'Done'));
+    }
+    a.appendChild(make('span', 'vh', ' (done)'));
+  }
+
+  const actions = document.getElementById('hub-actions');
+  if (!actions || progress.doneCount() === 0) return;
+  const next = firstNotDone(isDone);
+  const start = actions.querySelector('.hub-start');
+  if (!next) {
+    actions.prepend(make('p', 'hub-all-done', `You have finished all ${TOTAL_LIVE} lessons.`));
+    return;
+  }
+  const go = make('a', 'hub-continue hub-btn is-primary', `Continue: ${next.title}`);
+  go.href = lessonHref(next.slug);
+  if (start) start.classList.remove('is-primary');
+  actions.prepend(go);
+}
+
 // --- Start ---
 
 const top = document.querySelector('header.ml-top');
@@ -158,6 +189,9 @@ if (nav) renderPath(nav);
 if (top) renderProgress(top);
 if (top && nav) initDrawer(top, nav);
 initCoffee(document);
+
+const hubPath = document.querySelector('ol.hub-path');
+if (hubPath) initHub(hubPath);
 
 if (lessonMain) {
   // The engine builds the controls synchronously, before it waits for
