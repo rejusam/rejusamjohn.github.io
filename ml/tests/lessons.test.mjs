@@ -1074,3 +1074,145 @@ test('lesson9 read-out rows and page', () => {
   for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
   assert.equal(lesson9.stepOneScores(lesson9.lessonData()).dots < 1e-24, true);
 });
+
+// ---------------------------------------------------------------- lesson 10
+import { lstsq as lstsq10, polyDesign as polyDesign10, mean as mean10, variance as variance10 } from '../assets/maths.js';
+import * as lesson10 from '../overfitting/stage.js';
+
+test('lesson10 data: 15 training points (seed 3) and 200 test points (seed 4) from the shared generator', () => {
+  assert.deepEqual(lesson10.trainData(), sineData({ n: 15, seed: 3 }));
+  assert.deepEqual(lesson10.testData(), sineData({ n: 200, seed: 4 }));
+});
+
+test('lesson10 train MSE non-increasing in degree', () => {
+  const rows = lesson10.degreeTable();
+  assert.deepEqual(rows.map((r) => r.degree), Array.from({ length: 13 }, (_, p) => p));
+  for (let p = 1; p < rows.length; p++) assert.ok(rows[p].train <= rows[p - 1].train + 1e-12, `degree ${p}: ${rows[p].train} > ${rows[p - 1].train}`);
+  // 13 numbers from 15 points: degree 12 does not pass through every point.
+  assert.ok(rows[12].train > 1e-3, String(rows[12].train));
+  const tr = lesson10.trainData();
+  const te = lesson10.testData();
+  const fit = polyFitS(tr.xs, tr.ys, 3);
+  assert.ok(Math.abs(rows[3].train - mseS(tr.ys, tr.xs.map((x) => polyEvalS(fit.coef, x)))) < 1e-12);
+  assert.ok(Math.abs(rows[3].test - mseS(te.ys, te.xs.map((x) => polyEvalS(fit.coef, x)))) < 1e-12);
+});
+
+test('lesson10 test MSE at degree 12 exceeds its minimum over degrees', () => {
+  const rows = lesson10.degreeTable();
+  const min = Math.min(...rows.map((r) => r.test));
+  assert.ok(rows[12].test > min * 10, `${rows[12].test} vs ${min}`);
+  const best = lesson10.bestDegree();
+  assert.equal(rows[best].test, min);
+  assert.ok(best > 1 && best < 12, String(best));
+  // Too simple is worse than the best as well.
+  assert.ok(rows[0].test > min && rows[1].test > min);
+  // On this data the test curve is not a smooth U: past the best degree it
+  // goes up and down again before it climbs.
+  assert.ok(rows.some((r, p) => p > best && p < 12 && rows[p + 1].test < r.test));
+});
+
+test('lesson10 ridge at degree 12 lowers test MSE versus lambda 1e-6', () => {
+  const rows = lesson10.ridgeTable();
+  assert.equal(rows.length, lesson10.SLIDER_MAX + 1);
+  assert.equal(rows[0].lambda, 1e-6);
+  assert.equal(rows[rows.length - 1].lambda, 10);
+  const base = rows[0].test;
+  assert.ok(rows.some((r) => r.test < base / 10), 'no λ on the slider lowers the test MSE');
+  const best = rows.reduce((a, b) => (b.test < a.test ? b : a));
+  assert.ok(best.lambda > 1e-6 && best.lambda < 10);
+  // Large λ squeezes the slopes towards 0: the curve flattens and the training MSE rises.
+  assert.ok(rows[rows.length - 1].train > rows[0].train);
+  assert.ok(rows[rows.length - 1].maxAbs < rows[0].maxAbs);
+  // The training MSE never falls as λ grows.
+  for (let k = 1; k < rows.length; k++) assert.ok(rows[k].train >= rows[k - 1].train - 1e-12, `t = ${k}`);
+});
+
+test('lesson10 ridge objective matches lstsq', () => {
+  const { xs, ys } = lesson10.trainData();
+  const n = xs.length;
+  const X = polyDesign10(xs, 12);
+  for (let t = 0; t <= lesson10.SLIDER_MAX; t += 5) {
+    const lam = lesson10.lambdaFromSlider(t);
+    const coef = lesson10.ridgeFit(xs, ys, 12, lam);
+    // Gradient of (1/n)Σeᵢ² + λ·Σ_{j≥1}θⱼ²; the intercept θ₀ is not penalised.
+    const e = X.map((row, i) => ys[i] - row.reduce((s, v, j) => s + v * coef[j], 0));
+    const g = coef.map((c, j) => (-2 / n) * X.reduce((s, row, i) => s + row[j] * e[i], 0) + (j >= 1 ? 2 * lam * c : 0));
+    for (const gj of g) assert.ok(Math.abs(gj) < 1e-6, `λ = ${lam}: gradient ${gj}`);
+    assert.ok(Math.abs(lesson10.ridgeObjective(coef, xs, ys, lam) - (mean10(e.map((v) => v * v)) + lam * coef.slice(1).reduce((s, c) => s + c * c, 0))) < 1e-12);
+    // Nudging any coefficient raises the stated objective.
+    for (let j = 0; j < coef.length; j++) {
+      for (const h of [-1e-3, 1e-3]) {
+        const c2 = coef.slice();
+        c2[j] += h;
+        assert.ok(lesson10.ridgeObjective(c2, xs, ys, lam) > lesson10.ridgeObjective(coef, xs, ys, lam));
+      }
+    }
+  }
+  // Passing λ itself to lstsq (a sum, not a mean) would give a different fit.
+  const lam = 1e-2;
+  const wrong = lstsq10(X, ys, { lambda: lam }).coef;
+  assert.ok(Math.abs(lesson10.ridgeFit(xs, ys, 12, lam)[1] - wrong[1]) > 1e-3);
+});
+
+test('lesson10 λ slider: log scale from 1e-6 to 10, and the shown value agrees with λ', () => {
+  assert.equal(lesson10.lambdaFromSlider(0), 1e-6);
+  assert.equal(lesson10.lambdaFromSlider(lesson10.SLIDER_MAX), 10);
+  let prev = 0;
+  for (let t = 0; t <= lesson10.SLIDER_MAX; t++) {
+    const lam = lesson10.lambdaFromSlider(t);
+    assert.ok(lam > prev);
+    prev = lam;
+    if (t > 0) assert.ok(Math.abs(Math.log10(lam / lesson10.lambdaFromSlider(t - 1)) - 0.1) < 1e-9);
+    const shown = lesson10.lambdaValue(lesson10.lambdaText(lam));
+    // Two significant figures are within 5% of the value.
+    assert.ok(Math.abs(shown / lam - 1) < 0.05, `t = ${t}: ${lesson10.lambdaText(lam)} vs ${lam}`);
+    assert.ok(!/NaN|undefined|Infinity|e/.test(lesson10.lambdaText(lam)), lesson10.lambdaText(lam));
+  }
+  assert.equal(lesson10.lambdaText(1e-6), '1.0 × 10⁻⁶');
+  assert.equal(lesson10.lambdaText(10), '10');
+  // The log-axis labels name the right powers of ten.
+  assert.deepEqual([-2, -1, 0, 1, 2, 4].map(lesson10.logTick), ['0.01', '0.1', '1', '10', '10²', '10⁴']);
+});
+
+test('lesson10 bias² + variance from the many training sets add up', () => {
+  for (const p of lesson10.BV_DEGREES) {
+    const bv = lesson10.biasVariance(p);
+    const f0 = Math.sin(Math.PI * lesson10.X0);
+    const preds = bv.preds;
+    assert.equal(preds.length, lesson10.BV_SETS);
+    const m = mean10(preds);
+    assert.ok(Math.abs(bv.bias2 - (f0 - m) ** 2) < 1e-12);
+    assert.ok(Math.abs(bv.variance - variance10(preds, { sample: false })) < 1e-12);
+    const direct = mean10(preds.map((v) => (f0 - v) ** 2));
+    assert.ok(Math.abs(direct - (bv.bias2 + bv.variance)) <= 1e-9 * Math.max(1, direct));
+    assert.equal(bv.sigma2, 0.0625);
+  }
+  const lo = lesson10.biasVariance(1);
+  const mid = lesson10.biasVariance(3);
+  const hi = lesson10.biasVariance(lesson10.BV_DEGREES[2]);
+  assert.ok(lo.bias2 > mid.bias2 * 10, 'degree 1 should miss the bend');
+  assert.ok(hi.variance > mid.variance * 10, 'the flexible fit should vary more');
+  // Degree 12's fits spread further still (the page says so).
+  assert.ok(lesson10.biasVariance(12).variance > hi.variance * 100);
+});
+
+test('lesson10 read-out rows and page', () => {
+  const html = readFileSync(new URL('../overfitting/index.html', import.meta.url), 'utf8');
+  for (let step = 0; step < 6; step++) {
+    for (const st of [{}, { degree: 0 }, { degree: 7 }, { degree: 12 }, { t: 0 }, { t: 35 }, { t: lesson10.SLIDER_MAX }, { bv: 1 }, { bv: 7 }]) {
+      for (const r of lesson10.readout(step, st)) {
+        assert.ok(!/NaN|undefined|Infinity/.test(r), r);
+        assert.ok(r.length <= 24, r);
+      }
+    }
+  }
+  assert.equal((html.match(/<li class="step"/g) || []).length, 6);
+  assert.match(html, /<title>Overfitting and regularisation · ML Explorer<\/title>/);
+  assert.match(html, /seed 3/);
+  assert.match(html, /seed 4/);
+  assert.match(html, /<a class="next-lesson" href="\/ml\/">/);
+  assert.doesNotMatch(html, /through every point/);
+  const pv = lesson10.pageValues();
+  for (const [, key] of html.matchAll(/data-value="([^"]+)"/g)) assert.ok(key in pv, key);
+  for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+});
