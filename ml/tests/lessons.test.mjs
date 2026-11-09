@@ -397,3 +397,82 @@ test('lesson4 page agrees with the stage', () => {
   assert.match(note, /seed 5/);
   assert.match(note, /2 \+ 0\.8/);
 });
+
+// ---------------------------------------------------------------- lesson 5
+import { centralDiff } from '../assets/maths.js';
+import * as lesson5 from '../slopes/stage.js';
+
+const lesson5Html = readFileSync(new URL('../slopes/index.html', import.meta.url), 'utf8');
+
+test('lesson5 analytic derivative matches centralDiff on 20 points', () => {
+  for (let k = 0; k < 20; k++) {
+    const x = lesson5.X_LO + (k / 19) * (lesson5.X_HI - lesson5.X_LO);
+    const numeric = centralDiff(lesson5.f, x);
+    assert.ok(Math.abs(lesson5.fPrime(x) - numeric) < 1e-6, `x = ${x}: ${lesson5.fPrime(x)} vs ${numeric}`);
+  }
+  // The facts the page states: f′(x) = x − 2, slope 2 at x = 4, −2 at x = 0.
+  assert.equal(lesson5.fPrime(4), 2);
+  assert.equal(lesson5.fPrime(0), -2);
+  assert.equal(lesson5.f(0), 3);
+});
+
+test('lesson5 secant slope approaches derivative as h shrinks', () => {
+  for (const x of [-1, 0, lesson5.X_SECANT, 4]) {
+    const errs = [1, 0.5, 0.1, 0.01].map((h) => Math.abs(lesson5.secantSlope(x, h) - lesson5.fPrime(x)));
+    for (let i = 1; i < errs.length; i++) assert.ok(errs[i] <= errs[i - 1], `x = ${x}: ${errs}`);
+    // For this quadratic the gap is exactly h/2.
+    for (const h of [1, 0.5, 0.1, 0.01]) {
+      assert.ok(Math.abs(lesson5.secantSlope(x, h) - (lesson5.fPrime(x) + 0.5 * h)) < 1e-9);
+    }
+  }
+  // The slider never reaches h = 0, and the secant stays on the plot.
+  assert.ok(lesson5.H_MIN > 0 && lesson5.H_MIN < lesson5.H_MAX);
+  assert.ok(lesson5.X_SECANT + lesson5.H_MAX <= lesson5.X_HI);
+  assert.ok(Number.isFinite(lesson5.secantSlope(lesson5.X_SECANT, lesson5.H_MIN)));
+});
+
+test('lesson5 bottom of the bowl, the downhill rule and the straight line', () => {
+  const v = lesson5.vertex();
+  assert.equal(v.x, 2);
+  assert.equal(v.y, 1);
+  assert.equal(lesson5.fPrime(v.x), 0);
+  for (let x = lesson5.X_LO; x <= lesson5.X_HI; x += 0.25) assert.ok(lesson5.f(x) >= v.y);
+  assert.equal(lesson5.downhill(lesson5.fPrime(0)), 'right');
+  assert.equal(lesson5.downhill(lesson5.fPrime(4)), 'left');
+  assert.equal(lesson5.downhill(lesson5.fPrime(2)), 'flat');
+  // Moving a small step against the slope's sign lowers f.
+  for (const x of [-1, 0, 1, 3, 5, 6]) {
+    const dir = lesson5.downhill(lesson5.fPrime(x)) === 'right' ? 1 : -1;
+    assert.ok(lesson5.f(x + dir * 0.01) < lesson5.f(x), `x = ${x}`);
+  }
+  // Step 1: both triangles on the straight line give the same slope.
+  const big = lesson5.slopeBetween(...lesson5.BIG);
+  const small = lesson5.slopeBetween(...lesson5.SMALL);
+  assert.equal(big, lesson5.LINE.b);
+  assert.equal(small, lesson5.LINE.b);
+  for (const [px, py] of [...lesson5.BIG, ...lesson5.SMALL]) assert.ok(Math.abs(lesson5.LINE.a + lesson5.LINE.b * px - py) < 1e-12);
+});
+
+test('lesson5 read-out rows and page', () => {
+  for (let i = 0; i < 5; i++) {
+    for (const x of [lesson5.X_LO, 0, 1.99, 2, 4, lesson5.X_HI]) {
+      for (const h of [lesson5.H_MIN, 1, lesson5.H_MAX]) {
+        for (const r of lesson5.readout(i, { x, h })) {
+          assert.ok(!/NaN|undefined|Infinity/.test(r), r);
+          assert.ok(r.length <= 22, `row too long for a phone: "${r}"`);
+        }
+      }
+    }
+  }
+  assert.match(lesson5.readout(0, { x: 0, h: 1 }).join('\n'), /slope = 6\/4 = 1\.5/);
+  assert.match(lesson5.readout(1, { x: 4, h: 1 }).join('\n'), /slope = 2\.00/);
+  assert.match(lesson5.readout(2, { x: 0, h: 2 }).join('\n'), /secant: 2\.000/);
+  assert.match(lesson5.readout(3, { x: 0, h: 1 }).join('\n'), /go right/);
+  assert.match(lesson5.readout(4, { x: 2, h: 1 }).join('\n'), /slope = 0\.00/);
+  const answer = (id) => lesson5Html.match(new RegExp(`<form class="q" id="${id}" data-answer="([^"]+)"`))[1];
+  assert.equal(answer('q1'), String(lesson5.fPrime(4)));
+  assert.equal(answer('q2'), lesson5.downhill(lesson5.fPrime(0)));
+  const note = lesson5Html.match(/<p class="data-note">([\s\S]*?)<\/p>/)[1];
+  assert.match(note, /0\.5x² − 2x \+ 3/);
+  assert.equal(lesson5Html.match(/class="step"/g).length, 5);
+});
