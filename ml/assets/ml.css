@@ -444,6 +444,42 @@ button {
   margin-top: var(--ml-s2);
 }
 
+/* A small data table inside a step's side card. */
+.data-table {
+  margin-top: var(--ml-s3);
+  border-collapse: collapse;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table caption {
+  text-align: left;
+  padding-bottom: var(--ml-s1);
+  color: var(--ml-muted);
+}
+
+.data-table th,
+.data-table td {
+  padding: 3px 10px 3px 0;
+  text-align: right;
+  font-weight: 400;
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+  text-align: left;
+}
+
+.data-table thead th {
+  color: var(--ml-muted);
+  border-bottom: 1px solid var(--ml-line);
+}
+
+.data-table tbody th {
+  color: var(--ml-muted);
+}
+
 .maths {
   font-size: var(--ml-t-info);
 }
@@ -652,6 +688,21 @@ html:not(.js) .steps {
   color: var(--ml-cyan);
 }
 
+.ml-tools select {
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  background: var(--ml-bg);
+  color: var(--ml-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ml-tools select:hover {
+  border-color: var(--ml-muted);
+}
+
 .ml-dots {
   margin-left: auto;
   display: flex;
@@ -775,6 +826,9 @@ html:not(.js) .steps {
 .js .lesson:not(.stage-failed) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
+  /* A tall side card grows the stage row, not the title row, so the stage
+     stays right under the step title. */
+  grid-template-rows: auto auto 1fr auto auto auto;
   grid-template-areas:
     'head  head'
     'smain side'
@@ -1176,6 +1230,7 @@ html:not(.js) .coffee-line {
 @media (max-width: 1100px) {
   .js .lesson:not(.stage-failed) {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
     grid-template-areas:
       'head'
       'smain'
@@ -1313,6 +1368,11 @@ html:not(.js) .coffee-line {
 
   .ml-tools input[type='range'] {
     width: 100px;
+  }
+
+  .ml-tools select,
+  .ml-tools button {
+    height: 44px;
   }
 
   .ml-dot {
