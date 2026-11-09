@@ -1,7 +1,9 @@
 import test from 'node:test';
-// Loose deepEqual: cleaned quiz objects have a null prototype.
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
 import { createProgress } from '../assets/progress.js';
+
+// Cleaned quiz objects have a null prototype; copy to a plain object for strict comparison.
+const plain = (l) => ({ ...l, quiz: { ...l.quiz } });
 
 function memoryStorage() {
   const m = new Map();
@@ -19,14 +21,14 @@ test('progress store survives throwing storage', () => {
   };
   const p = createProgress(bad);
   assert.doesNotThrow(() => p.set('x', { step: 2 }));
-  assert.deepEqual(p.get('x'), { step: 0, done: false, quiz: {} });
+  assert.deepEqual(plain(p.get('x')), { step: 0, done: false, quiz: {} });
   assert.equal(p.doneCount(), 0);
 });
 
 test('progress store survives missing storage', () => {
   const p = createProgress(undefined);
   assert.doesNotThrow(() => p.set('x', { done: true }));
-  assert.deepEqual(p.get('x'), { step: 0, done: false, quiz: {} });
+  assert.deepEqual(plain(p.get('x')), { step: 0, done: false, quiz: {} });
 });
 
 test('progress store resets on invalid JSON', () => {
@@ -38,7 +40,7 @@ test('progress store ignores a wrong version or shape', () => {
   const s = { getItem: () => JSON.stringify({ v: 2, lessons: { slopes: { done: true } } }), setItem() {} };
   assert.equal(createProgress(s).doneCount(), 0);
   const t = { getItem: () => JSON.stringify({ v: 1, lessons: { a: { step: 'x', done: 'yes', quiz: 3 } } }), setItem() {} };
-  assert.deepEqual(createProgress(t).get('a'), { step: 0, done: false, quiz: {} });
+  assert.deepEqual(plain(createProgress(t).get('a')), { step: 0, done: false, quiz: {} });
 });
 
 test('progress round-trips', () => {
@@ -49,8 +51,8 @@ test('progress round-trips', () => {
   p.set('overfitting', { step: 3, quiz: { q1: 'left' } });
   p.set('overfitting', { quiz: { q2: 'right' } });
   const again = createProgress(s);
-  assert.deepEqual(again.get('slopes'), { step: 0, done: true, quiz: {} });
-  assert.deepEqual(again.get('overfitting'), { step: 3, done: false, quiz: { q1: 'left', q2: 'right' } });
+  assert.deepEqual(plain(again.get('slopes')), { step: 0, done: true, quiz: {} });
+  assert.deepEqual(plain(again.get('overfitting')), { step: 3, done: false, quiz: { q1: 'left', q2: 'right' } });
   assert.equal(again.doneCount(), 1);
   const raw = JSON.parse(s.dump().get('rsj-ml:v1'));
   assert.equal(raw.v, 1);
