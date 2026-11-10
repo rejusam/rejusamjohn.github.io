@@ -244,13 +244,24 @@ const NY = [[112, 252], [112, 252], [182]];
 const R = 19;
 const ROW = 20;
 // Where each link's label sits, and its text-anchor.
+// The diagonal labels run along their own link: x₁ → h₂ just above it,
+// x₂ → h₁ just below it, so neither sits in the wedge between the two.
+const DIAG = Math.atan2(NY[1][1] - NY[0][0], NX[1] - NX[0]);
+const along = (x0, y0, x1, y1, t, off) => {
+  const len = Math.hypot(x1 - x0, y1 - y0);
+  const ux = (x1 - x0) / len;
+  const uy = (y1 - y0) / len;
+  // Unit normal pointing to the lower side of the link's direction of travel.
+  return [Number((x0 + t * (x1 - x0) - uy * off).toFixed(2)), Number((y0 + t * (y1 - y0) + ux * off).toFixed(2))];
+};
+const DEG = (DIAG * 180) / Math.PI;
 const LABEL_AT = {
-  'x1-h1': [165, 102, 'middle'],
-  'x1-h2': [128, 174, 'end'],
-  'x2-h1': [128, 204, 'end'],
-  'x2-h2': [165, 272, 'middle'],
-  'h1-o': [390, 140, 'start'],
-  'h2-o': [390, 236, 'start'],
+  'x1-h1': [165, 102, 'middle', 0],
+  'x1-h2': [...along(NX[0], NY[0][0], NX[1], NY[1][1], 0.2, -9), 'start', DEG],
+  'x2-h1': [...along(NX[0], NY[0][1], NX[1], NY[1][0], 0.2, 15), 'start', -DEG],
+  'x2-h2': [165, 272, 'middle', 0],
+  'h1-o': [390, 140, 'start', 0],
+  'h2-o': [390, 236, 'start', 0],
 };
 
 export function createStage(svg, { controls, reduced = false, announce = () => {} }) {
@@ -292,8 +303,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   // Link labels: the weight, or the gradient on the chosen link (steps 4 and 5).
   const labG = el('g', {}, diaG);
   const linkLabels = LINKS.map((k) => {
-    const [x, y, anchor] = LABEL_AT[k.id];
-    return text(labG, x, y, anchor);
+    const [x, y, anchor, deg] = LABEL_AT[k.id];
+    return text(labG, x, y, anchor, 'stage-text', deg ? { transform: `rotate(${Number(deg.toFixed(2))} ${x} ${y})` } : {});
   });
 
   // Node labels, grouped by column so the passes can fill in order.
@@ -374,6 +385,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     if (step !== 3 && step !== 4) return;
     if (n === sel) return;
     sel = n;
+    nudge = 0;
     select.value = String(n);
     render();
     announce(spoken(step));

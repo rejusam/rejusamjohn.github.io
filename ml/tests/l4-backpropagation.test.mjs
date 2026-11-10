@@ -233,7 +233,10 @@ test('backpropagation read-out rows and page', () => {
   // Step 6 says when its run is not finished, and stops saying so at the end.
   assert.ok(B.readout(5, { net, link: B.LINKS[4], nudge: 0, run: runs[0] }).some((r) => /not finished/.test(r)));
   assert.ok(!B.readout(5, { net, link: B.LINKS[4], nudge: 0, run: runs[2] }).some((r) => /not finished/.test(r)));
-  assert.match(html, /the numbers in this paragraph are for the end of the 200-step run/);
+  assert.match(html, /the end-of-run numbers here are for the full 200-step run/);
+  assert.match(html, /seed 162/);
+  assert.match(html, /the same kind of four-clump data as in/);
+  assert.match(html, /<strong>x<\/strong> = \(1\.0, −0\.5\)/);
   assert.match(html, /Play steps through the lesson, and Train trains the network/);
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Backpropagation · ML Explorer<\/title>/);
