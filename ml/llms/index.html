@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Large language models, in miniature · ML Explorer</title>
-    <meta name="description" content="Train a tiny character-level transformer live in your browser and watch its samples go from noise to sentences; prompt it, then measure how often its fluent sentences are false in its own invented world. Every number is computed in your browser.">
+    <meta name="description" content="Train a tiny character-level transformer live in your browser and watch its samples go from noise to words; prompt it, then measure how often its fluent sentences are false in its own invented world. Every number is computed in your browser.">
     <link rel="canonical" href="https://rejusamjohn.pages.dev/ml/llms/">
     <meta property="og:title" content="Large language models, in miniature · ML Explorer">
-    <meta property="og:description" content="Train a tiny character-level transformer live in your browser and watch its samples go from noise to sentences; prompt it, then measure how often its fluent sentences are false in its own invented world. Every number is computed in your browser.">
+    <meta property="og:description" content="Train a tiny character-level transformer live in your browser and watch its samples go from noise to words; prompt it, then measure how often its fluent sentences are false in its own invented world. Every number is computed in your browser.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://rejusamjohn.pages.dev/ml/llms/">
     <meta property="og:image" content="https://rejusamjohn.pages.dev/ml/og.png">
@@ -38,7 +38,7 @@
     <header class="lesson-head">
         <p class="crumbs"><a href="/ml/">ML Explorer</a> · Level 5 · Modern AI</p>
         <h1>Large language models, in miniature</h1>
-        <p class="promise">Most large language models today are transformers trained to predict the next token on a very large amount of text. Train a tiny one here, live, watch its writing go from noise to sentences, and then check how many of those sentences are true.</p>
+        <p class="promise">Most large language models today are transformers trained to predict the next token on a very large amount of text. Train a tiny one here, live, watch its writing go from noise to words, and then check how many of the sentences it writes are true.</p>
         <p class="meta">About 12 minutes · The model trains in your browser in about a minute on a laptop; every number is computed in your browser, and the formulas are in The maths</p>
     </header>
 
@@ -49,7 +49,7 @@
         <h2>You'll learn</h2>
         <ul>
             <li>that a large language model is trained on one job, predicting the next token, and writes by sampling one token at a time</li>
-            <li>how a tiny one learns: its held-out loss falls and its samples turn from noise into sentences</li>
+            <li>how a tiny one learns: its held-out loss falls and its samples turn from noise into words</li>
             <li>why fluent output can be false: the model samples likely text, and nothing checks it against the facts</li>
         </ul>
     </section>
@@ -82,7 +82,7 @@
             <div class="happening">
                 <p>Play steps through the lesson, and Train trains the model. Each step takes 8 windows of 33 characters at random from the training text of <span data-value="n-train">2,000</span> sentences (<span data-value="train-chars">42,030</span> characters) and makes one Adam update (from <a href="/ml/optimisers/">optimisers</a>) with η = 0.003. The run is <span data-value="run">2,500</span> steps: about a minute on a laptop, about two minutes or more on a slow phone. Every 100 steps the page measures the model on held-out text and writes a sample of 60 characters at τ = 1.</p>
                 <p>The line is in bits per character on the <span data-value="n-held">300</span> held-out sentences of <a href="/ml/language-models/">Predicting the next token</a>, never used for training. The dashed lines are the counting models of that lesson for n = 1, 3 and 5, measured on exactly the same <span data-value="scored">6,240</span> characters (from the 6th character on, so the n = 5 model always has its 5 characters of context): <span data-story="ngram-1">1.99</span>, <span data-story="ngram-3">0.47</span> and <span data-story="ngram-5">0.39</span> bits.</p>
-                <p>These numbers are for the whole run. The model starts at <span data-story="bits-start">4.95</span> bits, about the cost of a uniform guess (<span data-value="uniform-bits">4.81</span>). It is below the n = 1 line from step <span data-story="below-1-at">200</span>, and below the n = 3 line from step <span data-story="below-3-at">800</span> on. It first dips below the n = 5 line at step <span data-story="dip-at">2,400</span>, and ends just above it: <span data-story="bits-end">0.393</span> bits against <span data-story="ngram-5-3">0.391</span>. In this short run it does not beat counting: on this small, regular world counting with n = 5 already does well, and the previous lesson's longer contexts do better still. What the samples show is the change from noise to the words of this world. Of the complete words in each sample shown (the first and last may be cut off), <span data-story="words-start">0%</span> are words of the invented world at step 0; from step <span data-story="words-90-from">700</span> on at least 90% are, and from step <span data-story="words-all-from">1,100</span> on all of them are.</p>
+                <p>These numbers are for the whole run. The model starts at <span data-story="bits-start">4.95</span> bits, about the cost of a uniform guess (<span data-value="uniform-bits">4.81</span>). It is below the n = 1 line from step <span data-story="below-1-at">200</span>, and below the n = 3 line from step <span data-story="below-3-at">800</span> on. It first dips below the n = 5 line at step <span data-story="dip-at">2,400</span>, and ends just above the n = 5 counting line: <span data-story="bits-end">0.393</span> bits against <span data-story="ngram-5-3">0.391</span>. In this short run it does not beat counting: on this small, regular world counting with n = 5 already does well, and the previous lesson's longer contexts do better still. What the samples show is the change from noise to the words of this world. Of the complete words in each sample shown (the first and last may be cut off), <span data-story="words-start">0%</span> are words of the invented world at step 0; from step <span data-story="words-90-from">700</span> on at least 90% are, and from step <span data-story="words-all-from">1,100</span> on all of them are.</p>
                 <p>Each sample starts after ". " and uses its own seed, so watching the run or not gives the same samples. With reduced motion, Train computes the run without drawing it, then shows the end. Reset goes back to the same starting weights, and the next run is the same as the last.</p>
             </div>
             <details class="maths">
@@ -203,7 +203,7 @@
 
         <h3>Common misconceptions</h3>
         <ul class="misconceptions">
-            <li>"A lower loss means the model tells the truth." The held-out loss here ends level with the n = 5 counting line, yet a false place still gets more probability than the true one.</li>
+            <li>"A lower loss means the model tells the truth." The held-out loss here ends just above the n = 5 counting line, yet a false place still gets more probability than the true one.</li>
             <li>"Greedy decoding gives the correct answer." It gives the likeliest one; at the end of this run greedy writes the true place for only <span data-story="greedy-place">4</span> of the 8 people.</li>
             <li>"The model looks facts up." It has only weights; what it gives a fact is a probability learned from the training text.</li>
         </ul>

@@ -182,6 +182,10 @@ test('held-out bits per character after the run is below the n = 1 baseline', ()
   assert.equal(SV['ngram-5-3'], n5.toFixed(3));
   // At the end just above the n = 5 line, after first dipping below it.
   assert.ok(end > n5 && end - n5 < 0.005);
+  assert.equal((html.match(/ends just above the n = 5 counting line/g) || []).length, 2);
+  assert.doesNotMatch(html, /ends level/);
+  // Samples are claimed to reach words, not sentences.
+  assert.doesNotMatch(html, /noise (to|into) sentences/);
   assert.equal(SV['dip-at'], S.count(RUN.curve.find((c) => c.bits < n5).iter));
   assert.ok(RUN.curve.find((c) => c.bits < n5).iter < 2500);
 });
@@ -253,6 +257,10 @@ test('true-fact probability rises across checkpoints', () => {
   assert.equal(SV['greedy-food'], String(byTau[0].per.filter((r) => r.likes.t === 1).length));
   assert.equal(SV['greedy-place'], String(byTau[0].per.filter((r) => r.lives.t === 1).length));
   assert.equal(Number(SV['greedy-food']) / 8, byTau[0].likes.t);
+  assert.equal(Number(SV['greedy-place']) / 8, byTau[0].lives.t);
+  // "a false one for the rest": the other greedy sentences are false, for foods and places.
+  assert.equal(byTau[0].per.filter((r) => r.likes.f === 1).length, 8 - Number(SV['greedy-food']));
+  assert.equal(byTau[0].per.filter((r) => r.lives.f === 1).length, 8 - Number(SV['greedy-place']));
 });
 
 test('fact probabilities are exact and match sampling', () => {
