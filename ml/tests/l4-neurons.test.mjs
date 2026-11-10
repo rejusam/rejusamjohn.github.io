@@ -236,3 +236,9 @@ test('moving one slider after Fit keeps the other fitted weights exact', () => {
   st = L.applySlider({ w: f.w.slice(), b: f.w0 }, 2, 0.5);
   assert.deepEqual(st, { w: f.w, b: 0.5 });
 });
+
+test('p̂ in prose is maths markup, not a combining hat', () => {
+  // The combining hat misrenders in Inter, so every p̂ on the page is a rendered tex span.
+  assert.equal((html.match(/p\u0302/g) || []).length, 0);
+  assert.ok((html.match(/data-tex="\\hat\{p\}"/g) || []).length >= 5);
+});
