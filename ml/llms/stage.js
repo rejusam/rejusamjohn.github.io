@@ -110,7 +110,7 @@ export function heldBitsPart(model, w0, w1) {
 }
 export const heldBits = (model) => heldBitsPart(model, 0, heldWindows().seqs.length) / scoredCount();
 
-// The n-gram lines of the previous lesson (add-k, k = 0.01), scored on the same positions.
+// The counting-model lines of the previous lesson (add-k, k = 0.01), scored on the same positions.
 export function ngramBits(n) {
   return cached(`ng${n}`, () => {
     const m = ngramModel(trainText(), n);
@@ -429,7 +429,7 @@ export function readout(step, s) {
   if (step === 0) return ['each position predicts the character after it', `n = 5 counting, after ␣ikes␣: p(a) = ${s.p5}`, 'this model sees up to 32 characters back'];
   if (step === 1) {
     const pt = s.last ? `held-out: ${s.last.bits.toFixed(2)} bits/char (step ${count(s.last.iter)})` : 'held-out: not measured yet';
-    return [`step ${count(s.iter)} of ${count(RUN)} · ${trainStatus(s)}`, pt, `n-grams: n = 1, 3, 5 dashed`];
+    return [`step ${count(s.iter)} of ${count(RUN)} · ${trainStatus(s)}`, pt, `counting models: n = 1, 3, 5 dashed`];
   }
   if (step === 2) {
     if (!s.p) return [modelLine(s.iter), 'no known characters: nothing to predict', `τ = ${TAU_NAME(s.tau)}`];
@@ -517,7 +517,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     label(oneG, X0, 248, 'one prediction per column: 16 here, 32 per window', 'start', MUTED, 12);
   }
 
-  // ---- step 2: held-out bits per character, with the n-gram lines.
+  // ---- step 2: held-out bits per character, with the counting-model lines.
   const curG = el('g', {}, svg);
   const AX0 = 64;
   const AX1 = 540;
@@ -675,7 +675,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const chip = (c) => {
     const s = make('span');
     s.className = c.unknown ? 'token-chip unknown' : 'token-chip';
-    s.textContent = c.unknown ? '?' : shown(c.ch);
+    s.textContent = c.unknown ? c.ch : shown(c.ch);
     if (c.ctx) Object.assign(s.style, { borderColor: CYAN, color: STRONG });
     return s;
   };
@@ -829,7 +829,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   function ariaFor(texts) {
     const rest = texts.filter(Boolean).join('. ');
     if (step === 0) return `The text tom likes apples, one character per column, with the character that follows each one underneath. Brackets show that the counting model with n = 5 uses only the last 5 characters before the prediction after likes, while this model can use all of them. ${rest}.`;
-    if (step === 1) return `A line of held-out bits per character against training step, with dashed lines for the n-gram models with n = 1, 3 and 5. ${rest}.`;
+    if (step === 1) return `A line of held-out bits per character against training step, with dashed lines for the counting models with n = 1, 3 and 5. ${rest}.`;
     if (step === 2) return `Bars of the probability of each of the ${A} possible next characters after your text, with dashed outlines at temperature 1. ${rest}.`;
     if (step === 3) return `Two stacked bars, for likes and lives sentences: the probability that the sampled sentence is true, false, or anything else. ${rest}.`;
     if (step === 4) return `Bars of the number of weights and biases in each part of the model. ${rest}.`;

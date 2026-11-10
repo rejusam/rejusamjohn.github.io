@@ -153,6 +153,15 @@ test('notation page links only to lessons that exist', () => {
   for (const l of LIVE) assert.ok(existsSync(`${ML}${l.slug}/index.html`));
 });
 
+test('notation page: Lesson 35 EM start and Lesson 33 permutation matrix', () => {
+  const html = notation();
+  assert.match(html, /for a mixture component\), though its EM start uses the <span class="tex" data-tex="n - 1">/);
+  assert.match(html, /sample covariance, as the lesson says; and <a href="\/ml\/diffusion\/">Lesson 36<\/a> scales/);
+  assert.doesNotMatch(html, /for a mixture component\), and <a href="\/ml\/diffusion\/">/);
+  assert.match(html, /bold capital <span class="tex" data-tex="\\boldsymbol\{\\Pi\}">/);
+  assert.match(html, /is a permutation matrix, a shuffle of the positions; it has nothing to do with <span class="tex" data-tex="\\pi_k">/);
+});
+
 test('notation page covers the symbols the lessons use', () => {
   const tex = new Set([...notation().matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1])));
   const has = (t) => [...tex].some((s) => s.includes(t));

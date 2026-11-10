@@ -327,3 +327,9 @@ test('page', () => {
   // only quoted text is the prompt and the world's own templates.
   assert.doesNotMatch(html, /sample (reads|says|was) "/i);
 });
+
+test('n-gram naming follows the usual convention, with n the context length', () => {
+  assert.match(html, /Looking only at the last n tokens is the Markov assumption behind n-gram models\. Here n is the context length; the usual name counts the whole run of n \+ 1 characters, so this is an \(n \+ 1\)-gram model\./);
+  assert.doesNotMatch(html, /is the n-gram assumption/);
+  assert.doesNotMatch(html, /the counts are of n \+ 1 characters in a row/);
+});

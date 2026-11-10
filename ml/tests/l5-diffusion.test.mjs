@@ -382,3 +382,10 @@ test('page', () => {
   assert.match(text, /12,288/);
   assert.equal(64 * 64 * 3, 12288);
 });
+
+test('final-review wording: noise recipe and first-press numbers', () => {
+  assert.match(text, /they keep the three steps: a way of adding noise, a network trained to undo it/);
+  assert.doesNotMatch(text, /a fixed way of adding noise/);
+  assert.match(text, /After the full 6,000-step run, for the first press, the starting noise scores/);
+  assert.doesNotMatch(html, /<p>For the first press, the starting noise scores/);
+});

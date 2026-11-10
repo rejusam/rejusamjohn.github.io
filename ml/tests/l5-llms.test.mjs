@@ -479,3 +479,13 @@ test('page', () => {
   for (const key of Object.keys(SV)) assert.ok(used.has(key), `unused story value ${key}`);
   for (const v of [...Object.values(pv), ...Object.values(SV)]) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
 });
+
+test('unknown chips show the character itself, and n is named as a counting model', () => {
+  // The CSS adds "? " before an unknown chip, so the chip text is the character.
+  assert.match(src, /s\.textContent = c\.unknown \? c\.ch : shown\(c\.ch\);/);
+  assert.doesNotMatch(src, /c\.unknown \? '\?'/);
+  // n is the context length here, so the dashed lines are "counting models", not "n-grams".
+  assert.match(src, /`counting models: n = 1, 3, 5 dashed`/);
+  assert.match(src, /dashed lines for the counting models with n = 1, 3 and 5\./);
+  assert.doesNotMatch(src, /n-grams: n =|n-gram models with n =/);
+});
