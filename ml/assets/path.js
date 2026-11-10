@@ -1,4 +1,4 @@
-// The full learning path. L0 to L3 are live; L4 to L6 show the road ahead
+// The full learning path. L0 to L4 are live; L5 and L6 show the road ahead
 // without links. Lesson pages live at /ml/<slug>/.
 
 export const PATH = [
@@ -43,7 +43,21 @@ export const PATH = [
       { slug: 'pca', title: 'Principal component analysis' },
     ],
   },
-  { level: 'L4', name: 'Deep learning', lessons: [], soon: true, topics: 'Neurons, backprop, optimisers, CNNs, RNNs' },
+  {
+    level: 'L4',
+    name: 'Deep learning',
+    lessons: [
+      { slug: 'neurons', title: 'The artificial neuron' },
+      { slug: 'hidden-layers', title: 'Hidden layers: bending the boundary' },
+      { slug: 'backpropagation', title: 'Backpropagation' },
+      { slug: 'training-networks', title: 'Training a network' },
+      { slug: 'optimisers', title: 'Optimisers: momentum and Adam' },
+      { slug: 'deep-networks', title: 'Going deeper: vanishing gradients' },
+      { slug: 'convolutions', title: 'Convolutions' },
+      { slug: 'cnns', title: 'Convolutional networks' },
+      { slug: 'rnns', title: 'Recurrent networks' },
+    ],
+  },
   { level: 'L5', name: 'Modern AI', lessons: [], soon: true, topics: 'Attention, transformers, LLMs, embeddings' },
   { level: 'L6', name: 'In practice', lessons: [], soon: true, topics: 'Evaluation, calibration, interpretability, fairness' },
 ];

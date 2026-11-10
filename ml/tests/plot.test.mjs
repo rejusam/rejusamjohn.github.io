@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { linearScale, clamp, pathFrom, fmt } from '../assets/plot.js';
+import { linearScale, clamp, pathFrom, fmt, networkLayout, pixelFill } from '../assets/plot.js';
 
 test('linearScale maps and inverts', () => {
   const s = linearScale([0, 10], [50, 550]);
@@ -126,4 +126,32 @@ test('treeLayout of a single leaf', () => {
   assert.equal(lay.depth, 0);
   assert.deepEqual(lay.links, []);
   assert.equal(lay.nodes[0].x, 0);
+});
+
+test('networkLayout spaces layers and centres units', () => {
+  const lay = networkLayout([2, 3, 1], { x: 0, y: 0, w: 300, h: 200 });
+  const xs = [...new Set(lay.nodes.map((n) => n.cx))];
+  assert.equal(xs.length, 3);
+  assert.ok(xs[0] < xs[1] && xs[1] < xs[2]);
+  assert.deepEqual(xs, [0, 150, 300]);
+  const mid = lay.nodes.find((n) => n.l === 1 && n.j === 1);
+  assert.equal(mid.cy, 100);
+  const single = lay.nodes.find((n) => n.l === 2);
+  assert.equal(single.cy, 100);
+  assert.equal(lay.nodes.length, 6);
+  assert.equal(lay.links.length, 2 * 3 + 3 * 1);
+  const k = lay.links.find((q) => q.l === 0 && q.i === 1 && q.j === 2);
+  const a = lay.nodes.find((n) => n.l === 0 && n.j === 1);
+  const b = lay.nodes.find((n) => n.l === 1 && n.j === 2);
+  assert.deepEqual([k.x1, k.y1, k.x2, k.y2], [a.cx, a.cy, b.cx, b.cy]);
+});
+
+test('pixelFill grey and signed', () => {
+  assert.deepEqual(pixelFill(0, 'grey'), { cls: 'px-grey', opacity: 0 });
+  assert.deepEqual(pixelFill(0.4, 'grey'), { cls: 'px-grey', opacity: 0.4 });
+  assert.deepEqual(pixelFill(-2, { signed: 4 }), { cls: 'px-neg', opacity: 0.5 });
+  assert.deepEqual(pixelFill(3, { signed: 4 }), { cls: 'px-pos', opacity: 0.75 });
+  const z = pixelFill(-1, { signed: 0 });
+  assert.equal(z.opacity, 0);
+  assert.ok(!Number.isNaN(pixelFill(0, { signed: 0 }).opacity));
 });
