@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { mulberry32, randn } from '../assets/maths.js';
-import { mlpInit, batchGrad, trainer, predictProb, accuracyNet, ACT } from '../assets/nn.js';
+import { mlpInit, mlpForward, batchGrad, trainer, predictProb, accuracyNet, ACT } from '../assets/nn.js';
 import * as D from '../deep-networks/stage.js';
 
 const html = readFileSync(new URL('../deep-networks/index.html', import.meta.url), 'utf8');
@@ -23,6 +23,7 @@ function circles(n, seed) {
   return { X, y };
 }
 
+const bceMean = (ps, y) => ps.reduce((t, p, i) => t - (y[i] ? Math.log(p) : Math.log(1 - p)), 0) / ps.length;
 const ALL = Array.from({ length: 200 }, (_, i) => i);
 const fro = (M) => Math.sqrt(M.reduce((s, row) => s + row.reduce((t, v) => t + v * v, 0), 0));
 // Per-layer Frobenius norms of the batch-mean gradient over all 200 points.
@@ -94,6 +95,11 @@ test('sigmoid Xavier first-layer gradient ≤ last-layer / 100', () => {
   assert.equal(sv['sx-ratio'], D.sci(g.ratio));
   assert.equal(sv['sx-shrink'], D.num(g.shrink, 1));
   assert.equal(sv['sx-million'], String(Math.round(1 / g.ratio / 1e6)));
+  // The step from layer 2 back to layer 1 is the largest of the ten.
+  const steps = g.norms.slice(1).map((v, l) => v / g.norms[l]);
+  assert.equal(Math.max(...steps), steps[0]);
+  assert.equal(sv['sx-step1'], String(Math.round(steps[0])));
+  assert.ok(steps[0] > 20 && steps[0] < 25);
   // The mean slope σ′ over the training points, per hidden layer, is near 1/4.
   const slopes = D.meanSlopes('sigmoid', 'matched');
   assert.equal(slopes.length, 10);
@@ -226,6 +232,27 @@ test('ReLU He trains to lower loss than sigmoid Xavier after 100 epochs', () => 
   assert.equal(sv['relu-start'], D.num(r.losses[0], 3));
   assert.equal(sv['relu-10'], D.num(r.losses[10], 3));
   assert.equal(sv['relu-end'], D.num(r.final, 4));
+  // The bumps after epoch 10: the largest is above epoch 10's loss.
+  let be = 11;
+  for (let e = 11; e <= 100; e++) if (r.losses[e] > r.losses[be]) be = e;
+  assert.deepEqual(D.bump(r.losses), { epoch: be, loss: r.losses[be] });
+  assert.ok(r.losses[be] > r.losses[10]);
+  assert.equal(sv['relu-bump'], D.num(r.losses[be], 3));
+  assert.equal(sv['relu-bump-epoch'], String(be));
+  // At the start the sigmoid network gives every point the same prediction:
+  // the output logit varies by under 10⁻⁶ across the 200 points.
+  const st = D.sigmoidStart();
+  const startNet = mlpInit(D.SIZES, { hidden: 'sigmoid', init: 'xavier', seed: 182 });
+  const tr0 = circles(200, 181);
+  const p0 = tr0.X.map((x) => predictProb(startNet, x));
+  const z0 = p0.map((p) => Math.log(p / (1 - p)));
+  assert.ok(st.spread < 1e-6 && st.spread > 0);
+  assert.ok(Math.abs(st.spread - (Math.max(...z0) - Math.min(...z0))) < 1e-9);
+  assert.equal(st.probMin, Math.min(...p0));
+  assert.equal(D.num(st.probMin, 3), D.num(st.probMax, 3));
+  assert.equal(sv['sig-p0'], D.num(st.probMax, 3));
+  assert.equal(sv['sig-spread'], D.sci(st.spread));
+  assert.equal(sv['sig-start'], D.num(bceMean(p0, tr0.y), 3));
   assert.equal(sv['relu-acc'], D.pct(r.acc));
   // The early layers barely move: relative change of W⁽¹⁾ and W⁽¹¹⁾.
   assert.ok(s.moved[0] < 1e-6 && s.moved[10] > 0.1);
@@ -259,6 +286,16 @@ test('the quoted numbers do not hang on rounding', () => {
       assert.equal(D.num(d[0] / d[10], 0), D.num(g.ratio, 0));
       assert.equal(D.num(Math.pow(d[10] / d[0], 0.1), 1), D.num(g.shrink, 1));
     }
+    {
+      const net = mlpInit(D.SIZES, { hidden: 'sigmoid', init: 'xavier', seed: 182 });
+      net.W[0][0][0] *= 1 + nudge;
+      const tr1 = circles(200, 181);
+      const z = tr1.X.map((x) => mlpForward(net, x).out[0]);
+      const p = tr1.X.map((x) => predictProb(net, x));
+      const st = D.sigmoidStart();
+      assert.equal(D.sci(Math.max(...z) - Math.min(...z)), D.sci(st.spread));
+      assert.equal(D.num(Math.max(...p), 3), D.num(st.probMax, 3));
+    }
     const tr = circles(200, 181);
     const runs = pageRuns();
     for (const act of D.RUN_ACTS) {
@@ -270,6 +307,10 @@ test('the quoted numbers do not hang on rounding', () => {
       assert.equal(D.num(L[0], 3), D.num(runs[act].losses[0], 3));
       assert.equal(D.num(L[10], 3), D.num(runs[act].losses[10], 3));
       assert.equal(D.num(L[100], 4), D.num(runs[act].final, 4));
+      const b0 = D.bump(runs[act].losses);
+      const b1 = D.bump(L);
+      assert.equal(b1.epoch, b0.epoch);
+      assert.equal(D.num(b1.loss, 3), D.num(b0.loss, 3));
       assert.equal(accuracyNet(t.state.net, tr.X, tr.y), runs[act].acc);
       const gap = Math.max(...L.map((v, i) => Math.abs(v - runs[act].losses[i])));
       assert.ok(gap < 1e-6, `${act} ${gap}`);
@@ -305,6 +346,8 @@ test('read-out rows', () => {
   assert.ok(start.some((r) => /press Train/.test(r)), start.join('|'));
   const mid = D.readout(4, D.liveInfo(D.makeTrainer('sigmoid').step(370), D.makeTrainer('relu').step(370)));
   assert.ok(mid.some((r) => /not finished/.test(r)), mid.join('|'));
+  const run = D.readout(4, D.liveInfo(D.makeTrainer('sigmoid').step(370), D.makeTrainer('relu').step(370), true));
+  assert.ok(run.includes('training…') && !run.some((r) => /press Train/.test(r)), run.join('|'));
   const end = D.readout(4, D.liveInfo(sig.state, relu.state));
   const sv = D.storyValues();
   assert.ok(end.includes('epoch 100 of 100'), end.join('|'));

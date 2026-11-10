@@ -72,6 +72,22 @@ export function meanSlopes(act, key) {
   return m.map((v) => v / N_TRAIN);
 }
 
+// The sigmoid/Xavier network at the start: the spread of its output logit over
+// the 200 training points (largest minus smallest) and the probability it gives.
+export function sigmoidStart() {
+  const net = startNet('sigmoid', 'matched');
+  const zs = TR.X.map((x) => mlpForward(net, x).out[0]);
+  const ps = TR.X.map((x) => predictProb(net, x));
+  return { spread: Math.max(...zs) - Math.min(...zs), probMin: Math.min(...ps), probMax: Math.max(...ps) };
+}
+
+// The highest training loss after epoch 10, and its epoch (the first if tied).
+export function bump(losses, from = 10) {
+  let e = from + 1;
+  for (let k = from + 1; k < losses.length; k++) if (losses[k] > losses[e]) e = k;
+  return { epoch: e, loss: losses[e] };
+}
+
 // The bar chart's log scale: 10⁻¹⁴ to 10². Bars beyond it are cut off and flagged.
 export const LOG_RANGE = [-14, 2];
 export function barSpan(v) {
@@ -152,7 +168,7 @@ export function sci(v) {
 
 export const diagramInfo = () => ({ params: paramCount(SIZES) });
 export const barsInfo = (act, key) => ({ ...gradNorms(act, key), label: `${ACT_LABEL[act]}, ${initLabel(act, key)}` });
-export const liveInfo = (sig, relu) => ({ sig, relu, epoch: Math.min(sig.epoch, relu.epoch) });
+export const liveInfo = (sig, relu, running = false) => ({ sig, relu, running, epoch: Math.min(sig.epoch, relu.epoch) });
 export const afterInfo = () => ({ runs: Object.fromEntries(RUN_ACTS.map((a) => [a, RUNS.get(a) || null])) });
 
 export function readout(step, s) {
@@ -170,7 +186,8 @@ export function readout(step, s) {
     const rows = [`epoch ${s.epoch} of ${EPOCHS}`, 'training loss ℒ',
       `${RUN_LABEL.sigmoid}: ${num(s.sig.epochLoss.at(-1), 4)}`,
       `${RUN_LABEL.relu}: ${num(s.relu.epochLoss.at(-1), 4)}`];
-    if (s.epoch === 0) rows.push('press Train');
+    if (s.running && s.epoch < EPOCHS) rows.push('training…');
+    else if (s.epoch === 0) rows.push('press Train');
     else if (s.epoch < EPOCHS) rows.push('not finished: press Train');
     return rows;
   }
@@ -206,6 +223,7 @@ export function storyValues() {
   v['sx-ratio'] = sci(sx.ratio);
   v['sx-shrink'] = num(sx.shrink, 1);
   v['sx-million'] = String(Math.round(1 / sx.ratio / 1e6));
+  v['sx-step1'] = String(Math.round(sx.norms[1] / sx.norms[0]));
   const slopes = meanSlopes('sigmoid', 'matched');
   v['slope-min'] = num(Math.min(...slopes), 2);
   v['slope-max'] = num(Math.max(...slopes), 2);
@@ -218,12 +236,18 @@ export function storyValues() {
   v['sig-big-ratio'] = sci(gradNorms('sigmoid', 'large').ratio);
   const s = runResult('sigmoid');
   const r = runResult('relu');
+  const st = sigmoidStart();
+  v['sig-spread'] = sci(st.spread);
+  v['sig-p0'] = num(st.probMax, 3);
   v['sig-start'] = num(s.losses[0], 3);
   v['sig-end'] = num(s.final, 3);
   v['sig-prob'] = num(s.probMax, 3);
   v['relu-start'] = num(r.losses[0], 3);
   v['relu-10'] = num(r.losses[10], 3);
   v['relu-end'] = num(r.final, 4);
+  const b = bump(r.losses);
+  v['relu-bump'] = num(b.loss, 3);
+  v['relu-bump-epoch'] = String(b.epoch);
   v['relu-acc'] = pct(r.acc);
   v['sig-moved-1'] = sci(s.moved[0]);
   v['sig-moved-11'] = num(s.moved[N_LAYERS - 1], 2);
@@ -374,16 +398,26 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   // ---- Controls.
   const make = (tag, props = {}) => Object.assign(doc.createElement(tag), props);
+  // The two button groups each get a small visible label so they read as two rows of choices.
+  const groupBox = (g, text) => {
+    Object.assign(g.style, { alignItems: 'center', flexWrap: 'wrap', gap: '6px' });
+    const tag = make('span', { textContent: text });
+    tag.setAttribute('aria-hidden', 'true');
+    Object.assign(tag.style, { color: MUTED, fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', marginRight: '2px' });
+    g.append(tag);
+  };
   const actGroup = make('div');
   actGroup.setAttribute('role', 'group');
   actGroup.setAttribute('aria-label', 'activation');
   const actBtns = ACTS.map((a) => make('button', { type: 'button', textContent: ACT_LABEL[a] }));
+  groupBox(actGroup, 'activation');
   actGroup.append(...actBtns);
   const initGroup = make('div');
   initGroup.setAttribute('role', 'group');
   initGroup.setAttribute('aria-label', 'starting weights');
   const INIT_TEXT = { small: 'sd 0.1', matched: 'Xavier / He', large: 'sd 2' };
   const initBtns = INITS.map((k) => make('button', { type: 'button', textContent: INIT_TEXT[k] }));
+  groupBox(initGroup, 'start');
   initGroup.append(...initBtns);
   const trainGroup = make('div');
   controls.append(actGroup, initGroup, trainGroup);
@@ -401,7 +435,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   function info() {
     if (step === 0) return diagramInfo();
     if (step <= 3) { const [a, k] = barSetting(); return barsInfo(a, k); }
-    if (step === 4) { const L = liveRuns(); return liveInfo(L.sigmoid.state, L.relu.state); }
+    if (step === 4) { const L = liveRuns(); return liveInfo(L.sigmoid.state, L.relu.state, loop.running()); }
     return afterInfo();
   }
 
@@ -538,6 +572,9 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     render: () => { render(); announce(spoken(4)); },
   });
 
+  // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.
+  trainGroup.addEventListener('click', () => { if (step === 4) render(); });
+
   // ---- Step 6's runs, computed when the step is first shown, in slices of
   // about 6 ms per animation frame.
   let job = null;
@@ -588,8 +625,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       token++;
       shownE = null;
       if (i === 5) computeRuns(); else cancelRuns();
-      showGroup(actGroup, i === 3);
-      showGroup(initGroup, i === 3);
+      actGroup.style.display = i === 3 ? 'flex' : 'none';
+      initGroup.style.display = i === 3 ? 'flex' : 'none';
       showGroup(trainGroup, i === 4);
       controls.classList.toggle('has-train', i === 4);
       if (i >= 1 && i <= 3) {
