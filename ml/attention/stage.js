@@ -112,6 +112,19 @@ export function bandStats(model, Dset, k) {
   return { hit, n, mean: w / n };
 }
 
+// One stream's map: of its rows with a target, how many have their largest weight at
+// s = t − k (ties to the earliest s). The text alternative of the live map.
+export function streamBand(model, xs, k) {
+  const A = attnForward(model, xs).A[0][0];
+  let hit = 0;
+  for (let t = k; t < T; t++) {
+    let best = 0;
+    for (let s = 1; s <= t; s++) if (A[t][s] > A[t][best]) best = s;
+    if (best === t - k) hit++;
+  }
+  return { hit, n: T - k };
+}
+
 // The same model with every position embedding set to 0.
 export function withoutPositions(model) {
   const m = attnUnflatten(model, attnFlatten(model));
@@ -213,7 +226,8 @@ const vec2 = (v) => `(${num(v[0], 2)}, ${num(v[1], 2)})`;
 
 export function liveInfo(live, running) {
   const s = live.trainer.state;
-  return { iter: s.iter, epoch: s.epoch, ok: live.testOk.at(-1), n: live.n, loss: s.epochLoss.at(-1), running, diverged: s.diverged, done: live.done(), model: s.model, k: live.k };
+  const band = streamBand(s.model, testSet(live.k).seqs[EXAMPLE], live.k);
+  return { iter: s.iter, epoch: s.epoch, ok: live.testOk.at(-1), n: live.n, loss: s.epochLoss.at(-1), running, diverged: s.diverged, done: live.done(), model: s.model, k: live.k, band };
 }
 
 export function readout(step, s) {
@@ -225,7 +239,7 @@ export function readout(step, s) {
   if (step === 2) return [`query q = ${vec(s.q)}`, `output = Σ weight × value = ${vec2(s.out)}`, 'always inside the square of the values'];
   if (step === 3) return ['starting model, not trained · stream 1', `row t: weights over positions 1 to t`, `largest at k = ${K_LIVE} back: ${pctCount(s.band.hit, s.band.n)} of ${count(s.band.n)} rows`];
   if (step === 4) {
-    return [`batch ${s.iter} of ${ITERS} · ${trainStatus(s)}`, `masked test accuracy: ${pctCount(s.ok, s.n)}`, `training loss ℒ (epoch ${s.epoch}): ${lossText(s.loss)}`];
+    return [`batch ${s.iter} of ${ITERS} · ${trainStatus(s)}`, `test accuracy ${pctCount(s.ok, s.n)} · loss ℒ ${lossText(s.loss)}`, `stream 1: largest ${s.k} back in ${s.band.hit} of ${s.band.n} rows`];
   }
   if (step === 5) {
     if (!s) return ['computing the four runs…'];

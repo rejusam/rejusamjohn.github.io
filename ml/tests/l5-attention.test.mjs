@@ -420,6 +420,14 @@ test('read-out rows', () => {
   const end = S.readout(4, S.liveInfo(liveRun(), false));
   assert.ok(end.some((r) => r.includes('batch 200 of 200 · finished')) && end.some((r) => r.includes(sv['end-acc'])));
   assert.ok(S.readout(5, null).some((r) => /computing/.test(r)));
+  // Step 5's text alternative says where the weight goes on the shown stream.
+  const xs = S.testSet(8).seqs[S.EXAMPLE];
+  const one = S.bandStats(liveRun().trainer.state.model, { seqs: [xs] }, 8);
+  assert.deepEqual(S.streamBand(liveRun().trainer.state.model, xs, 8), { hit: one.hit, n: one.n });
+  assert.ok(end.some((r) => r.includes('stream 1: largest 8 back in 4 of 4 rows')), end.join('|'));
+  const b0 = S.streamBand(S.startModel(), xs, 8);
+  assert.ok(start.some((r) => r.includes(`in ${b0.hit} of 4 rows`)), start.join('|'));
+  assert.ok(end.some((r) => r.includes(S.lossText(liveRun().trainer.state.epochLoss[10]))), end.join('|'));
 });
 
 test('page', () => {
@@ -440,6 +448,14 @@ test('page', () => {
   assert.match(html, /The independence is a simplification/);
   assert.match(html, /\\operatorname\{Attention\}\(\\mathbf\{Q\}, \\mathbf\{K\}, \\mathbf\{V\}\)/);
   assert.match(html, /soft lookup/);
+  // Wording fixed in review.
+  assert.match(html, /Softmax, from <a href="\/ml\/embeddings\/">embeddings<\/a>/);
+  assert.doesNotMatch(html, /not a contest of size/);
+  assert.match(html, /so this is not a like-for-like contest/);
+  assert.match(html, /in the rows with a target, the dots sit k cells left of the diagonal/);
+  assert.match(html, /Suppose all the <span class="tex" data-tex="2 d_k">/);
+  assert.match(html, /roughly unit variance/);
+  assert.match(html, /all four keys here have the same length/);
   assert.match(html, /exactly 0/);
   for (const href of ['/ml/rnns/', '/ml/language-models/', '/ml/optimisers/', '/ml/logistic-regression/']) assert.match(html, new RegExp(`href="${href}"`));
   assert.match(html, /<a class="next-lesson" href="\/ml\/transformers\/">Next lesson: Transformers →<\/a>/);
