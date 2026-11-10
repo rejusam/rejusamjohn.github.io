@@ -2039,3 +2039,100 @@ html:not(.js) .coffee-line {
     margin-bottom: var(--ml-s1);
   }
 }
+
+/* Network diagrams. Weight sign is shown by dash as well as colour. */
+.net-link {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.net-link.w-pos {
+  stroke: var(--ml-cyan);
+  stroke-dasharray: none;
+}
+
+.net-link.w-neg {
+  stroke: var(--ml-violet);
+  stroke-dasharray: 4 3;
+}
+
+.net-node {
+  fill: var(--ml-bg);
+  stroke: var(--ml-ink);
+  stroke-width: 1.5;
+}
+
+.net-val {
+  fill: var(--ml-ink);
+  font-family: var(--ml-mono);
+  font-size: 9px;
+  dominant-baseline: central;
+}
+
+.net-label {
+  fill: var(--ml-muted);
+  font-family: var(--ml-mono);
+  font-size: 11px;
+}
+
+/* Pixel images. Grey uses ink opacity; signed uses cyan (positive) and violet
+   (negative, also marked with a minus glyph). Cell lines are drawn as strokes. */
+.pixels rect {
+  stroke: var(--ml-line);
+  stroke-width: 0.5;
+}
+
+.pixels .px-grey {
+  fill: var(--ml-ink);
+}
+
+.pixels .px-pos {
+  fill: var(--ml-cyan);
+}
+
+.pixels .px-neg {
+  fill: var(--ml-violet);
+}
+
+.pixels .px-frame {
+  fill: none;
+  stroke: var(--ml-muted);
+  stroke-width: 1;
+}
+
+.px-sign {
+  fill: var(--ml-bg);
+  font-family: var(--ml-mono);
+  font-size: 12px;
+  font-weight: 700;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+/* Train / Pause / Reset row from train-loop.js, styled like the other lesson buttons. */
+.train-buttons {
+  display: inline-flex;
+  gap: var(--ml-s2);
+}
+
+.train-buttons button {
+  height: 32px;
+  min-width: 64px;
+  padding: 0 10px;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  background: transparent;
+  color: var(--ml-ink);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color var(--ml-fast) var(--ml-ease);
+}
+
+.train-buttons button:hover {
+  border-color: var(--ml-muted);
+}
+
+.train-buttons button:first-child {
+  border-color: var(--ml-cyan);
+  color: var(--ml-cyan);
+}

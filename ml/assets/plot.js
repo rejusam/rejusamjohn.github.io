@@ -308,3 +308,124 @@ export function treeLayout(root) {
   return { nodes, links, leaves: next, depth };
 }
 
+
+// Where each unit of a feed-forward network sits. sizes = units per layer, left
+// to right. Layers are spaced evenly across w (a single layer sits in the middle);
+// units are spaced evenly down h and centred. A link joins unit i of layer l to
+// unit j of layer l + 1, which is the W[l][j][i] layout of nn.js.
+export function networkLayout(sizes, { x = 0, y = 0, w, h }) {
+  const L = sizes.length;
+  const nodes = [];
+  const at = [];
+  sizes.forEach((n, l) => {
+    const cx = L === 1 ? x + w / 2 : x + (l * w) / (L - 1);
+    at.push([]);
+    for (let j = 0; j < n; j++) {
+      const node = { l, j, cx, cy: y + (h * (j + 0.5)) / n };
+      nodes.push(node);
+      at[l].push(node);
+    }
+  });
+  const links = [];
+  for (let l = 0; l + 1 < L; l++) {
+    for (let i = 0; i < sizes[l]; i++) {
+      for (let j = 0; j < sizes[l + 1]; j++) {
+        links.push({ l, i, j, x1: at[l][i].cx, y1: at[l][i].cy, x2: at[l + 1][j].cx, y2: at[l + 1][j].cy });
+      }
+    }
+  }
+  return { nodes, links };
+}
+
+// Draws the network once. update({ weights, values }) restyles it in place:
+// weights[l][j][i] sets each link's width from |w| (0.5 to 5 px) and its sign
+// class (w-pos solid, w-neg dashed, so sign never rests on colour alone);
+// values[l][j] is printed inside the unit. labels (optional) name each layer.
+export function networkDiagram(parent, sizes, { box, r = 12, labels } = {}) {
+  const g = el('g', { class: 'net' }, parent);
+  const lay = networkLayout(sizes, box);
+  const linkEls = lay.links.map((k) => el('line', { class: 'net-link w-pos', x1: k.x1, y1: k.y1, x2: k.x2, y2: k.y2, 'stroke-width': 0.5 }, g));
+  const nodeG = el('g', {}, g);
+  const nodeEls = lay.nodes.map((n) => {
+    el('circle', { class: 'net-node', cx: n.cx, cy: n.cy, r }, nodeG);
+    return el('text', { class: 'net-val', x: n.cx, y: n.cy, 'text-anchor': 'middle' }, nodeG);
+  });
+  if (labels) {
+    labels.forEach((text, l) => {
+      const first = lay.nodes.find((n) => n.l === l);
+      if (first && text) el('text', { class: 'net-label', x: first.cx, y: box.y - r - 6, 'text-anchor': 'middle', text }, g);
+    });
+  }
+  const update = ({ weights, values } = {}) => {
+    if (weights) {
+      lay.links.forEach((k, idx) => {
+        const w = weights[k.l][k.j][k.i];
+        const mag = Number.isFinite(w) ? Math.abs(w) : 0;
+        const e = linkEls[idx];
+        e.setAttribute('stroke-width', clamp(mag, 0.5, 5));
+        e.setAttribute('class', w < 0 ? 'net-link w-neg' : 'net-link w-pos');
+      });
+    }
+    if (values) {
+      lay.nodes.forEach((n, idx) => {
+        const v = values[n.l] && values[n.l][n.j];
+        nodeEls[idx].textContent = typeof v === 'number' && Number.isFinite(v) ? fmt(v) : '';
+      });
+    }
+  };
+  return { update, g };
+}
+
+// Class and opacity for one pixel. 'grey': v in [0, 1] is the ink opacity.
+// { signed: max }: the sign picks px-pos or px-neg, |v| / max the opacity
+// (0 when max is 0).
+export function pixelFill(v, mode = 'grey') {
+  if (mode && typeof mode === 'object') {
+    const max = mode.signed;
+    const opacity = max > 0 ? clamp(Math.abs(v) / max, 0, 1) : 0;
+    return { cls: v < 0 ? 'px-neg' : 'px-pos', opacity };
+  }
+  return { cls: 'px-grey', opacity: Number.isFinite(v) ? clamp(v, 0, 1) : 0 };
+}
+
+// A small image as a grid of cells. img is an array of rows. In 'signed' mode
+// the scale is the largest |value| in the image, and negative cells above half
+// of it also carry a minus glyph.
+export function pixelGrid(parent, img, { x = 0, y = 0, cell = 16, mode = 'grey' } = {}) {
+  const g = el('g', { class: 'pixels' }, parent);
+  const rows = img.length;
+  const cols = img[0].length;
+  const rects = [];
+  const marks = [];
+  for (let a = 0; a < rows; a++) {
+    for (let b = 0; b < cols; b++) {
+      rects.push(el('rect', { class: 'px-grey', x: x + b * cell, y: y + a * cell, width: cell, height: cell, opacity: 0 }, g));
+    }
+  }
+  if (mode === 'signed') {
+    for (let a = 0; a < rows; a++) {
+      for (let b = 0; b < cols; b++) {
+        marks.push(el('text', { class: 'px-sign', x: x + (b + 0.5) * cell, y: y + (a + 0.5) * cell, 'text-anchor': 'middle', text: '−', visibility: 'hidden' }, g));
+      }
+    }
+  }
+  el('rect', { class: 'px-frame', x, y, width: cols * cell, height: rows * cell }, g);
+  const update = (next) => {
+    let max = 0;
+    if (mode === 'signed') {
+      for (const row of next) for (const v of row) if (Number.isFinite(v)) max = Math.max(max, Math.abs(v));
+    }
+    for (let a = 0; a < rows; a++) {
+      for (let b = 0; b < cols; b++) {
+        const v = next[a][b];
+        const { cls, opacity } = pixelFill(v, mode === 'signed' ? { signed: max } : 'grey');
+        const k = a * cols + b;
+        rects[k].setAttribute('class', cls);
+        rects[k].setAttribute('opacity', opacity);
+        if (marks.length) marks[k].setAttribute('visibility', v < 0 && max > 0 && -v > max / 2 ? 'visible' : 'hidden');
+      }
+    }
+  };
+  update(img);
+  return { update, g };
+}
