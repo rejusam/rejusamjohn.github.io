@@ -1,4 +1,4 @@
-// The full learning path. L0 to L4 are live; L5 and L6 show the road ahead
+// The full learning path. L0 to L5 are live; L6 shows the road ahead
 // without links. Lesson pages live at /ml/<slug>/.
 
 export const PATH = [
@@ -58,7 +58,20 @@ export const PATH = [
       { slug: 'rnns', title: 'Recurrent networks' },
     ],
   },
-  { level: 'L5', name: 'Modern AI', lessons: [], soon: true, topics: 'Attention, transformers, LLMs, embeddings' },
+  {
+    level: 'L5',
+    name: 'Modern AI',
+    lessons: [
+      { slug: 'tokens', title: 'Tokens: text as numbers' },
+      { slug: 'embeddings', title: 'Embeddings: words as points' },
+      { slug: 'language-models', title: 'Predicting the next token' },
+      { slug: 'attention', title: 'Attention' },
+      { slug: 'transformers', title: 'Transformers' },
+      { slug: 'llms', title: 'Large language models, in miniature' },
+      { slug: 'generative-models', title: 'Generative models' },
+      { slug: 'diffusion', title: 'Diffusion: from noise to data' },
+    ],
+  },
   { level: 'L6', name: 'In practice', lessons: [], soon: true, topics: 'Evaluation, calibration, interpretability, fairness' },
 ];
 
