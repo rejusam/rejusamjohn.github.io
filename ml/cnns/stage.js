@@ -301,7 +301,7 @@ export function compareInfo(runs) {
 
 export function readout(step, s) {
   if (step === 0) return [`${s.n} of the ${N_TRAIN} training images`, 'circle: cross (class 0)', 'triangle: square (class 1)'];
-  if (step === 1) return [`example ${s.k + 1}, a ${s.cls}`, '8×8 → 6×6×2 → 3×3×2 → 18 → 1', `starting filters: p = ${num(s.p, 2)}`];
+  if (step === 1) return [`example ${s.k + 1}, a ${s.cls}`, '8×8 → 6×6×2 → 3×3×2 → 18 → 1', `starting filters: p(square) = ${num(s.p, 2)}`];
   if (step === 2) return [`example ${s.k + 1}, shifted right 1 pixel`, `maps after ReLU change by ${pctWhole(s.raw)}`, `pooled maps change by ${pctWhole(s.pooled)}`];
   if (step === 3) {
     const status = s.diverged ? 'diverged' : s.running && s.epoch < EPOCHS ? 'training…' : s.epoch === 0 ? 'press Train' : s.epoch < EPOCHS ? 'not finished: press Train' : 'finished';
@@ -313,7 +313,7 @@ export function readout(step, s) {
   }
   if (step === 5) {
     if (!s) return ['computing both runs…'];
-    return [`CNN: ${count(s.cnnParams)} weights · test ${pct(s.cnn.testAcc.at(-1))}`, `dense: ${count(s.denseParams)} weights · test ${pct(s.dense.testAcc)}`, `training accuracy: CNN ${pct(s.cnn.trainAcc)} · dense ${pct(s.dense.trainAcc)}`];
+    return [`CNN: ${count(s.cnnParams)} weights and biases · test ${pct(s.cnn.testAcc.at(-1))}`, `dense: ${count(s.denseParams)} weights and biases · test ${pct(s.dense.testAcc)}`, `training accuracy: CNN ${pct(s.cnn.trainAcc)} · dense ${pct(s.dense.trainAcc)}`];
   }
   return [];
 }
@@ -356,6 +356,10 @@ export function storyValues() {
   const [f1, f2] = c.net.filters;
   v['f1-centre'] = num(f1[1][1], 2);
   v['f2-centre'] = num(f2[1][1], 2);
+  v['f1-side-l'] = num(f1[1][0], 2);
+  v['f1-side-r'] = num(f1[1][2], 2);
+  v['f1-bias'] = num(c.net.fb[0], 2);
+  v['dw-positive'] = String(c.net.dw.filter((w) => w > 0).length);
   const m = filterMaps(c.net);
   for (const k of [0, 1]) {
     v[`f${k + 1}-cross`] = num(m.crossMax[k], 2);
@@ -421,11 +425,12 @@ function cellGrid(parent, rows, cols, { x, y, cell, kind = 'grey', numbers = fal
       const f = pixelFill(v, { signed: max });
       if (numbers) {
         rects[k].setAttribute('class', '');
-        rects[k].setAttribute('fill', v < 0 ? VIOLET : CYAN);
+        const shown = num(v, 2);
+        rects[k].setAttribute('fill', shown === '0.00' ? LINE : v < 0 ? VIOLET : CYAN);
         rects[k].setAttribute('stroke', LINE);
         rects[k].setAttribute('opacity', 1);
-        rects[k].setAttribute('fill-opacity', P(0.12 + 0.6 * f.opacity));
-        texts[k].textContent = num(v, 2);
+        rects[k].setAttribute('fill-opacity', shown === '0.00' ? 0.4 : P(0.12 + 0.6 * f.opacity));
+        texts[k].textContent = shown;
         return;
       }
       rects[k].setAttribute('class', f.cls);
@@ -698,7 +703,10 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     if (step === 0) return `Twelve 8 by 8 training images in two rows: crosses (class 0, circle marker) and hollow squares (class 1, triangle marker), alternating. ${rest}.`;
     if (step === 1) return `${exName(example)}, passed through the starting network: two 3 by 3 filters give two 6 by 6 maps, ReLU sets negatives to 0, 2 by 2 max-pooling gives two 3 by 3 maps, their 18 values feed one output. ${rest}.`;
     if (step === 2) return `${exName(example)} and the same image shifted right by one pixel, each with its two maps after ReLU and the two pooled maps. ${rest}.`;
-    if (step === 3) return `The two 3 by 3 filters with their current weights, and the maps they give on ${exName(example)}. ${rest}.`;
+    if (step === 3) {
+      const ws = getLive().trainer.state.net.filters.map((W, k) => `filter ${k + 1}, row by row: ${W.map((row) => row.map((w) => num(w, 2)).join(', ')).join('; ')}`).join('. ');
+      return `The two 3 by 3 filters with their current weights, and the maps they give on ${exName(example)}. ${ws}. ${rest}.`;
+    }
     if (step === 4) return `The trained filters, and their maps after ReLU on a cross and on a square. ${rest}.`;
     return `Bars comparing the number of weights and the test accuracy of the CNN and the dense network. ${rest}.`;
   }

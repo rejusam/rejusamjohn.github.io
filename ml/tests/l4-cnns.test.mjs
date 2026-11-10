@@ -278,6 +278,16 @@ test('pooled-map change under a 1-pixel shift is smaller than the raw-map change
   let same = 0;
   a.pooled.flat(2).forEach((v, i) => { if (v === b.pooled.flat(2)[i]) same++; });
   assert.equal(info.same, same);
+  // Each unchanged pooled value is above 0, and its max is the same pixel pattern
+  // one column to the right, inside the same 2 × 2 block.
+  for (let k = 0; k < 2; k++) for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+    if (a.pooled[k][r][c] !== b.pooled[k][r][c]) continue;
+    assert.ok(a.pooled[k][r][c] > 0);
+    const [i, j] = a.args[k][r][c];
+    const [i2, j2] = b.args[k][r][c];
+    assert.deepEqual([i2, j2], [i, j + 1]);
+    assert.equal(j >> 1, (j + 1) >> 1);
+  }
 });
 
 test('max-pool passes the gradient back only to the maximum', () => {
@@ -348,6 +358,14 @@ test('what the filters became', () => {
     assert.ok(Math.max(...fc.maps[k].flat()) < -0.1, String(k));
   }
   assert.equal(fc.z, runs.cnn.net.db);
+  // All 18 output weights are positive, so any filter response pushes towards "square".
+  assert.ok(runs.cnn.net.dw.every((w) => w > 0));
+  assert.equal(sv['dw-positive'], '18');
+  // Filter 1's side weights in its middle row, and its bias.
+  assert.ok(f1[1][0] < 0 && f1[1][2] < 0 && runs.cnn.net.fb[0] < 0);
+  assert.equal(sv['f1-side-l'], S.num(f1[1][0], 2));
+  assert.equal(sv['f1-side-r'], S.num(f1[1][2], 2));
+  assert.equal(sv['f1-bias'], S.num(runs.cnn.net.fb[0], 2));
   for (const k of [0, 1]) {
     assert.equal(m.crossMax[k], Math.max(...fc.relu[k].flat()));
     assert.equal(m.squareMax[k], Math.max(...fs.relu[k].flat()));
@@ -393,6 +411,10 @@ test('the quoted numbers do not hang on rounding', () => {
     const net = t.state.net;
     assert.equal(S.num(net.filters[0][1][1], 2), sv['f1-centre']);
     assert.equal(S.num(net.filters[1][1][1], 2), sv['f2-centre']);
+    assert.equal(S.num(net.filters[0][1][0], 2), sv['f1-side-l']);
+    assert.equal(S.num(net.filters[0][1][2], 2), sv['f1-side-r']);
+    assert.equal(S.num(net.fb[0], 2), sv['f1-bias']);
+    assert.equal(String(net.dw.filter((w) => w > 0).length), sv['dw-positive']);
     const m = S.filterMaps(net);
     for (const k of [0, 1]) {
       assert.equal(S.num(m.crossMax[k], 2), sv[`f${k + 1}-cross`]);
@@ -467,7 +489,7 @@ test('read-out rows', () => {
   const p = S.readout(2, S.poolInfo(S.EXAMPLE));
   assert.ok(p.some((r) => r.includes(sv['shift-raw'])) && p.some((r) => r.includes(sv['shift-pooled'])), p.join('|'));
   const l = S.readout(1, S.layerInfo(S.EXAMPLE));
-  assert.ok(l.some((r) => r.includes(`p = ${sv['start-p']}`)), l.join('|'));
+  assert.ok(l.some((r) => r.includes(`p(square) = ${sv['start-p']}`)), l.join('|'));
   const f = S.readout(4, S.filtersInfo(runs));
   assert.ok(f.some((r) => r.includes(sv['f1-square'])) && f.some((r) => r.includes(sv['f2-cross'])), f.join('|'));
   const c = S.readout(5, S.compareInfo(runs));
@@ -520,6 +542,9 @@ test('page', () => {
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)(?![^>]*application\/ld\+json)[^>]*>/);
   assert.doesNotMatch(html, /\son[a-z]+=/i);
   assert.doesNotMatch(html, /Taylor/);
+  assert.doesNotMatch(html, /often stays|One reason for it|\+ c = c/);
+  assert.match(html, /data-tex="\\hat\{p\} = \\sigma\(z\)"|\\hat\{p\} = \\sigma\(z\)/);
+  assert.match(html, /A likely reason, not tested here/);
   assert.doesNotMatch(html, /understands|learns like|it decided|always better|can learn anything/i);
   assert.doesNotMatch(html, /delve|in today's world|unlock|harness the power|it's important to note|dive in/i);
   assert.equal((html.match(/<form class="q"/g) || []).length, 2);
