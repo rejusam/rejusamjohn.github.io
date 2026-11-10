@@ -275,19 +275,20 @@ test('hidden-layers read-out rows and page', () => {
   for (let step = 0; step < 6; step++) {
     for (const st of states) {
       const rows = L.readout(step, st);
-      assert.ok(rows.length <= 5);
+      assert.ok(rows.length <= 6);
       for (const r of rows) {
         assert.ok(!/NaN|undefined|Infinity/.test(r), r);
-        assert.ok(r.length <= 22, r);
+        assert.ok(r.length <= 25, r);
       }
     }
   }
   // Step 6 says when its run is not finished, and stops saying so at the end.
   const fresh = L.makeRun(4);
-  assert.ok(L.readout(5, L.info(fresh, 4)).includes('run not finished:'));
+  assert.ok(L.readout(5, L.info(fresh, 4)).includes('press Train'));
   L.advance(fresh, L.MAX_ITER);
   assert.ok(!L.readout(5, L.info(fresh, 4)).some((r) => /not finished/.test(r)));
   assert.match(html, /The numbers in this text are for the end of its 150-epoch run/);
+  assert.match(html, /if the read-out does not say finished, press Train/);
   assert.match(html, /Play steps through the lesson, and Train trains the network/);
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Hidden layers: bending the boundary · ML Explorer<\/title>/);
@@ -324,4 +325,106 @@ test('hidden-layers read-out rows and page', () => {
     assert.equal(text, sv[key], key);
   }
   for (const v of [...Object.values(pv), ...Object.values(sv)]) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+});
+
+test('the read-out says whether the run is training, paused, not started or finished', () => {
+  assert.equal(L.trainStatus({ running: false, iter: 0, done: false }), 'press Train');
+  assert.equal(L.trainStatus({ running: true, iter: 0, done: false }), 'training…');
+  assert.equal(L.trainStatus({ running: true, iter: 37, done: false }), 'training…');
+  assert.equal(L.trainStatus({ running: false, iter: 37, done: false }), 'not finished: press Train');
+  assert.equal(L.trainStatus({ running: false, iter: L.MAX_ITER, done: true }), 'finished');
+  assert.equal(L.trainStatus({ running: true, iter: L.MAX_ITER, done: true }), 'finished');
+  // Every live step shows the state as its last row, from the run itself.
+  const t = L.makeRun(4);
+  for (let step = 1; step < 6; step++) {
+    assert.equal(L.readout(step, L.info(t, 4)).at(-1), 'press Train');
+    assert.equal(L.readout(step, L.info(t, 4, true)).at(-1), 'training…');
+  }
+  L.advance(t, 25);
+  for (let step = 1; step < 6; step++) {
+    assert.equal(L.readout(step, L.info(t, 4, true)).at(-1), 'training…');
+    assert.equal(L.readout(step, L.info(t, 4, false)).at(-1), 'not finished: press Train');
+  }
+  L.advance(t, L.MAX_ITER);
+  for (let step = 1; step < 6; step++) assert.equal(L.readout(step, L.info(t, 4)).at(-1), 'finished');
+  // The stage redraws the read-out when Pause is pressed (pausing alone does not render).
+  const src = readFileSync(new URL('../hidden-layers/stage.js', import.meta.url), 'utf8');
+  assert.match(src, /trainGroup\.addEventListener\('click', \(\) => \{ if \(step >= 1\) render\(true\); \}\)/);
+  assert.match(src, /info\(t, curH\(\), loop\.running\(\)\)/);
+});
+
+test('load: the one-neuron fit waits for step 1, and page values need no fit', () => {
+  const base = L.baseValues();
+  assert.ok(!('one-train' in base) && !('one-test' in base));
+  assert.deepEqual(Object.keys(L.fitValues()).sort(), ['one-test', 'one-train']);
+  const src = readFileSync(new URL('../hidden-layers/stage.js', import.meta.url), 'utf8');
+  const ctor = src.slice(src.indexOf('export function createStage'));
+  // fitOne is called only inside render, behind the first-show guard for step 1.
+  assert.equal((ctor.match(/fitOne\(\)/g) || []).length, 1);
+  assert.match(ctor, /if \(step === 0 && !fitShown\) \{\n\s+fitShown = true;\n\s+const f = fitOne\(\);/);
+  assert.match(ctor, /if \(!shown\) return;/);
+  // The four shaded maps are built on first show of their step, not in the constructor.
+  for (const name of ['netMap', 'farMap', 'hidRegion']) assert.match(ctor, new RegExp(`let ${name} = null;`));
+  assert.equal((ctor.match(/smoothMap\(|regionMap\(/g) || []).length, 5); // the definition's regionMap, then 4 lazy builds
+  assert.match(ctor, /if \(netMap\) netMap\.update\(fastProb\(net\)\);\n\s+else netMap = smoothMap/);
+});
+
+// Another browser may round Math.exp or Math.tanh differently in the last place.
+// Scaling every starting weight by 1 ± 1e-12 stands in for that: every number the
+// page quotes from these runs, rounded as the page shows it, must not move.
+const scaled = (H, f) => {
+  const net = mlpInit([2, H, 1], { hidden: 'tanh', init: 'xavier', seed: 155 });
+  for (const M of net.W) for (const row of M) row.forEach((v, i) => { row[i] = v * f; });
+  for (const row of net.b) row.forEach((v, i) => { row[i] = v * f; });
+  const tr = L.trainSet();
+  return trainer({ net, X: tr.X, y: tr.y, batch: 20, kind: 'adam', hyper: { eta: 0.03 }, seed: 154 });
+};
+
+test('the quoted numbers do not hang on rounding', () => {
+  const tr = L.trainSet();
+  const te = L.testSet();
+  const sv = L.storyValues();
+  const base = L.makeRun(4);
+  L.advance(base, L.MAX_ITER);
+  for (const f of [1 + 1e-12, 1 - 1e-12]) {
+    for (const H of L.H_CHOICES) {
+      const t = scaled(H, f);
+      let firstIter = null;
+      while (t.state.iter < L.MAX_ITER) {
+        t.step(1);
+        if (H === 4 && firstIter === null && accuracyNet(t.state.net, te.X, te.y) >= 0.95) firstIter = t.state.iter;
+      }
+      const net = t.state.net;
+      assert.equal(L.pct(accuracyNet(net, tr.X, tr.y)), sv[`h${H}-train`], `${f} H=${H} train`);
+      assert.equal(L.pct(accuracyNet(net, te.X, te.y)), sv[`h${H}-test`], `${f} H=${H} test`);
+      if (H === 2) assert.equal(L.pct(L.outputAccuracyHidden(net, tr.X, tr.y)), sv['h2-hidden']);
+      if (H !== 4) continue;
+      // "part-way through epoch 19, while the read-out still shows 18 finished epochs"
+      assert.equal(String(Math.ceil(firstIter / L.ITERS_PER_EPOCH)), sv['h4-first95']);
+      assert.equal(Math.floor(firstIter / L.ITERS_PER_EPOCH), 18);
+      assert.equal(L.num(t.state.epochLoss[0], 2), sv['h4-loss0']);
+      assert.equal(L.num(t.state.epochLoss[L.EPOCHS], 3), sv['h4-loss']);
+      const d = L.lineDistances(net);
+      assert.equal(L.num(Math.min(...d), 1), sv['line-min']);
+      assert.equal(L.num(Math.max(...d), 1), sv['line-max']);
+      assert.equal(L.num(Math.min(...L.farRing(net, L.FAR_R, 360)), 2), sv['far-min']);
+      const r = L.boundaryRadii(net, 360);
+      assert.equal(L.num(r.min, 1), sv['r-min']);
+      assert.equal(L.num(r.max, 1), sv['r-max']);
+      // Not chaotic: the whole loss curve stays within 1e-6 of the page's run.
+      const gap = Math.max(...t.state.epochLoss.map((v, i) => Math.abs(v - base.state.epochLoss[i])));
+      assert.ok(gap < 1e-6, String(gap));
+    }
+  }
+  // The one-neuron fit: no point sits within 1e-6 of its line, so the counts cannot flip.
+  const fit = L.fitOne();
+  for (const { X } of [tr, te]) {
+    for (const x of X) assert.ok(Math.abs(fit.w0 + fit.w[0] * x[0] + fit.w[1] * x[1]) > 1e-6);
+  }
+});
+
+test('p̂ in prose is maths markup, not a combining hat', () => {
+  // The combining hat misrenders in Inter, so every p̂ on the page is a rendered tex span.
+  assert.equal((html.match(/p\u0302/g) || []).length, 0);
+  assert.match(html, /So far out, <span class="tex" data-tex="\\hat\{p\}">/);
 });

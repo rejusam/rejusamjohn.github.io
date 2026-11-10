@@ -220,11 +220,21 @@ export const tableRows = (done) => H_CHOICES.map((H) => {
   return [String(H), r ? pct(r.train) : '–', r ? pct(r.test) : '–'];
 });
 
+// The run's state in words: "training…" only while the loop runs; "press Train"
+// before the first step; "not finished: press Train" when paused part-way.
+export function trainStatus({ running = false, iter = 0, done = false }) {
+  if (done) return 'finished';
+  if (running) return 'training…';
+  return iter === 0 ? 'press Train' : 'not finished: press Train';
+}
+
 // What the read-out needs from a run, all from its current weights.
-export function info(t, H) {
+export function info(t, H, running = false) {
   const net = t.state.net;
   return {
     H,
+    running,
+    iter: t.state.iter,
     epoch: t.state.epoch,
     loss: trainLoss(net),
     train: accuracyNet(net, TR.X, TR.y),
@@ -240,15 +250,16 @@ export function readout(step, s) {
     return ['one neuron', `train: ${pct(oneAccuracy(TR.X, TR.y))}`, `test: ${pct(oneAccuracy(TE.X, TE.y))}`];
   }
   const head = `H = ${s.H} · epoch ${s.epoch}`;
+  const status = trainStatus(s);
   if (step === 4) {
-    return [head, `loss: ${num(s.loss, 3)}`, 'train accuracy:', `line on (a₁,a₂): ${pct(s.hidden ?? 0)}`, `network: ${pct(s.train)}`];
+    return [head, `loss: ${num(s.loss, 3)}`, 'train accuracy:', `line on (a₁,a₂): ${pct(s.hidden ?? 0)}`, `network: ${pct(s.train)}`, status];
   }
   if (step === 5) {
     const far = `min p̂, r = ${FAR_R}: ${num(s.far, 2)}`;
-    if (!s.done) return [head, `test: ${pct(s.test)}`, far, 'run not finished:', 'press Train'];
-    return [head, `train: ${pct(s.train)}`, `test: ${pct(s.test)}`, far];
+    if (!s.done) return [head, `test: ${pct(s.test)}`, far, status];
+    return [head, `train: ${pct(s.train)}`, `test: ${pct(s.test)}`, far, status];
   }
-  return [head, `loss: ${num(s.loss, 3)}`, `train: ${pct(s.train)}`, `test: ${pct(s.test)}`];
+  return [head, `loss: ${num(s.loss, 3)}`, `train: ${pct(s.train)}`, `test: ${pct(s.test)}`, status];
 }
 
 // Run t to the end. Returns the epoch during which test accuracy first reaches
@@ -262,13 +273,17 @@ export function first95Epoch(t) {
   return firstIter === null ? null : Math.ceil(firstIter / ITERS_PER_EPOCH);
 }
 
-// Filled into the page at run time (cheap to compute).
-export function pageValues() {
+// Filled into the page at run time. The one-neuron fit's two values wait until
+// step 1 is first shown (fitValues), so a deep link to a later step skips the fit.
+export const fitValues = () => ({
+  'one-train': pct(oneAccuracy(TR.X, TR.y)),
+  'one-test': pct(oneAccuracy(TE.X, TE.y)),
+});
+export const pageValues = () => ({ ...baseValues(), ...fitValues() });
+export function baseValues() {
   return {
     'n-train': String(TR.X.length),
     'n-test': String(TE.X.length),
-    'one-train': pct(oneAccuracy(TR.X, TR.y)),
-    'one-test': pct(oneAccuracy(TE.X, TE.y)),
     'epochs': String(EPOCHS),
     'batch': String(BATCH),
     'iters': String(ITERS_PER_EPOCH),
@@ -345,8 +360,11 @@ const HID = [-1.15, 1.15];
 
 export function createStage(svg, { controls, reduced = false, announce = () => {} }) {
   const doc = svg.ownerDocument;
-  const f = fitOne();
   let step = 0;
+  // Step 1's one-neuron fit is made when that step is first shown (about 1 ms).
+  let fitShown = false;
+  // Nothing is drawn until the engine shows a step, so a deep link draws only that step.
+  let shown = false;
   let H = 4;
   const runs = new Map();
   const run = (h) => {
@@ -421,9 +439,11 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const IX = linearScale(DOM, [QX0, QX1]);
   const IY = linearScale(DOM, [QY0, QY1]);
   const inG = el('g', {}, svg);
-  const oneMap = smoothMap(el('g', {}, inG), IX, IY, (a, c) => sigmoid(f.w0 + f.w[0] * a + f.w[1] * c));
+  // The four shaded maps (about 6 ms of drawing each) are built when their step
+  // is first shown, each in a group made now so the layering stays the same.
+  const oneMapG = el('g', {}, inG);
   const netMapG = el('g', {}, inG);
-  const netMap = smoothMap(netMapG, IX, IY, fastProb(run(4).state.net));
+  let netMap = null;
   axes(inG, IX, IY, { xLabel: 'x₁', yLabel: 'x₂' });
   const unitG = el('g', { 'clip-path': 'url(#l42-plot)' }, inG);
   const unitLines = Array.from({ length: 8 }, () => el('line', { stroke: MUTED, 'stroke-width': 1.3, 'stroke-dasharray': '6 4' }, unitG));
@@ -434,8 +454,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const HX = linearScale(HID, [QX0, QX1]);
   const HY = linearScale(HID, [QY0, QY1]);
   const hidG = el('g', {}, svg);
-  const hidRegion = regionMap(el('g', {}, hidG), HX, HY, () => 0.5, { nx: GRID[0], ny: GRID[1], mode: 'prob' });
-  hidRegion.g.querySelector('.boundary').style.display = 'none';
+  const hidMapG = el('g', {}, hidG);
+  let hidRegion = null;
   axes(hidG, HX, HY, { xLabel: 'a₁, hidden unit 1', yLabel: 'a₂' });
   const hidLineG = el('g', { 'clip-path': 'url(#l42-plot)' }, hidG);
   const hidLine = el('line', { stroke: STRONG, 'stroke-width': 2 }, hidLineG);
@@ -446,7 +466,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const FX = linearScale(FAR_DOM, [QX0, QX1]);
   const FY = linearScale(FAR_DOM, [QY0, QY1]);
   const farG = el('g', {}, svg);
-  const farMap = smoothMap(el('g', {}, farG), FX, FY, fastProb(run(4).state.net));
+  const farMapG = el('g', {}, farG);
+  let farMap = null;
   axes(farG, FX, FY, { xLabel: 'x₁', yLabel: 'x₂' });
   el('rect', { x: P(FX(DOM[0])), y: P(FY(DOM[1])), width: P(FX(DOM[1]) - FX(DOM[0])), height: P(FY(DOM[0]) - FY(DOM[1])), fill: 'none', stroke: MUTED, 'stroke-width': 1.2, 'stroke-dasharray': '4 3' }, farG);
   el('circle', { cx: P(FX(0)), cy: P(FY(0)), r: P(FX(FAR_R) - FX(0)), fill: 'none', stroke: MUTED, 'stroke-width': 1.2, 'stroke-dasharray': '2 4' }, farG);
@@ -485,7 +506,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   // ---- Read-out box.
   const box = el('g', {}, svg);
   const boxRect = el('rect', { rx: 6, fill: SURFACE, 'fill-opacity': 0.92, stroke: LINE }, box);
-  const rowsT = [0, 1, 2, 3, 4].map(() => el('text', { class: 'value' }, box));
+  const rowsT = [0, 1, 2, 3, 4, 5].map(() => el('text', { class: 'value' }, box));
 
   // ---- Controls: the hidden-units slider (step 4) and Train / Pause / Reset.
   const make = (tag, props = {}) => Object.assign(doc.createElement(tag), props);
@@ -509,23 +530,40 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   function drawMaps(t) {
     const net = t.state.net;
-    if (step >= 1 && step <= 3) netMap.update(fastProb(net));
-    if (step === 5) farMap.update(fastProb(net));
+    if (step >= 1 && step <= 3) {
+      if (netMap) netMap.update(fastProb(net));
+      else netMap = smoothMap(netMapG, IX, IY, fastProb(net));
+    }
+    if (step === 5) {
+      if (farMap) farMap.update(fastProb(net));
+      else farMap = smoothMap(farMapG, FX, FY, fastProb(net));
+    }
     if (step === 4) {
       const w = net.W[1][0];
       const b = net.b[1][0];
-      hidRegion.update((a1, a2) => sigmoid(b + w[0] * a1 + w[1] * a2));
+      const prob = (a1, a2) => sigmoid(b + w[0] * a1 + w[1] * a2);
+      if (hidRegion) hidRegion.update(prob);
+      else {
+        hidRegion = regionMap(hidMapG, HX, HY, prob, { nx: GRID[0], ny: GRID[1], mode: 'prob' });
+        hidRegion.g.querySelector('.boundary').style.display = 'none';
+      }
       setLine(hidLine, lineEnds(w, b, HX, HY));
     }
   }
 
   function render(full = true) {
+    if (!shown) return;
+    if (step === 0 && !fitShown) {
+      fitShown = true;
+      const f = fitOne();
+      smoothMap(oneMapG, IX, IY, (a, c) => sigmoid(f.w0 + f.w[0] * a + f.w[1] * c));
+      fill(fitValues());
+    }
     const t = step === 0 ? null : cur();
     show(inG, step <= 3);
     show(hidG, step === 4);
     show(farG, step === 5);
-    show(oneMap.g, step === 0);
-    show(oneMap.lineG, step === 0);
+    show(oneMapG, step === 0);
     show(netMapG, step >= 1 && step <= 3);
     show(lossG, step === 1 || step === 4 || step === 5);
     show(netG, step === 2);
@@ -560,7 +598,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       hInput.setAttribute('aria-valuetext', `H = ${H} hidden units`);
     }
 
-    const texts = readout(step, t ? info(t, curH()) : null);
+    const texts = readout(step, t ? info(t, curH(), loop.running()) : null);
     rowsT.forEach((r, i) => {
       r.textContent = texts[i] || '';
       r.style.display = i < texts.length ? '' : 'none';
@@ -586,7 +624,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   const spoken = (i) => {
     if (i === 0) return `One neuron's best straight line, the logistic regression fit, gets ${pct(oneAccuracy(TR.X, TR.y))} of the training points and ${pct(oneAccuracy(TE.X, TE.y))} of the test points right.`;
-    const s = info(cur(), curH());
+    const s = info(cur(), curH(), loop.running());
     const where = `${s.H} hidden units, epoch ${s.epoch} of ${EPOCHS}: training loss ${num(s.loss, 3)}, train accuracy ${pct(s.train)}, test accuracy ${pct(s.test)}.`;
     if (i === 1) return `Press Train to train the network. ${where}`;
     if (i === 2) return `Each hidden unit's line is drawn dashed. ${where}`;
@@ -613,6 +651,9 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     render: () => { render(true); announce(spoken(step)); },
   });
 
+  // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.
+  trainGroup.addEventListener('click', () => { if (step >= 1) render(true); });
+
   hInput.addEventListener('input', () => {
     buttons.stop();
     H = H_CHOICES[Number(hInput.value)] ?? 4;
@@ -620,15 +661,16 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     announce(spoken(step));
   });
 
-  const filled = pageValues();
-  for (const span of doc.querySelectorAll('main.lesson [data-value]')) {
-    const val = filled[span.dataset.value];
-    if (val !== undefined) span.textContent = val;
+  function fill(vals) {
+    for (const span of doc.querySelectorAll('main.lesson [data-value]')) {
+      const val = vals[span.dataset.value];
+      if (val !== undefined) span.textContent = val;
+    }
   }
+  fill(baseValues());
 
   measure();
   if (typeof ResizeObserver === 'function') new ResizeObserver(measure).observe(svg);
-  render(true);
   if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(() => render(true), () => {});
 
   return {
@@ -636,6 +678,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     show(i) {
       buttons.stop();
       step = i;
+      shown = true;
       showGroup(hGroup, i === 3);
       showGroup(trainGroup, i >= 1);
       controls.classList.toggle('has-train', i >= 1);
