@@ -350,7 +350,7 @@ test('the read-out says whether the run is training, paused, not started or fini
   // The stage redraws the read-out when Pause is pressed (pausing alone does not render).
   const src = readFileSync(new URL('../hidden-layers/stage.js', import.meta.url), 'utf8');
   assert.match(src, /trainGroup\.addEventListener\('click', \(\) => \{ if \(step >= 1\) render\(true\); \}\)/);
-  assert.match(src, /info\(t, curH\(\), loop\.running\(\)\)/);
+  assert.match(src, /info\(t, curH\(\), loop\.activity\(\)\)/);
 });
 
 test('load: the one-neuron fit waits for step 1, and page values need no fit', () => {

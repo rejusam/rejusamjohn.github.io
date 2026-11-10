@@ -6,7 +6,7 @@
 
 import { circlesData, mlpInit, trainer, accuracyNet, optInit, optStep } from '../assets/nn.js';
 import { linearScale, el, axes, tween, trianglePoints } from '../assets/plot.js';
-import { createTrainLoop, trainButtons } from '../assets/train-loop.js';
+import { createTrainLoop, trainButtons, trainStatus } from '../assets/train-loop.js';
 
 // ---- the valley ---------------------------------------------------------
 
@@ -117,7 +117,8 @@ export function raceOrder() {
   return KINDS.map((kind) => ({ kind, steps: runs[kind].reached })).sort((a, b) => a.steps - b.steps);
 }
 // Where each run is after k steps; a run that has reached the target stays put.
-export function raceInfo(runs, k) {
+// running is the loop's activity(): false, 'training' or 'computing'.
+export function raceInfo(runs, k, running = false) {
   const at = {};
   const loss = {};
   const done = {};
@@ -128,7 +129,7 @@ export function raceInfo(runs, k) {
     loss[kind] = r.losses[j];
     done[kind] = r.reached !== null && k >= r.reached;
   }
-  return { k, at, loss, done, runs };
+  return { k, at, loss, done, runs, running, end: k >= raceLength(runs) };
 }
 
 // ---- the network (step 6) ------------------------------------------------
@@ -231,12 +232,11 @@ export function readout(step, s) {
     return [`${LABEL[s.kind]}, η = ${s.run.eta}`, ...runRows(s.run), `step 1: each weight ±${num(m[0], 2)}`];
   }
   if (step === 4) {
-    const head = s.k === 0 ? 'press Train to race' : `step ${s.k}`;
-    const note = s.k === 0 ? ['all four start together'] : [];
-    return [head, ...note, ...KINDS.map((k) => {
+    const head = s.k === 0 ? 'all four start together' : `step ${s.k}`;
+    return [head, ...KINDS.map((k) => {
       const name = `${LABEL[k]} η ${s.runs[k].eta}`;
       return s.done[k] ? `${name}: at ${s.runs[k].reached}` : `${name}: ℒ ${num(s.loss[k], 2)}`;
-    })];
+    }), trainStatus({ running: s.running, iter: s.k, done: s.end })];
   }
   if (step === 5) {
     return ['train loss · test acc.', ...KINDS.map((k) => {
@@ -492,7 +492,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     if (step === 1) return momInfo(beta);
     if (step === 2) return kindInfo('rmsprop');
     if (step === 3) return kindInfo('adam');
-    if (step === 4) return raceInfo(runs, raceK);
+    if (step === 4) return raceInfo(runs, raceK, loop.activity());
     return netInfo();
   }
 
@@ -601,9 +601,11 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const buttons = trainButtons(trainGroup, loop, {
     onReset: () => { raceK = 0; frame = 0; },
     reduced,
-    runToEnd: () => { raceK = raceEnd; },
-    render: () => { render(); announce(spoken(4)); },
+    work: (k) => { raceK = Math.min(raceEnd, raceK + k); },
   });
+
+  // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.
+  trainGroup.addEventListener('click', () => { if (step === 4) render(); });
 
   // ---- Step 6's runs, computed when the step is first shown, in slices of
   // about 6 ms per animation frame.

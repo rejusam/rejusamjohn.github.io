@@ -7,7 +7,7 @@
 import { sigmoid } from '../assets/classify.js';
 import { xorData, bceLogit, flatten, unflatten, trainer, accuracyNet } from '../assets/nn.js';
 import { linearScale, el, axes, networkDiagram, fmt } from '../assets/plot.js';
-import { createTrainLoop, trainButtons } from '../assets/train-loop.js';
+import { createTrainLoop, trainButtons, trainStatus } from '../assets/train-loop.js';
 
 // ---- the network and the one example
 
@@ -135,13 +135,8 @@ export function runInfo(t, running = false) {
   return { iter: t.state.iter, loss: e[e.length - 1], acc: accuracyNet(t.state.net, XOR.X, XOR.y), done: finished(t), running };
 }
 
-// The run's state in words: "training…" only while the loop runs; "press Train"
-// before the first step; "not finished: press Train" when paused part-way.
-export function trainStatus({ running = false, iter = 0, done = false }) {
-  if (done) return 'finished';
-  if (running) return 'training…';
-  return iter === 0 ? 'press Train' : 'not finished: press Train';
-}
+// The run's state in words comes from the shared trainStatus (train-loop.js).
+export { trainStatus };
 
 // ---- formatting
 
@@ -447,7 +442,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     }
     nudgeBtns.forEach((b, n) => b.setAttribute('aria-pressed', String(nudge === (n ? -1 : 1))));
 
-    const texts = readout(step, { net, link: LINKS[sel], nudge, run: runInfo(run, loop.running()) });
+    const texts = readout(step, { net, link: LINKS[sel], nudge, run: runInfo(run, loop.activity()) });
     rowsT.forEach((r, i) => {
       r.textContent = texts[i] || '';
       r.style.display = i < texts.length ? '' : 'none';
@@ -524,8 +519,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const buttons = trainButtons(trainGroup, loop, {
     onReset: () => { run.reset(); },
     reduced,
-    runToEnd: () => { advance(run, XOR_STEPS); },
-    render: () => { render(); announce(spoken(5)); },
+    work: (k) => { advance(run, k); },
   });
 
   // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.

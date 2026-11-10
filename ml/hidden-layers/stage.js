@@ -7,7 +7,7 @@
 import { logisticFit, sigmoid } from '../assets/classify.js';
 import { circlesData, mlpInit, mlpForward, trainer, accuracyNet, bceLogit } from '../assets/nn.js';
 import { linearScale, clamp, el, axes, classMarker, regionMap, regionCells, networkDiagram, trianglePoints } from '../assets/plot.js';
-import { createTrainLoop, trainButtons } from '../assets/train-loop.js';
+import { createTrainLoop, trainButtons, trainStatus } from '../assets/train-loop.js';
 
 export const SEED_TRAIN = 151;
 export const SEED_TEST = 152;
@@ -220,13 +220,8 @@ export const tableRows = (done) => H_CHOICES.map((H) => {
   return [String(H), r ? pct(r.train) : '–', r ? pct(r.test) : '–'];
 });
 
-// The run's state in words: "training…" only while the loop runs; "press Train"
-// before the first step; "not finished: press Train" when paused part-way.
-export function trainStatus({ running = false, iter = 0, done = false }) {
-  if (done) return 'finished';
-  if (running) return 'training…';
-  return iter === 0 ? 'press Train' : 'not finished: press Train';
-}
+// The run's state in words comes from the shared trainStatus (train-loop.js).
+export { trainStatus };
 
 // What the read-out needs from a run, all from its current weights.
 export function info(t, H, running = false) {
@@ -598,7 +593,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       hInput.setAttribute('aria-valuetext', `H = ${H} hidden units`);
     }
 
-    const texts = readout(step, t ? info(t, curH(), loop.running()) : null);
+    const texts = readout(step, t ? info(t, curH(), loop.activity()) : null);
     rowsT.forEach((r, i) => {
       r.textContent = texts[i] || '';
       r.style.display = i < texts.length ? '' : 'none';
@@ -624,7 +619,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   const spoken = (i) => {
     if (i === 0) return `One sigmoid neuron fitted as logistic regression draws a straight line that gets ${pct(oneAccuracy(TR.X, TR.y))} of the training points and ${pct(oneAccuracy(TE.X, TE.y))} of the test points right.`;
-    const s = info(cur(), curH(), loop.running());
+    const s = info(cur(), curH(), loop.activity());
     const where = `${s.H} hidden units, epoch ${s.epoch} of ${EPOCHS}: training loss ${num(s.loss, 3)}, train accuracy ${pct(s.train)}, test accuracy ${pct(s.test)}.`;
     if (i === 1) return `Press Train to train the network. ${where}`;
     if (i === 2) return `Each hidden unit's line is drawn dashed. ${where}`;
@@ -647,8 +642,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const buttons = trainButtons(trainGroup, loop, {
     onReset: () => { cur().reset(); },
     reduced,
-    runToEnd: () => { advance(cur(), MAX_ITER); },
-    render: () => { render(true); announce(spoken(step)); },
+    work: (k) => { advance(cur(), k); },
   });
 
   // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.

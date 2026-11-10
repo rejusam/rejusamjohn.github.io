@@ -352,6 +352,15 @@ test('optimisers read-out rows and page', () => {
   }
   assert.ok(O.readout(4, O.raceInfo(runs, 0)).some((r) => /press Train/.test(r)));
   assert.ok(O.readout(4, O.raceInfo(runs, 0)).includes('all four start together'));
+  // The race's status row uses the shared wording.
+  const end = O.raceLength(runs);
+  assert.equal(O.readout(4, O.raceInfo(runs, 0)).at(-1), 'press Train');
+  assert.equal(O.readout(4, O.raceInfo(runs, 40, 'training')).at(-1), 'training…');
+  assert.equal(O.readout(4, O.raceInfo(runs, 40)).at(-1), 'not finished: press Train');
+  assert.equal(O.readout(4, O.raceInfo(runs, 40, 'computing')).at(-1), 'computing…');
+  assert.equal(O.readout(4, O.raceInfo(runs, end)).at(-1), 'finished');
+  assert.equal(O.readout(4, O.raceInfo(runs, end, 'training')).at(-1), 'finished');
+  for (const k of [0, 40, end]) assert.ok(O.readout(4, O.raceInfo(runs, k, 'training')).length <= 6);
 
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Optimisers: momentum and Adam · ML Explorer<\/title>/);

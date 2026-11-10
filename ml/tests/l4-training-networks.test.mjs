@@ -508,7 +508,7 @@ test('the read-out says whether the run is training, paused, not started or fini
   assert.equal(T.readout(4, T.wdInfo(done, { 0: done })).at(-1), 'finished');
   // The stage passes the loop's state in and redraws the read-out when Pause is pressed.
   const src = readFileSync(new URL('../training-networks/stage.js', import.meta.url), 'utf8');
-  assert.match(src, /const on = loop\.running\(\);/);
+  assert.match(src, /const on = loop\.activity\(\);/);
   // The shaded maps are built on first show of their steps, not in the constructor.
   assert.match(src, /let spMap = null;/);
   assert.match(src, /let bgMap = null;/);

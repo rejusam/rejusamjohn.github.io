@@ -8,7 +8,7 @@ import { mulberry32 } from '../assets/maths.js';
 import { sigmoid } from '../assets/classify.js';
 import { spiralData, mlpInit, mlpForward, trainer, accuracyNet, bceLogit } from '../assets/nn.js';
 import { linearScale, el, axes, classMarker, regionMap, regionCells } from '../assets/plot.js';
-import { createTrainLoop, trainButtons } from '../assets/train-loop.js';
+import { createTrainLoop, trainButtons, trainStatus } from '../assets/train-loop.js';
 import { contour, pct, num } from '../hidden-layers/stage.js';
 
 export { pct, num };
@@ -312,13 +312,8 @@ export function wdInfo(b, runs, running = false) {
   return { ...bigInfo(b, running), end0: end(runs[0]), endW: end(runs[LAMBDA]), started0: started(runs[0]), startedW: started(runs[LAMBDA]) };
 }
 
-// The run's state in words: "training…" only while the loop runs; "press Train"
-// before the first step; "not finished: press Train" when paused part-way.
-export function trainStatus({ running = false, iter = 0, done = false }) {
-  if (done) return 'finished';
-  if (running) return 'training…';
-  return iter === 0 ? 'press Train' : 'not finished: press Train';
-}
+// The run's state in words comes from the shared trainStatus (train-loop.js).
+export { trainStatus };
 
 export function readout(step, s) {
   if (step === 0) {
@@ -675,7 +670,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   function info() {
     if (step === 0) return noiseInfo(pick);
-    const on = loop.running();
+    const on = loop.activity();
     if (step === 1 || step === 2) return spiralInfo(spiral, on);
     if (step === 3) return bigInfo(curBig(), on);
     if (step === 4) return wdInfo(curBig(), { 0: bigs.get(0), [LAMBDA]: bigs.get(LAMBDA) }, on);
@@ -794,8 +789,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const buttons = trainButtons(trainGroup, loop, {
     onReset: () => { if (usesBig()) curBig().reset(); else spiral.reset(); },
     reduced,
-    runToEnd: () => { if (usesBig()) bigAdvance(curBig(), BIG_MAX); else advance(spiral, MAX_ITER); },
-    render: () => { render(true); announce(spoken(step)); },
+    work: (k) => { if (usesBig()) bigAdvance(curBig(), k); else advance(spiral, k); },
   });
 
   // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.

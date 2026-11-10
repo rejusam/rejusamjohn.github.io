@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { adaptSteps, createTrainLoop, trainButtons } from '../assets/train-loop.js';
+import { adaptSteps, createTrainLoop, trainButtons, trainStatus } from '../assets/train-loop.js';
 import { xorData, mlpInit, trainer } from '../assets/nn.js';
 
 // Fake frame scheduler: frames run only when the test calls tick().
@@ -221,17 +221,100 @@ test('trainButtons toggles label, stop() resyncs, reduced runs to end once', () 
   r.el.children[1].click();
   assert.equal(resets, 1);
 
-  // Reduced motion: Train runs to the end and renders once, no loop starts.
+  // Reduced motion: Train starts a quiet run with work(n), and Train again pauses it.
   const g = fakes();
   const dom = fakeDom();
-  let ends = 0;
+  let left = 50;
   let draws = 0;
-  const l2 = createTrainLoop({ step() {}, render() {}, raf: g.raf, caf: g.caf, now: g.now, doc: g.doc });
-  const b2 = trainButtons(dom.controls, l2, { reduced: true, runToEnd: () => ends++, render: () => draws++ });
+  const l2 = createTrainLoop({
+    step() { throw new Error('paced step must not run under reduced motion'); },
+    render: () => draws++, done: () => left === 0, raf: g.raf, caf: g.caf, now: g.now, doc: g.doc,
+    onStop: () => b2.sync(),
+  });
+  const b2 = trainButtons(dom.controls, l2, { reduced: true, work: (k) => { left -= k; } });
   b2.el.children[0].click();
-  assert.equal(ends, 1);
-  assert.equal(draws, 1);
+  assert.equal(l2.activity(), 'computing');
+  assert.equal(b2.el.children[0].textContent, 'Pause');
+  b2.el.children[0].click();
   assert.equal(l2.running(), false);
-  assert.equal(g.queued(), 0);
+  assert.equal(left, 50);
+  b2.el.children[0].click();
+  while (g.queued()) g.tick();
+  assert.equal(left, 0);
+  assert.equal(draws, 0);
+  assert.equal(l2.running(), false);
   assert.equal(b2.el.children[0].textContent, 'Train');
+});
+
+test('trainStatus: one wording for every live lesson', () => {
+  assert.equal(trainStatus({}), 'press Train');
+  assert.equal(trainStatus({ running: false, iter: 0 }), 'press Train');
+  assert.equal(trainStatus({ running: 'training', iter: 0 }), 'training…');
+  assert.equal(trainStatus({ running: true, iter: 40 }), 'training…');
+  assert.equal(trainStatus({ running: 'computing', iter: 40 }), 'computing…');
+  assert.equal(trainStatus({ running: false, iter: 40 }), 'not finished: press Train');
+  assert.equal(trainStatus({ running: false, iter: 400, done: true }), 'finished');
+  assert.equal(trainStatus({ running: 'training', iter: 400, done: true }), 'finished');
+  assert.equal(trainStatus({ running: false, iter: 7, diverged: true }), 'diverged');
+  assert.equal(trainStatus({ running: false, iter: 7, done: true, diverged: true }), 'diverged');
+  for (const w of ['press Train', 'training…', 'computing…', 'not finished: press Train', 'finished', 'diverged']) assert.ok(w.length <= 26);
+});
+
+test('activity() reads false, training or computing', () => {
+  const f = fakes();
+  const loop = createTrainLoop({ step() {}, render() {}, raf: f.raf, caf: f.caf, now: f.now, doc: f.doc });
+  assert.equal(loop.activity(), false);
+  loop.start();
+  assert.equal(loop.activity(), 'training');
+  loop.pause();
+  loop.start({ quietStep: () => {} });
+  assert.equal(loop.activity(), 'computing');
+  loop.pause();
+  assert.equal(loop.activity(), false);
+  loop.start();
+  assert.equal(loop.activity(), 'training');
+});
+
+test('a quiet run slices its work, renders nothing and ends in the same state', () => {
+  const { X, y } = xorData({ n: 40, seed: 1 });
+  const make = () => trainer({ net: mlpInit([2, 3, 1], { seed: 2 }), X, y, batch: 10, kind: 'adam', hyper: { eta: 0.05 }, seed: 3 });
+  const END = 300;
+  const ref = make();
+  ref.step(END);
+
+  const f = fakes();
+  const t = make();
+  let renders = 0;
+  let stops = 0;
+  const loop = createTrainLoop({
+    step: (k) => t.step(Math.min(k, 2)), render: () => { renders++; },
+    done: () => t.state.iter >= END, budgetMs: 8,
+    raf: f.raf, caf: f.caf, now: f.now, doc: f.doc, onStop: () => stops++,
+  });
+  loop.start({ quietStep: (k) => t.step(Math.min(k, END - t.state.iter)) });
+  let frames = 0;
+  while (f.queued()) { f.tick(); frames++; }
+  // The fake clock moves 1 ms per read, so each frame does a handful of steps.
+  assert.ok(frames > 10, String(frames));
+  assert.equal(renders, 0);
+  assert.equal(stops, 1);
+  assert.equal(loop.running(), false);
+  assert.equal(t.state.iter, END);
+  assert.deepEqual(t.state.batchLoss, ref.state.batchLoss);
+  assert.deepEqual(t.state.epochLoss, ref.state.epochLoss);
+});
+
+test('every live lesson uses the shared status and a quiet run under reduced motion', async () => {
+  const { readFileSync } = await import('node:fs');
+  for (const slug of ['hidden-layers', 'backpropagation', 'training-networks', 'optimisers', 'deep-networks', 'cnns', 'rnns']) {
+    const src = readFileSync(new URL(`../${slug}/stage.js`, import.meta.url), 'utf8');
+    assert.match(src, /import \{ createTrainLoop, trainButtons, trainStatus \} from '\.\.\/assets\/train-loop\.js';/, slug);
+    // No lesson keeps its own status ladder.
+    assert.doesNotMatch(src, /return 'training…'|\? 'training…'|push\('training…'\)/, slug);
+    assert.doesNotMatch(src, /export function trainStatus/, slug);
+    // The read-out is told whether the loop is training or computing.
+    assert.match(src, /loop\.activity\(\)/, slug);
+    assert.doesNotMatch(src, /runToEnd/, slug);
+    assert.match(src, /trainButtons\(trainGroup, loop, \{\n(?:    .*\n){0,4}    work: \(k\) =>/, slug);
+  }
 });

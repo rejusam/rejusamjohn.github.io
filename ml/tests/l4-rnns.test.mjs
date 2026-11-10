@@ -497,6 +497,9 @@ test('read-out rows', () => {
   assert.ok(end.some((r) => r.includes('batch 200 of 200')), end.join('|'));
   assert.ok(end.some((r) => r.includes(sv['end-loss'])) && end.some((r) => r.includes(sv['end-acc'])), end.join('|'));
   assert.ok(!end.some((r) => /press Train|training…/.test(r)), end.join('|'));
+  assert.ok(end.some((r) => /· finished$/.test(r)), end.join('|'));
+  const quiet = S.readout(2, S.liveInfo(fresh, 'computing'));
+  assert.ok(quiet.some((r) => /computing…/.test(r)), quiet.join('|'));
   const b8 = S.readout(3, S.budgetInfo(8, runs));
   assert.ok(b8.some((r) => r.includes(sv['acc-k8'])) && b8.some((r) => r.includes(`${sv['k8-ok']} of ${sv['k8-n']}`)), b8.join('|'));
   assert.ok(b8.some((r) => /test/.test(r)) && b8.some((r) => /train/.test(r)), b8.join('|'));

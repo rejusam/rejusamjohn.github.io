@@ -6,7 +6,7 @@
 
 import { circlesData, mlpInit, batchGrad, trainer, accuracyNet, predictProb, mlpForward, ACT } from '../assets/nn.js';
 import { linearScale, el, axes, tween, networkDiagram } from '../assets/plot.js';
-import { createTrainLoop, trainButtons } from '../assets/train-loop.js';
+import { createTrainLoop, trainButtons, trainStatus } from '../assets/train-loop.js';
 
 // ---- the network and the data ---------------------------------------------
 
@@ -168,7 +168,10 @@ export function sci(v) {
 
 export const diagramInfo = () => ({ params: paramCount(SIZES) });
 export const barsInfo = (act, key) => ({ ...gradNorms(act, key), label: `${ACT_LABEL[act]}, ${initLabel(act, key)}` });
-export const liveInfo = (sig, relu, running = false) => ({ sig, relu, running, epoch: Math.min(sig.epoch, relu.epoch) });
+export const liveInfo = (sig, relu, running = false) => ({
+  sig, relu, running, epoch: Math.min(sig.epoch, relu.epoch),
+  iter: Math.min(sig.iter, relu.iter), done: sig.iter >= ITERS && relu.iter >= ITERS,
+});
 export const afterInfo = () => ({ runs: Object.fromEntries(RUN_ACTS.map((a) => [a, RUNS.get(a) || null])) });
 
 export function readout(step, s) {
@@ -186,9 +189,7 @@ export function readout(step, s) {
     const rows = [`epoch ${s.epoch} of ${EPOCHS}`, 'training loss ℒ',
       `${RUN_LABEL.sigmoid}: ${num(s.sig.epochLoss.at(-1), 4)}`,
       `${RUN_LABEL.relu}: ${num(s.relu.epochLoss.at(-1), 4)}`];
-    if (s.running && s.epoch < EPOCHS) rows.push('training…');
-    else if (s.epoch === 0) rows.push('press Train');
-    else if (s.epoch < EPOCHS) rows.push('not finished: press Train');
+    rows.push(trainStatus({ ...s, diverged: Boolean(s.sig.diverged || s.relu.diverged) }));
     return rows;
   }
   if (step === 5) {
@@ -435,7 +436,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   function info() {
     if (step === 0) return diagramInfo();
     if (step <= 3) { const [a, k] = barSetting(); return barsInfo(a, k); }
-    if (step === 4) { const L = liveRuns(); return liveInfo(L.sigmoid.state, L.relu.state, loop.running()); }
+    if (step === 4) { const L = liveRuns(); return liveInfo(L.sigmoid.state, L.relu.state, loop.activity()); }
     return afterInfo();
   }
 
@@ -571,8 +572,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const buttons = trainButtons(trainGroup, loop, {
     onReset: () => { const L = liveRuns(); L.sigmoid.reset(); L.relu.reset(); },
     reduced,
-    runToEnd: () => advance(ITERS),
-    render: () => { render(); announce(spoken(4)); },
+    work: (k) => advance(k),
   });
 
   // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.

@@ -9,7 +9,7 @@ import { sigmoid } from '../assets/classify.js';
 import { echoData, rnnInit, rnnForward, bptt, rnnFlatten, rnnUnflatten } from '../assets/rnn.js';
 import { optInit, optStep } from '../assets/nn.js';
 import { el, pixelFill, tween } from '../assets/plot.js';
-import { createTrainLoop, trainButtons } from '../assets/train-loop.js';
+import { createTrainLoop, trainButtons, trainStatus } from '../assets/train-loop.js';
 
 // ---- data and settings --------------------------------------------------------
 
@@ -347,7 +347,7 @@ export function readout(step, s) {
     return [`test stream ${EXAMPLE + 1}, step t = ${s.t} of ${T}`, `hₜ: ${NH} numbers, from xₜ and hₜ₋₁`, `starting network: p̂ = ${num(s.ps[s.t - 1], 2)} · target ${tgt}`];
   }
   if (step === 2) {
-    const status = s.diverged ? 'diverged' : s.running && !s.done ? 'training…' : s.iter === 0 ? 'press Train' : !s.done ? 'not finished: press Train' : 'finished';
+    const status = trainStatus(s);
     return [`batch ${s.iter} of ${ITERS} · ${status}`, `masked test accuracy: ${pctCount(s.ok, s.n)}`, `training loss ℒ (epoch ${s.epoch}): ${lossText(s.loss)}`];
   }
   if (step === 3) {
@@ -734,7 +734,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   function info() {
     if (step === 0) return seqInfo(K_LIVE);
     if (step === 1) return loopInfo(loopT);
-    if (step === 2) return liveInfo(getLive(), loop.running());
+    if (step === 2) return liveInfo(getLive(), loop.activity());
     if (step === 3) return budgetInfo(K_CHOICES[kSel], readyRuns());
     if (step === 4) return lagPlot();
     return null;
@@ -861,8 +861,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const buttons = trainButtons(trainGroup, loop, {
     onReset: () => { waited = 0; getLive().reset(); },
     reduced,
-    runToEnd: () => getLive().advance(ITERS),
-    render: () => { render(); announce(spoken()); },
+    work: (k) => getLive().advance(k),
   });
   // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.
   trainGroup.addEventListener('click', () => { if (step === 2) { render(); announce(spoken()); } });

@@ -486,6 +486,9 @@ test('read-out rows', () => {
   assert.ok(end.some((r) => r.includes('epoch 30 of 30')), end.join('|'));
   assert.ok(end.some((r) => r.includes(sv['cnn-end-loss'])) && end.some((r) => r.includes(sv['cnn-test'])), end.join('|'));
   assert.ok(!end.some((r) => /press Train|training…/.test(r)), end.join('|'));
+  assert.ok(end.some((r) => /· finished$/.test(r)), end.join('|'));
+  const quiet = S.readout(3, S.liveInfo(fresh, 0, 'computing'));
+  assert.ok(quiet.some((r) => /computing…/.test(r)), quiet.join('|'));
   const p = S.readout(2, S.poolInfo(S.EXAMPLE));
   assert.ok(p.some((r) => r.includes(sv['shift-raw'])) && p.some((r) => r.includes(sv['shift-pooled'])), p.join('|'));
   const l = S.readout(1, S.layerInfo(S.EXAMPLE));

@@ -351,6 +351,12 @@ test('read-out rows', () => {
   const end = D.readout(4, D.liveInfo(sig.state, relu.state));
   const sv = D.storyValues();
   assert.ok(end.includes('epoch 100 of 100'), end.join('|'));
+  // The end of the run says so, in the shared wording.
+  assert.equal(end.at(-1), 'finished');
+  assert.equal(mid.at(-1), 'not finished: press Train');
+  assert.equal(start.at(-1), 'press Train');
+  const quiet = D.readout(4, D.liveInfo(D.makeTrainer('sigmoid').step(370), D.makeTrainer('relu').step(370), 'computing'));
+  assert.equal(quiet.at(-1), 'computing…');
   assert.ok(end.some((r) => r.includes(sv['sig-end'])) && end.some((r) => r.includes(sv['relu-end'])), end.join('|'));
   const after = D.readout(5, D.afterInfo());
   assert.ok(after.some((r) => r.includes(sv['sig-moved-1'])), after.join('|'));

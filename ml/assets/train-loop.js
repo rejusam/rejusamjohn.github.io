@@ -13,8 +13,27 @@ export function adaptSteps(prev, elapsedMs, budgetMs = 8, { min = 1, max = 200 }
   return Math.min(max, Math.max(min, n));
 }
 
+// The run's state in words, the same in every live lesson: "diverged" if the run
+// blew up; "finished" once it is done; "computing…" while a reduced-motion run
+// works out the end state; "training…" while the loop runs; "press Train" before
+// the first step; "not finished: press Train" when paused part-way. `running` is
+// the loop's activity(): false, 'training' or 'computing' (true reads as training).
+export function trainStatus({ running = false, iter = 0, done = false, diverged = false } = {}) {
+  if (diverged) return 'diverged';
+  if (done) return 'finished';
+  if (running === 'computing') return 'computing…';
+  if (running) return 'training…';
+  return iter === 0 ? 'press Train' : 'not finished: press Train';
+}
+
 // onStop() is called when the loop stops by itself (done, or the tab is hidden),
 // so the buttons can resync. Calls to pause() and reset() do not trigger it.
+//
+// start({ quietStep }) runs quietly, for reduced motion: each frame calls
+// quietStep(1) until about budgetMs has passed or done() is true, with no render
+// in between, so nothing animates and the page stays responsive. The lesson's
+// onStop draws the end state. quietStep must give the same states as step, only
+// without pacing.
 export function createTrainLoop({
   step, render, done = () => false, budgetMs = 8, onStop = () => {},
   raf, caf, now, doc,
@@ -27,9 +46,11 @@ export function createTrainLoop({
   let n = first;
   let id = null;
   let on = false;
+  let quiet = null;
 
   const halt = () => {
     on = false;
+    quiet = null;
     if (id !== null) cancel(id);
     id = null;
   };
@@ -40,6 +61,18 @@ export function createTrainLoop({
     if (done()) { halt(); onStop(); return; }
     const t0 = clock();
     let elapsed;
+    if (quiet) {
+      try {
+        do quiet(1); while (!done() && clock() - t0 < budgetMs);
+      } catch (err) {
+        halt();
+        onStop();
+        throw err;
+      }
+      if (done()) { halt(); onStop(); return; }
+      id = request(frame);
+      return;
+    }
     try {
       step(n);
       elapsed = clock() - t0;
@@ -55,9 +88,10 @@ export function createTrainLoop({
   };
 
   const api = {
-    start() {
+    start({ quietStep = null } = {}) {
       if (on) return;
       on = true;
+      quiet = quietStep;
       id = request(frame);
     },
     pause() { halt(); },
@@ -68,6 +102,8 @@ export function createTrainLoop({
       render();
     },
     running() { return on; },
+    // false when stopped, 'computing' during a quiet run, 'training' otherwise.
+    activity() { return on ? (quiet ? 'computing' : 'training') : false; },
   };
 
   if (d && typeof d.addEventListener === 'function') {
@@ -83,9 +119,10 @@ export function createTrainLoop({
 // returns to "Train" when the loop finishes or the tab is hidden. Lessons call
 // buttons.stop() in their show(i), never a bare loop.pause(), so the label stays
 // true. The Train label flips Train / Pause and carries the state (no aria-pressed).
-// Under `reduced` Train runs to the end state (runToEnd) and renders once; nothing
-// animates.
-export function trainButtons(controls, loop, { onReset, reduced = false, runToEnd = () => {}, render = () => {} } = {}) {
+// Under `reduced` Train starts a quiet run with work(n), which advances the model
+// n steps with no pacing: the read-out says "computing…" and only the end state is
+// drawn (the lesson re-renders after any click on its Train group, and in onStop).
+export function trainButtons(controls, loop, { onReset, reduced = false, work = null } = {}) {
   const doc = controls.ownerDocument;
   const el = doc.createElement('div');
   el.className = 'train-buttons';
@@ -102,14 +139,9 @@ export function trainButtons(controls, loop, { onReset, reduced = false, runToEn
     train.textContent = on ? 'Pause' : 'Train';
   };
   train.addEventListener('click', () => {
-    if (reduced) {
-      runToEnd();
-      render();
-    } else if (loop.running()) {
-      loop.pause();
-    } else {
-      loop.start();
-    }
+    if (loop.running()) loop.pause();
+    else if (reduced && work) loop.start({ quietStep: work });
+    else loop.start();
     sync();
   });
   reset.addEventListener('click', () => {

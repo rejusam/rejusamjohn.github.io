@@ -302,7 +302,7 @@ test('the read-out says whether the run is training, paused, not started or fini
   assert.equal(last(B.runInfo(t)), 'finished');
   // The stage passes the loop's state in and redraws the read-out when Pause is pressed.
   const src = readFileSync(new URL('../backpropagation/stage.js', import.meta.url), 'utf8');
-  assert.match(src, /runInfo\(run, loop\.running\(\)\)/);
+  assert.match(src, /runInfo\(run, loop\.activity\(\)\)/);
   assert.match(src, /trainGroup\.addEventListener\('click', \(\) => \{ if \(step === 5\) render\(\); \}\)/);
 });
 

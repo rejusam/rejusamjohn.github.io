@@ -9,7 +9,7 @@ import { sigmoid } from '../assets/classify.js';
 import { shapeImages, cnnInit, cnnForward, cnnBackward, cnnFlatten, cnnUnflatten, cnnParamCount, denseParamCount } from '../assets/conv.js';
 import { mlpInit, trainer, accuracyNet, optInit, optStep, bceLogit } from '../assets/nn.js';
 import { el, pixelFill, classMarker } from '../assets/plot.js';
-import { createTrainLoop, trainButtons } from '../assets/train-loop.js';
+import { createTrainLoop, trainButtons, trainStatus } from '../assets/train-loop.js';
 
 // ---- data and settings --------------------------------------------------------
 
@@ -291,7 +291,7 @@ export function layerInfo(k) {
 export const poolInfo = (k) => ({ k, ...shiftInfo(startNet(), TR.X[k]) });
 export function liveInfo(live, k, running) {
   const s = live.trainer.state;
-  return { k, epoch: s.epoch, loss: s.epochLoss.at(-1), acc: live.testAcc.at(-1), running, diverged: s.diverged };
+  return { k, iter: s.iter, epoch: s.epoch, loss: s.epochLoss.at(-1), acc: live.testAcc.at(-1), running, diverged: s.diverged, done: live.done() };
 }
 export const filtersInfo = (runs) => (runs ? { ...filterMaps(runs.cnn.net) } : null);
 export function compareInfo(runs) {
@@ -304,7 +304,7 @@ export function readout(step, s) {
   if (step === 1) return [`example ${s.k + 1}, a ${s.cls}`, '8×8 → 6×6×2 → 3×3×2 → 18 → 1', `starting filters: p(square) = ${num(s.p, 2)}`];
   if (step === 2) return [`example ${s.k + 1}, shifted right 1 pixel`, `maps after ReLU change by ${pctWhole(s.raw)}`, `pooled maps change by ${pctWhole(s.pooled)}`];
   if (step === 3) {
-    const status = s.diverged ? 'diverged' : s.running && s.epoch < EPOCHS ? 'training…' : s.epoch === 0 ? 'press Train' : s.epoch < EPOCHS ? 'not finished: press Train' : 'finished';
+    const status = trainStatus(s);
     return [`epoch ${s.epoch} of ${EPOCHS} · ${status}`, `training loss ℒ: ${num(s.loss, 3)}`, `test accuracy: ${pct(s.acc)}`];
   }
   if (step === 4) {
@@ -596,7 +596,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     if (step === 0) return gridInfo();
     if (step === 1) return layerInfo(example);
     if (step === 2) return poolInfo(example);
-    if (step === 3) return liveInfo(getLive(), example, loop.running());
+    if (step === 3) return liveInfo(getLive(), example, loop.activity());
     if (step === 4) return filtersInfo(readyRuns());
     return compareInfo(readyRuns());
   }
@@ -728,8 +728,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const buttons = trainButtons(trainGroup, loop, {
     onReset: () => getLive().reset(),
     reduced,
-    runToEnd: () => getLive().advance(ITERS),
-    render: () => { render(); announce(spoken()); },
+    work: (k) => getLive().advance(k),
   });
   // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.
   trainGroup.addEventListener('click', () => { if (step === 3) { render(); announce(spoken()); } });
