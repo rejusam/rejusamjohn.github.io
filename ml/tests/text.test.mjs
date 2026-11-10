@@ -30,12 +30,18 @@ test('sanitise caps the length and counts emoji as one character', () => {
   assert.deepEqual(charTokenise('a😀b'), [2, -1, 3]);
 });
 
+test('sanitise caps after lower-casing', () => {
+  const r = sanitise('\u0130'.repeat(60));   // each lower-cases to two code points
+  assert.equal(Array.from(r.text).length, 80);
+  assert.ok(r.unknown.every(i => i < 80));
+});
+
 test('bpe by hand', () => {
-  // 'aaab aab.' : words aaab and aab. Pairs inside words: aa 3 (aaab twice, aab once), ab 2.
-  // Merge 1 is a+a (3). Tokens: aa a b | aa b | . = 7 tokens (9 characters before).
+  // 'aaab aab.' : words aaab and aab. Pairs inside words, non-overlapping: aa 2 (once in each
+  // word), ab 2. A tie, and aa occurs first in the text, so merge 1 is a+a (2). Tokens: aa a b | aa b | . = 7 tokens (9 characters before).
   // Then every pair (aa,a), (a,b), (aa,b) occurs once, so training stops.
   const t1 = bpeTrain('aaab aab.', 5);
-  assert.deepEqual(t1.merges, [['a', 'a', 3]]);
+  assert.deepEqual(t1.merges, [['a', 'a', 2]]);
   assert.deepEqual(t1.lengths, [9, 7]);
   assert.deepEqual(t1.vocab, [' ', '.', 'a', 'b', 'aa']);
   // 'abab abab.' : ab 4, ba 2. Merge 1 a+b (4): ab ab | ab ab | . = 6 tokens (10 before).
@@ -45,6 +51,10 @@ test('bpe by hand', () => {
   assert.deepEqual(t2.lengths, [10, 6, 4]);
   assert.deepEqual(bpeEncode('abab abab.', t2.merges), ['abab', ' ', 'abab', '.']);
   // Tie: 'abcd' has ab, bc, cd once each; nothing repeats, so no merge at all.
+  // 'aaaa' holds two non-overlapping aa, so the merge saves 2 tokens.
+  const t4 = bpeTrain('aaaa aaaa.', 1);
+  assert.deepEqual(t4.merges, [['a', 'a', 4]]);
+  assert.deepEqual(t4.lengths, [10, 6]);
   assert.deepEqual(bpeTrain('abcd', 3).merges, []);
   // Tie broken by first occurrence: 'abxab cdxcd.' -> ab 2, xa 1, bx 1, cd 2, xc 1: ab first.
   const t3 = bpeTrain('abxab cdxcd.', 1);
@@ -66,6 +76,12 @@ test('bpe round-trips', () => {
   }
   assert.equal(bpeDecode(bpeEncode(text, merges)), text);
   assert.equal(bpeEncode(text, merges).length, bpeTrain(text, 40).lengths.at(-1));
+});
+
+test('bpe merge counts equal the tokens saved', () => {
+  const {merges, lengths} = bpeTrain(worldText({n: 80, seed: 4}), 60);
+  assert.ok(merges.length > 10);
+  merges.forEach(([, , count], r) => assert.equal(count, lengths[r] - lengths[r + 1]));
 });
 
 test('bpe never merges across a space or full stop', () => {

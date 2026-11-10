@@ -7,7 +7,8 @@ import {ALPHABET} from './world.js';
 const ID = new Map(ALPHABET.map((c, i) => [c, i]));
 const chars = s => Array.from(s);   // code points, so an emoji is one character
 
-// Lower-case, cap the length, keep characters as typed. `unknown` lists the indices
+// Lower-case, then cap the length (in code points, after lower-casing, since toLowerCase
+// can lengthen a string), keep characters as typed. `unknown` lists the indices
 // (in characters) of anything outside ALPHABET.
 export function sanitise(s, max = 80) {
   const cs = chars(String(s).toLowerCase()).slice(0, max);
@@ -34,7 +35,8 @@ function applyMerge(tokens, a, b) {
 
 // Greedy merges. Spaces and full stops stay single tokens, so a pair never spans two
 // words. Each round the most frequent adjacent pair wins; a tie goes to the pair that
-// occurs first in the text. Counts are adjacent occurrences (overlaps counted). Stops
+// occurs first in the text. Counts are non-overlapping occurrences, left to right, the way
+// the merge is applied, so count equals the tokens saved: lengths[r] - lengths[r+1]. Stops
 // early when no pair occurs twice. lengths[r] is the token count after r merges.
 export function bpeTrain(text, nMerges) {
   let tokens = chars(text);
@@ -49,7 +51,8 @@ export function bpeTrain(text, nMerges) {
       if (isBreak(a) || isBreak(b)) continue;
       const key = a + '\u0000' + b;
       const s = stat.get(key);
-      if (s) s.count++; else stat.set(key, {a, b, count: 1, first: i});
+      if (!s) stat.set(key, {a, b, count: 1, first: i, last: i});
+      else if (!(a === b && i === s.last + 1)) { s.count++; s.last = i; }   // 'aaa' holds one aa, as the merge sees it
     }
     let best = null;
     for (const s of stat.values()) {
@@ -75,7 +78,8 @@ export const bpeDecode = tokens => tokens.join('');
 // ---- Character n-gram model ---------------------------------------------------------
 
 // n = context length in characters (1 to 5). Counts the next character after each
-// context, over ALPHABET. Characters outside ALPHABET in `text` are dropped first.
+// context, over ALPHABET. Characters outside ALPHABET in `text` are dropped first (and
+// skipped from a context in nextProbs).
 export function ngramModel(text, n, {k = 0.01} = {}) {
   const ids = charTokenise(text).filter(i => i >= 0);
   const counts = new Map();
@@ -100,7 +104,8 @@ export function nextProbs(model, context) {
   return row.map(c => (c + model.k) / total);
 }
 
-// Mean -log2 p(next character) over positions n .. len-1 of `text`.
+// Mean -log2 p(next character) over positions n .. len-1 of `text`. Infinity if k = 0 and
+// a character of `text` never followed its context in training (the pages use k > 0).
 export function crossEntropyBits(model, text) {
   const ids = charTokenise(text).filter(i => i >= 0), n = model.n;
   let sum = 0, count = 0;
