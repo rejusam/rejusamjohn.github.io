@@ -203,6 +203,19 @@ test('story statements on K', () => {
     assert.equal(sv[`train-k${K}`], S.ll(tab[K - 1].train));
     assert.equal(sv[`held-k${K}`], S.ll(tab[K - 1].held));
   }
+  // The win is narrow: K = 4 and 5 are each about 0.02 lower, and another held-out set
+  // can put K = 4 first.
+  assert.equal(sv['held-gap'], S.num(tab[2].held - tab[3].held, 2));
+  assert.equal(sv['held-gap'], S.num(tab[2].held - tab[4].held, 2));
+  assert.equal(sv['held-gap'], '0.02');
+  assert.ok(tab[2].held - tab[3].held < 0.05 && tab[2].held - tab[4].held < 0.05);
+  let k4first = 0;
+  for (let seed = 400; seed < 450; seed++) {
+    const H = blobs3({ n: 300, seed });
+    const sc = [1, 2, 3, 4, 5].map((K) => gmmLogLik(H, S.fitResult(`k${K}`).params));
+    if (sc.indexOf(Math.max(...sc)) === 3) k4first++;
+  }
+  assert.ok(k4first >= 1, 'another held-out set puts K = 4 first');
   // Step 4: the curve rises fast, nearly stalls, then climbs again before it settles.
   const L = S.fitResult('k3').logLik;
   const rise = (i) => L[i] - L[i - 1];
@@ -266,6 +279,13 @@ test('spiral nearestDist values equal the helper', () => {
 });
 
 test('sampling reproducible', () => {
+  // Every distance comparison on the page is at equal sizes (300 vs 300, 400 vs 400).
+  assert.equal(S.blobSamples(309).length, S.blobsTrain().length);
+  assert.equal(S.blobsHeld().length, S.blobsTrain().length);
+  assert.equal(S.spiralSamples(310).length, S.spiralData().length);
+  assert.equal(S.freshSpiral().length, S.spiralData().length);
+  assert.equal(S.blobsTrain().length, 300);
+  assert.equal(S.spiralData().length, 400);
   assert.deepEqual(S.blobSamples(309), S.blobSamples(309));
   assert.deepEqual(S.blobSamples(309), gmmSample(S.fitResult('k3').params, 300, 309));
   assert.notDeepEqual(S.blobSamples(309), S.blobSamples(310));
@@ -288,6 +308,7 @@ test('quoted numbers survive a 1e-12 nudge', () => {
       const d = directFit(tr, K, nudged(gmmInit(tr, K, 304), eps));
       assert.equal(S.ll(d.logLik.at(-1)), sv[`train-k${K}`], `train K ${K}`);
       assert.equal(S.ll(gmmLogLik(he, d.params)), sv[`held-k${K}`], `held K ${K}`);
+      if (K === 4) assert.equal(S.num(gmmLogLik(he, directFit(tr, 3, nudged(gmmInit(tr, 3, 304), eps)).params) - gmmLogLik(he, d.params), 2), sv['held-gap']);
       if (K === 3) {
         assert.equal(String(d.logLik.length - 1), sv['iters-k3']);
         assert.equal(S.ll(d.logLik[0]), sv['start-k3']);
@@ -376,7 +397,7 @@ test('page', () => {
   assert.doesNotMatch(src, /innerHTML|outerHTML|insertAdjacentHTML|document\.write/);
   assert.doesNotMatch(src, /localStorage|sessionStorage|fetch\(/);
   assert.equal((html.match(/<form class="q"/g) || []).length, 2);
-  assert.match(html, /What can a generative model do that a classifier cannot\?/);
+  assert.match(html, /What can a generative model do that a classifier such as logistic regression cannot\?/);
   assert.match(html, /Why judge K on held-out data\?/);
   const pv = S.pageValues();
   const spans = [...html.matchAll(/<span data-value="([^"]+)">([^<]*)<\/span>/g)];

@@ -310,6 +310,8 @@ export function storyValues() {
     v[`train-k${row.K}`] = ll(row.train);
     v[`held-k${row.K}`] = ll(row.held);
   }
+  // The K = 3 win is narrow: both K = 4 and K = 5 are about this much lower.
+  v['held-gap'] = num(tab[2].held - tab[3].held, 2);
   const k3 = fitResult(`k${K_TRUE}`);
   v['iters-k3'] = String(k3.iter);
   v['start-k3'] = ll(k3.logLik[0]);
