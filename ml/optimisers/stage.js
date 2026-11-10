@@ -571,15 +571,16 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     if (!animate || reduced) {
       shown = Infinity;
       render();
-      return Promise.resolve();
+      return Promise.resolve(true);
     }
     shown = 0;
     render();
+    // Resolves false if a later step or setting took over, so nothing stale is announced.
     return tween(Math.min(1400, 400 + 10 * n), (t) => {
       if (my !== token) return;
       shown = Math.round(t * n);
       render();
-    }, { reduced });
+    }, { reduced }).then(() => my === token);
   }
 
   // ---- Step 5: the race, run by the training loop, one step every other frame.
@@ -637,7 +638,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   });
   betaBtns.forEach((btn, k) => btn.addEventListener('click', () => {
     beta = BETAS[k];
-    reveal(true).then(() => announce(spoken(1)));
+    reveal(true).then((ok) => { if (ok) announce(spoken(1)); });
   }));
 
   const filled = pageValues();

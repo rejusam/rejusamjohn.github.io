@@ -520,6 +520,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   };
 
   // The bars grow from their last heights to the new ones, about half a second.
+  // Resolves true if it ran to the end, false if a later step or setting took
+  // over; never rejects, so leaving the step mid-tween stays quiet.
   function growBars(animate) {
     const my = ++token;
     const [a, k] = barSetting();
@@ -531,16 +533,17 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     if (!animate || reduced) {
       shownE = null;
       render();
-      return Promise.resolve();
+      return Promise.resolve(true);
     }
     return tween(500, (t) => {
       if (my !== token) return;
       shownE = target.map((e, l) => from[l] + (e - from[l]) * t);
       render();
     }, { reduced }).then(() => {
-      if (my !== token) return;
+      if (my !== token) return false;
       shownE = null;
       render();
+      return true;
     });
   }
 
@@ -600,11 +603,11 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   actBtns.forEach((btn, k) => btn.addEventListener('click', () => {
     act = ACTS[k];
-    growBars(true).then(() => announce(spoken(3)));
+    growBars(true).then((ok) => { if (ok) announce(spoken(3)); });
   }));
   initBtns.forEach((btn, k) => btn.addEventListener('click', () => {
     key = INITS[k];
-    growBars(true).then(() => announce(spoken(3)));
+    growBars(true).then((ok) => { if (ok) announce(spoken(3)); });
   }));
 
   const filled = pageValues();
@@ -631,7 +634,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       controls.classList.toggle('has-train', i === 4);
       if (i >= 1 && i <= 3) {
         if (was < 1 || was > 3) bars.forEach((b) => b.setAttribute('height', 0));
-        return growBars(animate).then(() => announce(spoken(i)));
+        return growBars(animate).then((ok) => { if (ok) announce(spoken(i)); });
       }
       render();
       announce(spoken(i));

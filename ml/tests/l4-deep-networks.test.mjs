@@ -417,3 +417,13 @@ test('page', () => {
   for (const key of Object.keys(sv)) assert.ok(used.has(key), `unused story value ${key}`);
   for (const v of [...Object.values(pv), ...Object.values(sv)]) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
 });
+
+test('leaving a step mid-tween announces nothing and rejects nothing', () => {
+  // growBars resolves false when a later step or setting took over; announcing then
+  // ran readout(i, info()) with the new step's info and threw into the engine.
+  const src = readFileSync(new URL('../deep-networks/stage.js', import.meta.url), 'utf8');
+  const calls = src.match(/growBars\([^)]*\)\.then\([^;]*;/g) || [];
+  assert.equal(calls.length, 3);
+  for (const c of calls) assert.match(c, /\.then\(\(ok\) => \{ if \(ok\) announce\(/);
+  assert.match(src, /if \(my !== token\) return false;/);
+});

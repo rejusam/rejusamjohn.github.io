@@ -744,7 +744,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     if (!animate || reduced) {
       filled = null;
       render();
-      return Promise.resolve();
+      return Promise.resolve(true);
     }
     filled = 0;
     pos = [0, 0];
@@ -756,12 +756,14 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       pos = [Math.floor((k - 1) / m), (k - 1) % m];
       render();
     }, { reduced: false }).then(() => {
-      if (my !== token) return;
+      // false: a later step took over, so nothing stale is announced.
+      if (my !== token) return false;
       filled = null;
       render();
+      return true;
     });
   }
-  replay.addEventListener('click', () => { sweep(true).then(() => announce(spoken())); });
+  replay.addEventListener('click', () => { sweep(true).then((ok) => { if (ok) announce(spoken()); }); });
 
   render();
   if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(render, () => {});
@@ -779,7 +781,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       shiftGroup.style.display = i === 5 ? 'flex' : 'none';
       syncEditor();
       if (i === 1) pos = [2, 0];
-      if (i === 2) return sweep(animate).then(() => announce(spoken()));
+      if (i === 2) return sweep(animate).then((ok) => { if (ok) announce(spoken()); });
       render();
       announce(spoken());
       return Promise.resolve();
