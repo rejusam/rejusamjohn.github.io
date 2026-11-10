@@ -56,8 +56,18 @@ export const LOSS_MAX = 0.8;
 export const trainSet = () => spiralData({ n: N_TRAIN, seed: SEED_TRAIN });
 export const testSet = () => spiralData({ n: N_TEST, seed: SEED_TEST });
 export const smallSet = () => spiralData({ n: N_SMALL, seed: SEED_SMALL });
-export const startNet = () => mlpInit(SIZES, { hidden: 'tanh', init: 'xavier', seed: SEED_INIT });
-export const bigStartNet = () => mlpInit(BIG_SIZES, { hidden: 'tanh', init: 'xavier', seed: SEED_INIT });
+// scale multiplies every starting weight and bias; the page always uses 1. The
+// tests use 1 ± 1e-12 to check that no quoted number hangs on the last bit of a
+// floating-point result, which can differ between browsers.
+const scaled = (net, scale) => {
+  if (scale !== 1) {
+    for (const M of net.W) for (const row of M) row.forEach((v, i) => { row[i] = v * scale; });
+    for (const row of net.b) row.forEach((v, i) => { row[i] = v * scale; });
+  }
+  return net;
+};
+export const startNet = (scale = 1) => scaled(mlpInit(SIZES, { hidden: 'tanh', init: 'xavier', seed: SEED_INIT }), scale);
+export const bigStartNet = (scale = 1) => scaled(mlpInit(BIG_SIZES, { hidden: 'tanh', init: 'xavier', seed: SEED_INIT }), scale);
 
 const TR = trainSet();
 const TE = testSet();
@@ -126,26 +136,28 @@ export function meanAbsChange(ys) {
 
 const NOISE = new Map();
 const JOBS = new Map();
+const noiseTrainer = (b, scale = 1) => trainer({ net: startNet(scale), X: TR.X, y: TR.y, batch: b, kind: 'adam', hyper: { eta: ETA }, seed: SEED_SHUFFLE });
+function noiseResult(b, t) {
+  const ys = t.state.batchLoss.slice();
+  return {
+    b, steps: NOISE_EXAMPLES / b, ys,
+    xs: ys.map((_, i) => (i + 1) * b),
+    noise: meanAbsChange(ys),
+    end: t.state.epochLoss[NOISE_EXAMPLES / N_TRAIN],
+  };
+}
 
 // Runs batch size b for k more optimiser steps (never past its 1600 examples)
 // and returns true once its result is ready. The page calls this in small
 // slices so no single task is long; the result does not depend on the slicing.
 export function noiseWork(b, k) {
   if (NOISE.has(b)) return true;
-  if (!JOBS.has(b)) {
-    JOBS.set(b, trainer({ net: startNet(), X: TR.X, y: TR.y, batch: b, kind: 'adam', hyper: { eta: ETA }, seed: SEED_SHUFFLE }));
-  }
+  if (!JOBS.has(b)) JOBS.set(b, noiseTrainer(b));
   const t = JOBS.get(b);
   const steps = NOISE_EXAMPLES / b;
   t.step(Math.max(0, Math.min(k, steps - t.state.iter)));
   if (t.state.iter < steps) return false;
-  const ys = t.state.batchLoss.slice();
-  NOISE.set(b, {
-    b, steps, ys,
-    xs: ys.map((_, i) => (i + 1) * b),
-    noise: meanAbsChange(ys),
-    end: t.state.epochLoss[NOISE_EXAMPLES / N_TRAIN],
-  });
+  NOISE.set(b, noiseResult(b, t));
   JOBS.delete(b);
   return true;
 }
@@ -164,8 +176,8 @@ export const noiseInfo = (b) => (NOISE.has(b) ? NOISE.get(b) : { b, pending: tru
 
 // ---- steps 2 and 3: the spiral run
 
-export function makeRun() {
-  return trainer({ net: startNet(), X: TR.X, y: TR.y, batch: BATCH, kind: 'adam', hyper: { eta: ETA }, seed: SEED_SHUFFLE });
+export function makeRun(scale = 1) {
+  return trainer({ net: startNet(scale), X: TR.X, y: TR.y, batch: BATCH, kind: 'adam', hyper: { eta: ETA }, seed: SEED_SHUFFLE });
 }
 
 export const finished = (t) => t.state.iter >= MAX_ITER || t.state.diverged;
@@ -223,9 +235,10 @@ export const epochInfo = (iter) => ({
   batch: iter === 0 ? 0 : ((iter - 1) % ITERS_PER_EPOCH) + 1,
 });
 
-export function spiralInfo(t) {
+export function spiralInfo(t, running = false) {
   const net = t.state.net;
   return {
+    running,
     iter: t.state.iter,
     ...epochInfo(t.state.iter),
     loss: trainLoss(net),
@@ -237,10 +250,10 @@ export function spiralInfo(t) {
 
 // ---- steps 4 and 5: the big network, with the test loss after every epoch
 
-export function makeBig(lambda) {
+export function makeBig(lambda, scale = 1) {
   const b = {
     lambda,
-    t: trainer({ net: bigStartNet(), X: SM.X, y: SM.y, batch: BIG_BATCH, kind: 'adam', hyper: { eta: ETA }, seed: SEED_SHUFFLE, lambda }),
+    t: trainer({ net: bigStartNet(scale), X: SM.X, y: SM.y, batch: BIG_BATCH, kind: 'adam', hyper: { eta: ETA }, seed: SEED_SHUFFLE, lambda }),
     test: [],
     reset() { b.t.reset(); b.test = [meanLossFast(b.t.state.net, TE)]; },
   };
@@ -269,9 +282,11 @@ export function earlyStop(test) {
   return { epoch: e, value: test[e] };
 }
 
-export function bigInfo(b) {
+export function bigInfo(b, running = false) {
   const e = b.t.state.epoch;
   return {
+    running,
+    iter: b.t.state.iter,
     lambda: b.lambda,
     epoch: e,
     train: b.t.state.epochLoss[e],
@@ -282,12 +297,18 @@ export function bigInfo(b) {
 }
 
 // The current run, plus the final test loss of each weight-decay setting that has finished.
-export function wdInfo(b, runs) {
+export function wdInfo(b, runs, running = false) {
   const end = (r) => (r && bigFinished(r) ? r.test[BIG_EPOCHS] : null);
-  return { ...bigInfo(b), end0: end(runs[0]), endW: end(runs[LAMBDA]) };
+  return { ...bigInfo(b, running), end0: end(runs[0]), endW: end(runs[LAMBDA]) };
 }
 
-const NOT_DONE = 'not finished: press Train';
+// The run's state in words: "training…" only while the loop runs; "press Train"
+// before the first step; "not finished: press Train" when paused part-way.
+export function trainStatus({ running = false, iter = 0, done = false }) {
+  if (done) return 'finished';
+  if (running) return 'training…';
+  return iter === 0 ? 'press Train' : 'not finished: press Train';
+}
 
 export function readout(step, s) {
   if (step === 0) {
@@ -300,15 +321,13 @@ export function readout(step, s) {
     ];
   }
   if (step === 1) {
-    return [`steps: ${s.iter}`, `epochs done: ${s.epoch}`, `batch ${s.batch} of ${ITERS_PER_EPOCH} done`, `train loss: ${num(s.loss, 3)}`];
+    return [`steps: ${s.iter}`, `epochs done: ${s.epoch}`, `batch ${s.batch} of ${ITERS_PER_EPOCH} done`, `train loss: ${num(s.loss, 3)}`, trainStatus(s)];
   }
   if (step === 2) {
-    const rows = [`epoch ${s.epoch} of ${EPOCHS}`, `train loss: ${num(s.loss, 3)}`, `train: ${pct(s.train)}`, `test: ${pct(s.test)}`];
-    return s.done ? rows : [...rows, NOT_DONE];
+    return [`epoch ${s.epoch} of ${EPOCHS}`, `train loss: ${num(s.loss, 3)}`, `train: ${pct(s.train)}`, `test: ${pct(s.test)}`, trainStatus(s)];
   }
   if (step === 3) {
-    const rows = [`epoch ${s.epoch} of ${BIG_EPOCHS}`, `train loss: ${num(s.train, 3)}`, `test loss: ${num(s.test, 3)}`, `best test: ${num(s.best.value, 3)} @ ${s.best.epoch}`];
-    return s.done ? rows : [...rows, NOT_DONE];
+    return [`epoch ${s.epoch} of ${BIG_EPOCHS}`, `train loss: ${num(s.train, 3)}`, `test loss: ${num(s.test, 3)}`, `best test: ${num(s.best.value, 3)} @ ${s.best.epoch}`, trainStatus(s)];
   }
   if (step === 4) {
     const end = (v) => (v === null ? 'not finished' : num(v, 3));
@@ -319,6 +338,7 @@ export function readout(step, s) {
       'final test loss:',
       `λ = 0: ${end(s.end0)}`,
       `λ = ${LAMBDA}: ${end(s.endW)}`,
+      trainStatus(s),
     ];
   }
   return [];
@@ -350,21 +370,37 @@ export function pageValues() {
 // From the seeded training runs. Written in the page and checked by the tests;
 // the page does not train on load, so these are not recomputed in the browser.
 let STORY = null;
-export function storyValues() {
-  if (STORY) return STORY;
+export const storyValues = () => storyRuns(1).values;
+
+// The runs behind storyValues, from starting weights times scale (1 on the page):
+// the quoted values, and the curves the page's other claims are about.
+export function storyRuns(scale = 1) {
+  if (scale === 1) return (STORY ??= computeStory(1));
+  return computeStory(scale);
+}
+
+function computeStory(scale) {
   const v = {};
+  const noise = {};
   for (const b of BATCHES) {
-    const r = noiseRun(b);
+    let r;
+    if (scale === 1) r = noiseRun(b);
+    else {
+      const t = noiseTrainer(b, scale);
+      t.step(NOISE_EXAMPLES / b);
+      r = noiseResult(b, t);
+    }
+    noise[b] = r.end;
     v[`noise-${b}`] = sig3(r.noise);
     v[`end-${b}`] = num(r.end, 3);
   }
-  const t = makeRun();
+  const t = makeRun(scale);
   advance(t, MAX_ITER);
   v['sp-train'] = pct(accuracyNet(t.state.net, TR.X, TR.y));
   v['sp-test'] = pct(accuracyNet(t.state.net, TE.X, TE.y));
   v['sp-loss0'] = num(t.state.epochLoss[0], 2);
   v['sp-loss'] = num(t.state.epochLoss[EPOCHS], 3);
-  const g = makeBig(0);
+  const g = makeBig(0, scale);
   bigAdvance(g, BIG_MAX);
   const best = earlyStop(g.test);
   const tl = g.t.state.epochLoss;
@@ -379,7 +415,7 @@ export function storyValues() {
   v['big-ups'] = String(ups);
   v['big-train-acc'] = pct(accuracyNet(g.t.state.net, SM.X, SM.y));
   v['big-test-acc'] = pct(accuracyNet(g.t.state.net, TE.X, TE.y));
-  const w = makeBig(LAMBDA);
+  const w = makeBig(LAMBDA, scale);
   bigAdvance(w, BIG_MAX);
   const bw = earlyStop(w.test);
   v['wd-end'] = num(w.test[BIG_EPOCHS], 3);
@@ -388,8 +424,17 @@ export function storyValues() {
   v['wd-train-end'] = num(w.t.state.epochLoss[BIG_EPOCHS], 3);
   v['wd-train-acc'] = pct(accuracyNet(w.t.state.net, SM.X, SM.y));
   v['wd-test-acc'] = pct(accuracyNet(w.t.state.net, TE.X, TE.y));
-  STORY = v;
-  return v;
+  return {
+    values: v,
+    curves: {
+      noiseEnd: noise,
+      spiral: t.state.epochLoss,
+      bigTrain: g.t.state.epochLoss,
+      bigTest: g.test,
+      wdTrain: w.t.state.epochLoss,
+      wdTest: w.test,
+    },
+  };
 }
 
 // ---------------------------------------------------------------- the stage
@@ -505,7 +550,10 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   // ---- Steps 2 and 3: the spiral network.
   const spG = el('g', {}, svg);
-  const spMap = smoothMap(el('g', {}, spG), GRID);
+  // The two shaded maps (several ms of drawing each) are built when their steps
+  // are first shown, each in a group made now so the layering stays the same.
+  const spMapG = el('g', {}, spG);
+  let spMap = null;
   axes(spG, IX, IY, { xLabel: 'x₁', yLabel: 'x₂' });
   const spPts = el('g', {}, spG);
   TR.X.forEach((x, i) => classMarker(spPts, P(IX(x[0])), P(IY(x[1])), TR.y[i], { r: 3.4 }));
@@ -514,7 +562,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   // ---- Steps 4 and 5: the big network on 60 points.
   const bgG = el('g', {}, svg);
-  const bgMap = smoothMap(el('g', {}, bgG), BIG_GRID);
+  const bgMapG = el('g', {}, bgG);
+  let bgMap = null;
   axes(bgG, IX, IY, { xLabel: 'x₁', yLabel: 'x₂' });
   const bgPts = el('g', {}, bgG);
   SM.X.forEach((x, i) => classMarker(bgPts, P(IX(x[0])), P(IY(x[1])), SM.y[i], { r: 4 }));
@@ -588,7 +637,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   // ---- Read-out box.
   const box = el('g', {}, svg);
   const boxRect = el('rect', { rx: 6, fill: SURFACE, 'fill-opacity': 0.92, stroke: LINE }, box);
-  const rowsT = [0, 1, 2, 3, 4, 5].map(() => el('text', { class: 'value' }, box));
+  const rowsT = [0, 1, 2, 3, 4, 5, 6].map(() => el('text', { class: 'value' }, box));
 
   // ---- Controls: batch picker (step 1), weight decay (step 5), Train / Pause / Reset.
   const make = (tag, props = {}) => Object.assign(doc.createElement(tag), props);
@@ -614,9 +663,10 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   function info() {
     if (step === 0) return noiseInfo(pick);
-    if (step === 1 || step === 2) return spiralInfo(spiral);
-    if (step === 3) return bigInfo(curBig());
-    if (step === 4) return wdInfo(curBig(), { 0: bigs.get(0), [LAMBDA]: bigs.get(LAMBDA) });
+    const on = loop.running();
+    if (step === 1 || step === 2) return spiralInfo(spiral, on);
+    if (step === 3) return bigInfo(curBig(), on);
+    if (step === 4) return wdInfo(curBig(), { 0: bigs.get(0), [LAMBDA]: bigs.get(LAMBDA) }, on);
     return null;
   }
 
@@ -640,7 +690,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     }
     if (step === 1 || step === 2) {
       const net = spiral.state.net;
-      if (full || !narrow || frames % 4 === 0) spMap.update(net);
+      if (full || !narrow || frames % 4 === 0) (spMap ??= smoothMap(spMapG, GRID)).update(net);
       const it = spiral.state.iter;
       const idx = step === 1 && it > 0 ? batchAt(it) : [];
       rings.forEach((r, k) => {
@@ -660,7 +710,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     }
     if (usesBig()) {
       const b = curBig();
-      if (full || frames % (narrow ? 12 : 6) === 0) bgMap.update(b.t.state.net);
+      if (full || frames % (narrow ? 12 : 6) === 0) (bgMap ??= smoothMap(bgMapG, BIG_GRID)).update(b.t.state.net);
       trainPath.setAttribute('d', curvePath(b.t.state.epochLoss));
       testPath.setAttribute('d', curvePath(b.test));
       const other = step === 4 ? bigs.get(lam ? 0 : LAMBDA) : null;
@@ -736,6 +786,9 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     runToEnd: () => { if (usesBig()) bigAdvance(curBig(), BIG_MAX); else advance(spiral, MAX_ITER); },
     render: () => { render(true); announce(spoken(step)); },
   });
+
+  // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.
+  trainGroup.addEventListener('click', () => { if (step >= 1 && step <= 4) render(true); });
 
   pickBtns.forEach((btn, k) => btn.addEventListener('click', () => {
     pick = BATCHES[k];

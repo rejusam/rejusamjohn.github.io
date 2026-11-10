@@ -1,11 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { Worker } from 'node:worker_threads';
 import { mulberry32, randn } from '../assets/maths.js';
 import { mlpInit, mlpForward, trainer, accuracyNet, bceLogit, batchGrad, flatten, optInit, optStep, unflatten } from '../assets/nn.js';
 import * as T from '../training-networks/stage.js';
 
 const html = readFileSync(new URL('../training-networks/index.html', import.meta.url), 'utf8');
+
+// Another browser may round Math.exp or Math.tanh differently in the last place.
+// The page's runs are re-run with every starting weight scaled by 1 ± 1e-12 to
+// stand in for that. They take a few seconds each, so they start now, in worker
+// threads, alongside the other tests; the robustness test below awaits them.
+const STAGE_URL = new URL('../training-networks/stage.js', import.meta.url).href;
+const WORKER = `const { parentPort, workerData } = require('node:worker_threads');
+import(workerData.url).then((m) => parentPort.postMessage(m.storyRuns(workerData.scale)));`;
+const nudgedRuns = (scale) => new Promise((resolve, reject) => {
+  const w = new Worker(WORKER, { eval: true, workerData: { url: STAGE_URL, scale } });
+  w.once('message', resolve);
+  w.once('error', reject);
+});
+const NUDGED = [1 + 1e-12, 1 - 1e-12].map((scale) => nudgedRuns(scale).then((r) => ({ scale, ...r })));
 const LITERAL_TRAIN_X0 = 0.11783946381590707;
 
 const meanLoss = (net, D) => D.X.reduce((s, x, i) => s + bceLogit(D.y[i], mlpForward(net, x).out[0]), 0) / D.X.length;
@@ -343,7 +358,7 @@ test('training-networks read-out rows and page', () => {
       assert.ok(rows.length <= 6);
     }
     for (const rows of [T.readout(3, T.bigInfo(g)), T.readout(4, T.wdInfo(w, { 0: g, [T.LAMBDA]: w })), T.readout(4, T.wdInfo(g, { 0: g }))]) {
-      assert.ok(rows.length <= 6);
+      assert.ok(rows.length <= 7);
       for (const r of rows) {
         assert.ok(!/NaN|undefined|Infinity/.test(r), r);
         assert.ok(r.length <= 26, r);
@@ -357,9 +372,13 @@ test('training-networks read-out rows and page', () => {
   }
   // Steps whose prose gives end-of-run numbers say when the run is not finished.
   const fresh = T.makeRun();
+  assert.equal(T.readout(2, T.spiralInfo(fresh)).at(-1), 'press Train');
+  T.advance(fresh, 5);
   assert.ok(T.readout(2, T.spiralInfo(fresh)).some((r) => /not finished/.test(r)));
   assert.ok(!T.readout(2, T.spiralInfo(t)).some((r) => /not finished/.test(r)));
   const freshBig = T.makeBig(0);
+  assert.equal(T.readout(3, T.bigInfo(freshBig)).at(-1), 'press Train');
+  T.bigAdvance(freshBig, 5);
   assert.ok(T.readout(3, T.bigInfo(freshBig)).some((r) => /not finished/.test(r)));
   assert.ok(!T.readout(3, T.bigInfo(g)).some((r) => /not finished/.test(r)));
   assert.ok(T.readout(4, T.wdInfo(freshBig, { 0: freshBig })).some((r) => /not finished/.test(r)));
@@ -432,4 +451,78 @@ test('step 1 runs computed in slices equal the runs computed at once', async () 
     assert.deepEqual(F.noiseRun(b), T.noiseRun(b));
     assert.deepEqual(F.noiseInfo(b), T.noiseRun(b));
   }
+});
+
+test('the read-out says whether the run is training, paused, not started or finished', () => {
+  assert.equal(T.trainStatus({ running: false, iter: 0, done: false }), 'press Train');
+  assert.equal(T.trainStatus({ running: true, iter: 0, done: false }), 'training…');
+  assert.equal(T.trainStatus({ running: true, iter: 12, done: false }), 'training…');
+  assert.equal(T.trainStatus({ running: false, iter: 12, done: false }), 'not finished: press Train');
+  assert.equal(T.trainStatus({ running: false, iter: T.MAX_ITER, done: true }), 'finished');
+  assert.equal(T.trainStatus({ running: true, iter: T.MAX_ITER, done: true }), 'finished');
+  // Every live step shows the state as its last row, from the run itself.
+  const sp = T.makeRun();
+  const bg = T.makeBig(0);
+  const rows = (step, on) => (step <= 2 ? T.readout(step, T.spiralInfo(sp, on)) : step === 3 ? T.readout(3, T.bigInfo(bg, on)) : T.readout(4, T.wdInfo(bg, { 0: bg }, on)));
+  for (let step = 1; step <= 4; step++) {
+    assert.equal(rows(step, false).at(-1), 'press Train');
+    assert.equal(rows(step, true).at(-1), 'training…');
+  }
+  T.advance(sp, 12);
+  T.bigAdvance(bg, 12);
+  for (let step = 1; step <= 4; step++) {
+    assert.equal(rows(step, true).at(-1), 'training…');
+    assert.equal(rows(step, false).at(-1), 'not finished: press Train');
+    for (const r of rows(step, false)) assert.ok(r.length <= 26, r);
+    assert.ok(rows(step, false).length <= 7);
+  }
+  T.advance(sp, T.MAX_ITER);
+  for (let step = 1; step <= 2; step++) assert.equal(rows(step, false).at(-1), 'finished');
+  const done = pageBig(0);
+  assert.equal(T.readout(3, T.bigInfo(done)).at(-1), 'finished');
+  assert.equal(T.readout(4, T.wdInfo(done, { 0: done })).at(-1), 'finished');
+  // The stage passes the loop's state in and redraws the read-out when Pause is pressed.
+  const src = readFileSync(new URL('../training-networks/stage.js', import.meta.url), 'utf8');
+  assert.match(src, /const on = loop\.running\(\);/);
+  // The shaded maps are built on first show of their steps, not in the constructor.
+  assert.match(src, /let spMap = null;/);
+  assert.match(src, /let bgMap = null;/);
+  assert.match(src, /\(spMap \?\?= smoothMap\(spMapG, GRID\)\)\.update\(net\)/);
+  assert.match(src, /\(bgMap \?\?= smoothMap\(bgMapG, BIG_GRID\)\)\.update\(b\.t\.state\.net\)/);
+  assert.match(src, /trainGroup\.addEventListener\('click', \(\) => \{ if \(step >= 1 && step <= 4\) render\(true\); \}\)/);
+});
+
+test('the quoted numbers do not hang on rounding', async () => {
+  const base = T.storyRuns(1);
+  assert.deepEqual(base.values, T.storyValues());
+  // scale 1 is the page's run exactly.
+  assert.deepEqual(base.curves.bigTest, pageBig(0).test);
+  assert.deepEqual(base.curves.wdTest, pageBig(T.LAMBDA).test);
+  for (const { scale, values, curves } of await Promise.all(NUDGED)) {
+    // Every number the page quotes from these runs, rounded as the page shows it,
+    // including the epochs of the lowest test losses (120, 399) and the 45 rises.
+    assert.deepEqual(values, base.values, String(scale));
+    // Not chaotic: every curve stays within 1e-9 of the page's run.
+    for (const k of ['spiral', 'bigTrain', 'bigTest', 'wdTrain', 'wdTest']) {
+      const gap = Math.max(...curves[k].map((v, i) => Math.abs(v - base.curves[k][i])));
+      assert.ok(gap < 1e-9, `${scale} ${k} ${gap}`);
+    }
+    // The page's other claims, on the nudged curves.
+    // "on this run the smoothest curve did not end lowest"
+    assert.ok(curves.noiseEnd[160] > curves.noiseEnd[8]);
+    const best0 = T.earlyStop(curves.bigTest);
+    const bestW = T.earlyStop(curves.wdTest);
+    // Without weight decay the test loss climbs overall after its lowest point.
+    assert.ok(curves.bigTest[400] > 1.1 * best0.value);
+    assert.ok(curves.bigTrain[400] < 0.1 * curves.bigTrain[best0.epoch]);
+    // With it, the test loss is still falling overall at the end.
+    const mean = (lo, hi) => curves.wdTest.slice(lo, hi + 1).reduce((s, v) => s + v, 0) / (hi - lo + 1);
+    assert.ok(mean(351, 400) < mean(301, 350) && mean(301, 350) < mean(201, 300));
+    assert.ok(bestW.epoch >= 380 && curves.wdTest[400] < curves.bigTest[400]);
+  }
+  // Why the quoted epochs are not knife edges: the lowest test loss beats the
+  // next-lowest epoch by far more than the runs move.
+  const margin = (ys, e) => Math.min(...ys.filter((_, i) => i !== e).map((v) => v - ys[e]));
+  assert.ok(margin(base.curves.bigTest, 120) > 1e-5);
+  assert.ok(margin(base.curves.wdTest, 399) > 1e-3);
 });
