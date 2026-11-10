@@ -367,6 +367,17 @@ test('page', () => {
   }
   for (const key of Object.keys(sv)) assert.ok(used.has(key), `unused story value ${key}`);
   for (const v of [...Object.values(pv), ...Object.values(sv)]) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+  // Wording fixed in review.
+  assert.match(text, /a weighted average of their noises, where the pairs more likely to have made that point count for more/);
+  assert.match(text, /Diffusion models that make pictures use the same three steps/);
+  assert.match(text, /Later systems change details/);
+  assert.doesNotMatch(text, /noise is added to every number|They add three things|Starting from the data would only/);
+  assert.match(text, /Speed is not the reason: the walk takes the same 50 steps whatever it starts from/);
+  assert.match(html, /Adam's own settings β₁ = 0\.9, β₂ = 0\.999 \(not the noise schedule\)/);
+  assert.match(html, /β<sub>t<\/sub> from 0\.001 to 0\.2/);
+  assert.match(text, /the same seed as press 1 of Generate/);
+  assert.match(text, /for the reason in the previous step/);
+  assert.doesNotMatch(text, /until the (spiral|data) (is|are) pure noise|into pure noise|closer to the spiral than/);
   // 64 × 64 × 3, quoted in step 6.
   assert.match(text, /12,288/);
   assert.equal(64 * 64 * 3, 12288);

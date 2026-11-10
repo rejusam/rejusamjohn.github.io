@@ -465,8 +465,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     label(sumG, x + 12, 144, b[2], 'start', MUTED, 12);
     if (i < 2) el('line', { x1: x + 176, x2: x + 192, y1: 120, y2: 120, stroke: MUTED, 'stroke-width': 1.5, 'marker-end': 'url(#dif-arrow-m)' }, sumG);
   });
-  label(sumG, 20, 220, 'Real systems: far bigger networks, images instead of points,', 'start', STRONG, 13);
-  label(sumG, 20, 240, 'and a text description as an extra input to the network.', 'start', STRONG, 13);
+  label(sumG, 20, 220, 'Picture-making diffusion models: far bigger networks,', 'start', STRONG, 13);
+  label(sumG, 20, 240, 'images instead of points, often a text description as input.', 'start', STRONG, 13);
 
   const rowsT = RY.map((y, i) => label(svg, 16, y, '', 'start', i === 0 ? STRONG : MUTED, 13));
 
