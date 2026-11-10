@@ -87,12 +87,12 @@ function top(logits) {
 
 export const BLOCK_PARTS = [
   { key: 'in', name: 'digits + positions', desc: 'Each digit’s embedding (32 numbers) plus the embedding of its position, 1 to 8.' },
-  { key: 'ln1', name: 'layer norm', desc: 'Rescales each position’s 32 numbers to mean 0 and variance 1, then a learned scale and shift.' },
+  { key: 'ln1', name: 'layer norm', desc: 'Rescales each position’s 32 numbers to mean 0, variance about 1, then learned scale and shift.' },
   { key: 'att', name: 'attention, 2 heads', desc: 'Each position takes a weighted average over all 8 positions, once per head.' },
-  { key: 'add1', name: 'add (shortcut)', desc: 'The attention result is added to its input, so the input flows on unchanged.' },
+  { key: 'add1', name: 'add (shortcut)', desc: 'The attention result is added to the block’s input (before LN), which flows on unchanged.' },
   { key: 'ln2', name: 'layer norm', desc: 'The same rescaling again, with its own learned scale and shift.' },
   { key: 'mlp', name: 'small network', desc: 'The same 32 → 64 → 32 ReLU network, applied to each position on its own.' },
-  { key: 'add2', name: 'add (shortcut)', desc: 'The network’s result is added to its input.' },
+  { key: 'add2', name: 'add (shortcut)', desc: 'The network’s result is added back to the stream it read from (before LN).' },
   { key: 'lnf', name: 'final layer norm', desc: 'One more layer norm before the output.' },
   { key: 'out', name: 'output', desc: 'At each position, 10 scores turned into probabilities for the digits 0 to 9.' },
 ];

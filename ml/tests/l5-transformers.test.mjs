@@ -100,6 +100,20 @@ test('permutation demo equals attnForward', () => {
     assert.equal(demo.diffPos, w2);
     if (perm.some((j, t) => j !== t)) assert.ok(w2 > 0.01, `with positions ${w2}`);
   }
+  // The read-out's "< 10⁻¹²" holds for many more shuffles than are drawn above.
+  for (let i = 6; i < 40; i++) {
+    const d = S.permDemo(i);
+    assert.ok(d.diffNoPos < 1e-12, `shuffle ${i}: ${d.diffNoPos}`);
+    assert.match(S.readout(1, S.stageInfo(1, null, false, { perm: i })).join('|'), /gap (0|< 10⁻¹²)\)/);
+  }
+  // With a causal mask the shuffle no longer just moves the outputs (the page says so).
+  const causal = S.withoutPositions(attnInit({ ...S.CFG, causal: true }));
+  const pm = S.permutation(0);
+  const ca = attnForward(causal, S.example()).logits;
+  const cb = attnForward(causal, pm.map((j) => S.example()[j])).logits;
+  let cg = 0;
+  for (let t = 0; t < 8; t++) for (let k = 0; k < 10; k++) cg = Math.max(cg, Math.abs(cb[t][k] - ca[pm[t]][k]));
+  assert.ok(cg > 0.01, `causal gap ${cg}`);
   // The example's repeated digit: same output at its three positions without positions,
   // though reversal needs three different digits there.
   const rep = S.repeatedDigit();
@@ -276,6 +290,11 @@ test('page', () => {
   assert.match(html, /What does a residual connection add\?/);
   assert.match(html, /1706\.03762/);
   assert.match(html, /population/);
+  assert.match(html, /with no mask \(as here\)/);
+  assert.match(html, /brighter cell is a larger weight/);
+  assert.doesNotMatch(html, /darker cell/);
+  assert.match(html, /the original transformer, and the block here, add a position embedding/);
+  assert.match(html, /base model/);
   const pv = S.pageValues();
   const spans = [...html.matchAll(/<span data-value="([^"]+)">([^<]*)<\/span>/g)];
   for (const [, key, text] of spans) {
