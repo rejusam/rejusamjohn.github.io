@@ -8,6 +8,9 @@ import { PATH, TOTAL_LIVE, lessonHref, firstNotDone, startLink, nextLesson } fro
 import { mean, variance, sd, olsFit, mse, mae } from '../assets/maths.js';
 import { sigmoid, logLoss, gini, accuracy, confusion } from '../assets/classify.js';
 import { inertia, pca2 } from '../assets/unsupervised.js';
+import { mlpForward, ACT, bceLogit, optInit, optStep } from '../assets/nn.js';
+import { convOutSize, conv2d, cnnInit, cnnParamCount } from '../assets/conv.js';
+import { rnnForward } from '../assets/rnn.js';
 
 const ML = fileURLToPath(new URL('..', import.meta.url));
 const read = (p) => readFileSync(ML + p, 'utf8');
@@ -208,7 +211,7 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 test('TOTAL_LIVE equals the count of lessons in PATH', () => {
   assert.equal(TOTAL_LIVE, PATH.flatMap((l) => l.lessons).length);
-  assert.equal(TOTAL_LIVE, 19);
+  assert.equal(TOTAL_LIVE, 28);
 });
 
 test('L3 is live: not marked soon, nine lessons, each with a page whose h1 is its title', () => {
@@ -225,9 +228,23 @@ test('L3 is live: not marked soon, nine lessons, each with a page whose h1 is it
   }
 });
 
-test('landing intro says which levels are ready', () => {
+test('L4 is live: not marked soon, nine lessons, each with a page whose h1 is its title', () => {
+  const l4 = PATH.find((l) => l.level === 'L4');
+  assert.ok(!l4.soon);
+  assert.equal(l4.topics, undefined);
+  assert.deepEqual(l4.lessons.map((l) => l.slug), [
+    'neurons', 'hidden-layers', 'backpropagation', 'training-networks', 'optimisers',
+    'deep-networks', 'convolutions', 'cnns', 'rnns',
+  ]);
+  for (const l of l4.lessons) {
+    const html = read(`${l.slug}/index.html`);
+    assert.equal(stripTags(/<h1>([\s\S]*?)<\/h1>/.exec(html)[1]), l.title, l.slug);
+  }
+});
+
+test('landing intro says L0 to L4 are ready', () => {
   const sub = stripTags(/<p class="hub-sub">([\s\S]*?)<\/p>/.exec(landing())[1]);
-  assert.ok(sub.includes('L0 to L3 are ready; L4 to L6 are coming next.'), sub);
+  assert.ok(sub.includes('L0 to L4 are ready; L5 and L6 are coming next.'), sub);
 });
 
 test('landing numbers the lessons in order and quotes each page\'s promise and time', () => {
@@ -250,6 +267,12 @@ test('landing numbers the lessons in order and quotes each page\'s promise and t
 test("overfitting's next link points to /ml/k-nearest-neighbours/", () => {
   const html = read('overfitting/index.html');
   assert.ok(html.includes('<a class="next-lesson" href="/ml/k-nearest-neighbours/">Next lesson: k-nearest neighbours →</a>'));
+  assert.ok(!html.includes('Back to the path'));
+});
+
+test("pca's next link points to /ml/neurons/", () => {
+  const html = read('pca/index.html');
+  assert.ok(html.includes('<a class="next-lesson" href="/ml/neurons/">Next lesson: The artificial neuron →</a>'));
   assert.ok(!html.includes('Back to the path'));
 });
 
@@ -276,10 +299,11 @@ test('sitemap lists every lesson URL in PATH', () => {
   }
 });
 
-test('home page card names levels 0 to 3', () => {
+test('home page card names levels 0 to 4', () => {
   const html = readFileSync(`${ROOT}index.html`, 'utf8');
-  assert.ok(html.includes('<div class="project-label">Interactive guide · Levels 0–3 live</div>'));
-  assert.ok(html.includes('classic models such as decision trees, random forests, k-means and PCA'));
+  assert.ok(html.includes('<div class="project-label">Interactive guide · Levels 0–4 live</div>'));
+  assert.ok(!html.includes('Levels 0–3 live'));
+  assert.ok(html.includes('classic models such as decision trees, random forests, k-means and PCA, then neural networks.'));
 });
 
 // Every HTML page under ml/, vendor files aside.
@@ -375,4 +399,88 @@ test('notation Level 3 worked examples match the computed values', () => {
   ];
   const tex = [...notation().matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1]));
   for (const t of expected) assert.ok(tex.includes(t), `notation page shows ${t}`);
+});
+
+test('notation page lists the Level 4 symbols', () => {
+  const html = notation();
+  const tex = new Set([...html.matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1])));
+  const has = (t) => [...tex].some((s) => s.includes(t));
+  for (const t of [
+    '\\ell = 1, \\dots, L', '\\mathbf{W}^{(\\ell)}', '\\mathbf{b}^{(\\ell)}',
+    '\\mathbf{z}^{(\\ell)} = \\mathbf{W}^{(\\ell)}\\mathbf{a}^{(\\ell-1)} + \\mathbf{b}^{(\\ell)}', '\\mathbf{a}^{(\\ell)} = g\\big(\\mathbf{z}^{(\\ell)}\\big)',
+    '\\mathbf{a}^{(0)} = \\mathbf{x}', '\\operatorname{ReLU}(z) = \\max(0, z)', '\\tanh', '\\mathcal{L}',
+    '\\boldsymbol{\\delta}^{(\\ell)} = \\partial\\mathcal{L}/\\partial\\mathbf{z}^{(\\ell)}', '\\beta', '\\beta_1', '\\beta_2', '\\epsilon',
+    'n_B', 'E', '\\left\\lfloor \\frac{n + 2p - f}{s} \\right\\rfloor + 1', 'X \\star \\mathbf{W}', '\\odot',
+    'x_t', '\\mathbf{h}_t', '\\mathbf{W}_h', 'b_{\\text{out}}', '\\mathbf{W}_k', 'J(\\boldsymbol{\\theta}) = \\mathcal{L}(\\boldsymbol{\\theta}) + \\frac{\\lambda}{2}',
+  ]) assert.ok(has(t), `notation page shows ${t}`);
+  for (const id of ['layers', 'Wl', 'zl', 'act', 'delta', 'momentum', 'adam', 'batch', 'conv', 'cnn', 'rnn', 'calL', 'hadamard', 'star']) {
+    assert.ok(html.includes(`id="${id}"`), `notation page has #${id}`);
+  }
+  const conv = stripTags(/<div class="sym" id="conv">[\s\S]*?<\/div>/.exec(html)[0]);
+  for (const w of ['stride', 'padding', 'cross-correlation']) assert.ok(conv.includes(w), `conv entry says ${w}`);
+  const loss = stripTags(/<div class="sym" id="calL">[\s\S]*?<\/div>/.exec(html)[0]);
+  assert.ok(loss.includes('Binary cross-entropy is the log-loss'), 'BCE is the L3 log-loss');
+  for (const l of PATH.find((x) => x.level === 'L4').lessons) {
+    assert.ok(html.includes(`href="${lessonHref(l.slug)}"`), `notation page links ${l.slug}`);
+  }
+});
+
+test('notation page lists the Level 4 clashes', () => {
+  const sec = /<section class="sym-group" id="clashes"[\s\S]*?<\/section>/.exec(notation());
+  const items = [...sec[0].matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1]);
+  const tex = (item) => [...item.matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1]));
+  const find = (...ts) => items.some((it) => ts.every((t) => tex(it).some((s) => s === t)));
+  assert.ok(find('\\mathbf{b}^{(\\ell)}', 'b'), 'b: bias vector vs b');
+  assert.ok(find('\\lambda'), 'lambda: weight decay and ridge');
+  assert.ok(find('B', 'n_B'), 'B vs n_B');
+  assert.ok(find('T', 'X^{\\top}'), 'T vs transpose');
+  assert.ok(find('\\mathbf{W}', 'w'), 'bold W vs w');
+  assert.ok(find('p', '\\hat{p}'), 'padding p vs p-hat');
+  assert.ok(find('\\epsilon', '\\varepsilon'), 'Adam epsilon vs noise');
+  assert.ok(find('L', '\\mathcal{L}'), 'L layers vs loss');
+  const sigma = items.find((it) => tex(it).includes('\\sigma(z)'));
+  assert.ok(stripTags(sigma).includes('Level 4'), 'sigma clash mentions Level 4');
+});
+
+// The Level 4 worked examples: Lesson 22's hand-set network, and small cases computed here.
+test('notation Level 4 worked examples match the computed values', () => {
+  const f2 = (v) => v.toFixed(2).replace(/\.?0+$/, '');
+  const p3 = (v) => v.toPrecision(3);
+  const net = { sizes: [2, 2, 1], hidden: 'sigmoid', W: [[[0.5, -0.4], [-0.3, 0.8]], [[0.7, -0.6]]], b: [[0.1, -0.2], [0.2]] };
+  const fw = mlpForward(net, [1, -0.5]);
+  const phat = sigmoid(fw.out[0]);
+  const rnn = rnnForward({ nh: 1, Wx: [1], Wh: [[0.5]], bh: [0], Wy: [1], by: 0 }, [1, 0]);
+  const adam = optStep('adam', { eta: 0.1 }, optInit('adam', 1), [0], [5]);
+  assert.ok(Math.abs(adam.state.m[0] - 0.1 * 5) < 1e-12);
+  const adamSmall = optStep('adam', { eta: 0.1 }, optInit('adam', 1), [0], [0.001]);
+  const mom = 1 / (1 - 0.9);
+  const edge = conv2d([[0, 0, 1], [0, 0, 1], [0, 0, 1]], [[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]]);
+  assert.deepEqual(edge, [[3]]);
+  const expected = [
+    `\\mathbf{z}^{(1)} = \\mathbf{W}^{(1)}\\mathbf{x} + \\mathbf{b}^{(1)} = (${p3(fw.zs[0][0])},\\ ${p3(fw.zs[0][1])})`,
+    `\\mathbf{a}^{(1)} = \\sigma\\big(\\mathbf{z}^{(1)}\\big) = (${p3(fw.as[1][0])},\\ ${p3(fw.as[1][1])})`,
+    `\\delta^{(2)} = \\hat{p} - y = ${p3(phat)} - 1 = ${p3(phat - 1)}`,
+    `8(2 + 1) = ${8 * (2 + 1)}`,
+    `\\operatorname{ReLU}(-2) = ${ACT.relu.f(-2)},\\ \\operatorname{ReLU}(3) = ${ACT.relu.f(3)},\\ \\tanh 1 \\approx ${f2(Math.tanh(1))}`,
+    `\\mathcal{L} = -\\ln(1 - ${f2(sigmoid(2))}) \\approx ${f2(bceLogit(0, 2))}`,
+    `n/n_B = 160/16 = ${160 / 16}`,
+    `\\mathbf{g}/(1 - \\beta) = ${f2(mom)}\\,\\mathbf{g}`,
+    `\\mathbf{m} = (1 - \\beta_1)\\,\\mathbf{g} = ${f2(adam.state.m[0] / 5)}\\,\\mathbf{g}`,
+    `1 - \\eta\\lambda = 1 - 0.1 \\times 0.01 = ${1 - 0.1 * 0.01}`,
+    `\\lfloor (12 + 0 - 3)/1 \\rfloor + 1 = ${convOutSize(12, 3, 1, 0)}`,
+    `\\lfloor (12 + 0 - 3)/2 \\rfloor + 1 = ${convOutSize(12, 3, 2, 0)}`,
+    `\\lfloor (12 + 2 - 3)/1 \\rfloor + 1 = ${convOutSize(12, 3, 1, 1)}`,
+    `(X \\star \\mathbf{W})[0, 0] = 1 + 1 + 1 = ${edge[0][0]}`,
+    `2 \\times 9 + 2 + 18 + 1 = ${cnnParamCount(cnnInit({ seed: 1 }))}`,
+    `\\mathbf{h}_1 = \\tanh 1 \\approx ${f2(rnn.hs[1][0])}`,
+    `\\mathbf{h}_2 = \\tanh(0.5 \\times ${f2(rnn.hs[1][0])}) \\approx ${f2(rnn.hs[2][0])}`,
+    `(1, 2) \\odot (3, 4) = (${1 * 3}, ${2 * 4})`,
+    `\\lfloor 4.5 \\rfloor = ${Math.floor(4.5)}`,
+  ];
+  const tex = [...notation().matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1]));
+  for (const t of expected) assert.ok(tex.includes(t), `notation page shows ${t}`);
+  // The Adam entry says the first step is about eta whatever the gradient's size.
+  assert.ok(Math.abs(adam.params[0] + 0.1) < 1e-6 && Math.abs(adamSmall.params[0] + 0.1) < 1e-5);
+  const adamEntry = stripTags(/<div class="sym" id="adam">[\s\S]*?<\/div>/.exec(notation())[0]);
+  assert.ok(adamEntry.includes('moves each weight by about η'), adamEntry);
 });

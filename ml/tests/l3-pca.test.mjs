@@ -145,7 +145,7 @@ test('pca page contract', () => {
   assert.match(html, /<title>Principal component analysis · ML Explorer<\/title>/);
   assert.match(html, /Level 3 · Classic ML/);
   assert.match(html, /seed 111/);
-  assert.match(html, /<a class="next-lesson" href="\/ml\/">Back to the path →<\/a>/);
+  assert.match(html, /<a class="next-lesson" href="\/ml\/neurons\/">Next lesson: The artificial neuron →<\/a>/);
   assert.match(html, /href="\/ml\/k-means\/"/);
   assert.match(html, /href="\/ml\/loss-surface\/"/);
   assert.match(html, /href="\/ml\/centre-and-spread\/"/);

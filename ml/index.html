@@ -137,6 +137,51 @@
           "@type": "LearningResource",
           "name": "Principal component analysis",
           "url": "https://rejusamjohn.pages.dev/ml/pca/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "The artificial neuron",
+          "url": "https://rejusamjohn.pages.dev/ml/neurons/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Hidden layers: bending the boundary",
+          "url": "https://rejusamjohn.pages.dev/ml/hidden-layers/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Backpropagation",
+          "url": "https://rejusamjohn.pages.dev/ml/backpropagation/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Training a network",
+          "url": "https://rejusamjohn.pages.dev/ml/training-networks/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Optimisers: momentum and Adam",
+          "url": "https://rejusamjohn.pages.dev/ml/optimisers/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Going deeper: vanishing gradients",
+          "url": "https://rejusamjohn.pages.dev/ml/deep-networks/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Convolutions",
+          "url": "https://rejusamjohn.pages.dev/ml/convolutions/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Convolutional networks",
+          "url": "https://rejusamjohn.pages.dev/ml/cnns/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Recurrent networks",
+          "url": "https://rejusamjohn.pages.dev/ml/rnns/"
         }
       ]
     }
@@ -153,7 +198,7 @@
     <header class="hub-head">
         <p class="hub-cap">Machine learning, one idea at a time</p>
         <h1>ML Explorer</h1>
-        <p class="promise">How machine learning works, for students and complete beginners: from what a model is to fitting one, testing it fairly and keeping it from overfitting, and on to the classic methods: nearest neighbours, trees and forests, clustering and PCA.</p>
+        <p class="promise">How machine learning works, for students and complete beginners: from what a model is to fitting one, testing it fairly and keeping it from overfitting, and on to the classic methods: nearest neighbours, trees and forests, clustering and PCA, then neural networks.</p>
         <div class="hub-intro">
             <p>Each lesson shows one idea on a single picture, in a few short steps. Move the controls and watch what changes. Every number in the pictures is computed in your browser from the lesson&#8217;s data as you go.</p>
             <p>The main text needs no maths. The formulas, and the reasons behind them, sit one click deeper under &#8220;The maths&#8221;.</p>
@@ -166,7 +211,7 @@
 
     <section class="hub-path-sec" id="path" aria-labelledby="path-title">
         <h2 id="path-title">The path</h2>
-        <p class="hub-sub">Each lesson builds on the ones before it. L0 to L3 are ready; L4 to L6 are coming next. Your progress is kept in this browser only.</p>
+        <p class="hub-sub">Each lesson builds on the ones before it. L0 to L4 are ready; L5 and L6 are coming next. Your progress is kept in this browser only.</p>
         <!-- Safari drops list semantics when list-style is none; role="list" restores them. -->
         <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
         <ol class="hub-path" role="list">
@@ -289,10 +334,56 @@
                     </li>
                 </ol>
             </li>
-            <li class="hub-level is-soon" data-level="L4">
+            <li class="hub-level" data-level="L4">
                 <div class="hub-level-head"><span class="hub-lv">L4</span> <h3 class="hub-lt">Deep learning</h3></div>
-                <p class="hub-topics">Neurons, backprop, optimisers, CNNs, RNNs</p>
-                <p class="hub-soon">Coming next</p>
+                <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
+                <ol class="hub-lessons" role="list">
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 20 · About 10 min</p>
+                        <a data-slug="neurons" href="/ml/neurons/"><span class="hub-title">The artificial neuron</span></a>
+                        <p class="hub-promise">A weighted sum, a bias and a squashing curve: the building block of every neural network, and an old friend in disguise.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 21 · About 11 min</p>
+                        <a data-slug="hidden-layers" href="/ml/hidden-layers/"><span class="hub-title">Hidden layers: bending the boundary</span></a>
+                        <p class="hub-promise">Press Train and watch a small network bend its boundary, step by step, around data that no straight line can split.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 22 · About 12 min</p>
+                        <a data-slug="backpropagation" href="/ml/backpropagation/"><span class="hub-title">Backpropagation</span></a>
+                        <p class="hub-promise">How did the network know which way to nudge each weight? Follow every number through a tiny network, forward and then backward.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 23 · About 11 min</p>
+                        <a data-slug="training-networks" href="/ml/training-networks/"><span class="hub-title">Training a network</span></a>
+                        <p class="hub-promise">The craft of running training: small batches, passes through the data, and how to notice when a network starts memorising.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 24 · About 11 min</p>
+                        <a data-slug="optimisers" href="/ml/optimisers/"><span class="hub-title">Optimisers: momentum and Adam</span></a>
+                        <p class="hub-promise">Plain gradient descent zig-zags down a narrow valley. Momentum, RMSProp and Adam change how each step is made; here you race them, then try them on a real network.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 25 · About 10 min</p>
+                        <a data-slug="deep-networks" href="/ml/deep-networks/"><span class="hub-title">Going deeper: vanishing gradients</span></a>
+                        <p class="hub-promise">Stack ten hidden layers of sigmoid units and the gradient that reaches the first layer can be millions of times smaller than at the last. Here you measure it layer by layer, see why, and watch a ReLU network with better starting weights train where the sigmoid one stalls.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 26 · About 10 min</p>
+                        <a data-slug="convolutions" href="/ml/convolutions/"><span class="hub-title">Convolutions</span></a>
+                        <p class="hub-promise">A filter is a small grid of weights slid across an image. At each position it multiplies the pixels under it by its weights and adds them up, giving one number, large where the patch looks like the filter. The same nine weights are used everywhere.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 27 · About 11 min</p>
+                        <a data-slug="cnns" href="/ml/cnns/"><span class="hub-title">Convolutional networks</span></a>
+                        <p class="hub-promise">Stack a convolution, a ReLU and a pooling step, put one output unit on top, and let training choose the filters. With weights shared across the image, the whole network needs far fewer of them than a dense one.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 28 · About 11 min</p>
+                        <a data-slug="rnns" href="/ml/rnns/"><span class="hub-title">Recurrent networks</span></a>
+                        <p class="hub-promise">A recurrent network reads a sequence one step at a time and carries a hidden state forward. Train one live to repeat the bit it saw a few steps ago, and see why reaching further back is harder.</p>
+                    </li>
+                </ol>
             </li>
             <li class="hub-level is-soon" data-level="L5">
                 <div class="hub-level-head"><span class="hub-lv">L5</span> <h3 class="hub-lt">Modern AI</h3></div>
