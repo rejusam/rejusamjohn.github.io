@@ -563,6 +563,16 @@ test('page', () => {
   assert.doesNotMatch(html, /delve|in today's world|unlock|harness the power|it's important to note|dive in/i);
   assert.doesNotMatch(html, /Next lesson: /);
   assert.doesNotMatch(html, /last 8 bits|next three targets|only needs the last 2/);
+  // Quiz q2's distractor is refuted by the page's own numbers: k = 4 holds more bits at
+  // once than k = 8, with the same 8 hidden numbers, and got every masked test step right.
+  assert.match(html, /value="more"> Holding 4 bits at once is more than its 8 hidden numbers can manage/);
+  assert.equal(S.bitsAtOnce(8), 4);
+  assert.ok(S.bitsAtOnce(4) > S.bitsAtOnce(8));
+  assert.equal(S.NH, 8);
+  assert.equal(S.storyValues()['acc-k4'], '100%');
+  assert.match(html, /data-for="more">The same network, with the same 8 hidden numbers, managed k = 4/);
+  assert.doesNotMatch(html, /It has to hold more bits at once|Not because there is more to hold/);
+  assert.match(html, /Not mainly because there is more to hold/);
   assert.match(html, /epoch 17/);
   assert.match(html, /measured on the k = 8 test targets/);
   assert.match(html, /above the 50% of chance/);
