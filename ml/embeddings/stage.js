@@ -236,7 +236,7 @@ export function readout(step, s) {
     const e = s.ex;
     return [`sentence ${s.index + 1} of ${count(N_SENTENCES)} · centre: ${e.tokens[e.pos]}`, `${e.pairs.length} pairs from this centre`, `${count(s.nPairs)} pairs in the whole text`];
   }
-  const where = s.live.iter === 0 ? 'random start' : `after ${s.live.iter} of ${STEPS} steps`;
+  const where = s.live.iter === 0 ? 'random start' : `${s.live.iter} of ${STEPS} steps`;
   if (step === 2) {
     return [`step ${s.live.iter} of ${STEPS} · ${trainStatus(s.live)}`, `loss ℒ: ${num(s.live.loss, 3)}`, `start ${num(s.live.start, 3)} · ln ${s.V} = ${num(Math.log(s.V), 3)}`];
   }
@@ -270,6 +270,9 @@ export function pageValues() {
   };
 }
 
+// The three words that sit with the foods after the run (step 5 names them).
+export const CROWD_FOOD = ['are', 'and', 'friends'];
+
 // The values quoted from the seeded run. end(model) and start(model) are pure, so
 // the drift test can apply them to a run from nudged starting weights.
 export function runValues(start, end, startLoss, endLoss) {
@@ -292,6 +295,15 @@ export function runValues(start, end, startLoss, endLoss) {
   let fmin = Infinity;
   for (const a of WORLD.foods) for (const b of WORLD.foods) if (a !== b) fmin = Math.min(fmin, cosine(vecOf(end, a), vecOf(end, b)));
   v['food-min'] = num(fmin, 3);
+  // Words that crowd in with the foods and the places in two dimensions.
+  let crowd = Infinity;
+  for (const w of CROWD_FOOD) for (const f of WORLD.foods) crowd = Math.min(crowd, cosine(vecOf(end, w), vecOf(end, f)));
+  v['crowd-food-min'] = num(crowd, 3);
+  let thePl = Infinity;
+  for (const pl of WORLD.places) thePl = Math.min(thePl, cosine(vecOf(end, 'the'), vecOf(end, pl)));
+  v['the-place-min'] = num(thePl, 3);
+  // For every food, how many other foods come before the first word that is not a food.
+  v['food-first'] = String(Math.min(...WORLD.foods.map((f) => ranking(end, f).findIndex((r) => r.group !== 'food'))));
   v['apples-pears'] = num(cosine(vecOf(end, 'apples'), vecOf(end, 'pears')), 3);
   return v;
 }
@@ -467,13 +479,15 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   // Step 4's table of nearest words, in place of the loss curve.
   const nnG = el('g', {}, scG);
   const nnTitle = label(nnG, 372, 162, '', 'start', STRONG, 12);
-  label(nnG, 372, 180, '#  word       cosine  angle', 'start', MUTED, 11);
+  label(nnG, 372, 180, '#    word     cosine angle', 'start', MUTED, 11);
   const nnHead = nnG.lastChild;
   nnHead.style.whiteSpace = 'pre';
   const nnRows = Array.from({ length: 5 }, (_, k) => {
-    const t = label(nnG, 372, 198 + k * 16, '', 'start', INK, 11);
+    const y = 198 + k * 16;
+    const t = label(nnG, 372, y, '', 'start', INK, 11);
     t.style.whiteSpace = 'pre';
-    return t;
+    const mg = el('g', { transform: `translate(392 ${y - 4})` }, nnG);
+    return { t, mg, grp: null };
   });
 
   // Step 5: every other word ranked by cosine, in two columns.
@@ -615,10 +629,15 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
         lossDot.setAttribute('cy', P(ly(L.at(-1))));
       } else {
         nnTitle.textContent = `nearest to "${word}"`;
-        nnRows.forEach((t, k) => {
+        nnRows.forEach((row, k) => {
           const r = s.rank[k];
-          t.textContent = `${k + 1}  ${r.word.padEnd(9)}  ${num(r.cos, 3).padStart(6)}  ${num(r.angle, 1).padStart(5)}°`;
-          t.style.fill = r.group === groupOf(word) ? STRONG : MUTED;
+          row.t.textContent = `${k + 1}    ${r.word.padEnd(8)} ${num(r.cos, 3).padStart(6)} ${num(r.angle, 1).padStart(5)}°`;
+          row.t.style.fill = r.group === groupOf(word) ? STRONG : MUTED;
+          if (row.grp !== r.group) {
+            row.mg.replaceChildren();
+            marker(row.mg, r.group, 4);
+            row.grp = r.group;
+          }
         });
       }
     }

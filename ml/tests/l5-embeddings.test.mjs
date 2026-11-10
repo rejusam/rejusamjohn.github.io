@@ -138,6 +138,9 @@ test('example pairs: neighbours within 2, inside the sentence', () => {
   assert.deepEqual(e5.pairs, [['.', 'the'], ['.', 'lake']]);
   // Each sentence holds at most one food, so two foods never share a sentence.
   assert.equal(S.sentencesWithTwoFoods(), 0);
+  // No sentence repeats a word, so a centre's up to four neighbours are all different words.
+  for (const ids of S.data().ids) assert.equal(new Set(ids).size, ids.length);
+  assert.equal(Math.max(...[0, 1, 2, 3, 4, 5].map((p) => S.examplePairs(p).pairs.length)), 4);
 });
 
 test('training deterministic', () => {
@@ -204,6 +207,21 @@ test('foods and places group', () => {
   // Two different foods, never in one sentence, end up with cosine 1.000 to 3 places.
   assert.equal(sv['apples-pears'], '1.000');
   assert.equal(sv['food-min'], '1.000');
+  // In two dimensions "are", "and" and "friends" crowd in with the foods, and "the" with the
+  // places: every food ranks its 5 fellow foods first, then those three words.
+  assert.deepEqual(S.CROWD_FOOD, ['are', 'and', 'friends']);
+  assert.equal(sv['food-first'], '5');
+  for (const f of WORLD.foods) {
+    const next = S.ranking(end, f).slice(5, 8).map((x) => x.word).sort();
+    assert.deepEqual(next, ['and', 'are', 'friends'], f);
+  }
+  assert.equal(sv['crowd-food-min'], '1.000');
+  assert.equal(sv['the-place-min'], '1.000');
+  // The names end with much shorter vectors than the foods and places.
+  const len = (w) => Math.hypot(...S.vecOf(end, w));
+  const longestName = Math.max(...WORLD.people.map(len));
+  const shortestOther = Math.min(...[...WORLD.foods, ...WORLD.places].map(len));
+  assert.ok(longestName < 0.5 && shortestOther > 4, `${longestName} ${shortestOther}`);
   // The ranking is by cosine, best first, and leaves the word itself out.
   const r = S.ranking(end, 'sea');
   assert.equal(r.length, 26);
@@ -282,6 +300,8 @@ test('page', () => {
   assert.match(html, /invented/);
   assert.match(html, /rules of (this|the) page/);
   assert.match(html, /far larger scale/);
+  assert.match(html, /about 6 billion words/);
+  assert.doesNotMatch(html, /1\.6 billion|That is all cosine measures/);
   assert.match(html, /square-root scale/);
   assert.match(html, /href="\/ml\/tokens\/"/);
   assert.match(html, /<a class="next-lesson" href="\/ml\/language-models\/">Next lesson: Predicting the next token →<\/a>/);
