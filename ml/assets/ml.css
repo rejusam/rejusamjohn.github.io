@@ -2168,3 +2168,117 @@ html:not(.js) .coffee-line {
   background: color-mix(in srgb, var(--ml-ink) 6%, transparent);
   border-color: var(--ml-muted);
 }
+
+/* Attention heatmap. Cyan opacity is the weight; a dot marks each row's
+   largest; masked (not allowed) cells are empty outlines with a hatch. */
+.heatmap .hm-cell {
+  fill: var(--ml-cyan);
+  stroke: var(--ml-line);
+  stroke-width: 0.5;
+}
+
+.heatmap .hm-masked {
+  fill: none;
+  stroke: var(--ml-muted);
+  stroke-width: 0.75;
+}
+
+.heatmap .hm-hatch {
+  fill: none;
+  stroke: var(--ml-muted);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.heatmap .hm-max {
+  /* Dark dot in a light halo: readable on an empty and on a full cell. */
+  fill: var(--ml-bg);
+  stroke: var(--ml-ink);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.heatmap .hm-frame {
+  fill: none;
+  stroke: var(--ml-muted);
+  stroke-width: 1;
+}
+
+.heatmap .hm-label {
+  fill: var(--ml-muted);
+  font-family: var(--ml-mono);
+  font-size: 10px;
+}
+
+/* Token chips (HTML spans, text only). */
+.token-chip {
+  display: inline-block;
+  margin: 2px;
+  padding: 2px 8px;
+  border: 1px solid var(--ml-muted);
+  border-radius: var(--ml-radius-sm);
+  background: var(--ml-surface);
+  color: var(--ml-ink);
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-small);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.token-chip.unknown {
+  border-style: dashed;
+  color: var(--ml-muted);
+}
+
+.token-chip.unknown::before {
+  content: '? ';
+}
+
+/* Probability bar: label, track, value. Length carries the value. */
+.prob-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--ml-s2);
+  margin: 2px 0;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-small);
+  color: var(--ml-ink);
+}
+
+.prob-bar .prob-label {
+  flex: 0 0 4.5em;
+  overflow-wrap: anywhere;
+}
+
+.prob-bar .prob-track {
+  flex: 1 1 auto;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--ml-surface);
+}
+
+.prob-bar .prob-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--ml-cyan);
+}
+
+.prob-bar .prob-value {
+  flex: 0 0 3.5em;
+  text-align: right;
+  color: var(--ml-muted);
+}
+
+/* Fitted ellipses: stroke only; the second series is dashed. */
+.ellipse {
+  fill: none;
+  stroke: var(--ml-cyan);
+  stroke-width: 2;
+}
+
+.ellipse.ellipse-2 {
+  stroke: var(--ml-violet);
+  stroke-dasharray: 6 4;
+}

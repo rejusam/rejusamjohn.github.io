@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { linearScale, clamp, pathFrom, fmt, networkLayout, pixelFill } from '../assets/plot.js';
+import { linearScale, clamp, pathFrom, fmt, networkLayout, pixelFill, heatmapFill, ellipsePath } from '../assets/plot.js';
 
 test('linearScale maps and inverts', () => {
   const s = linearScale([0, 10], [50, 550]);
@@ -154,4 +154,31 @@ test('pixelFill grey and signed', () => {
   const z = pixelFill(-1, { signed: 0 });
   assert.equal(z.opacity, 0);
   assert.ok(!Number.isNaN(pixelFill(0, { signed: 0 }).opacity));
+});
+
+test('heatmapFill clamps and handles NaN', () => {
+  assert.equal(heatmapFill(0.42).opacity, 0.42);
+  assert.equal(heatmapFill(-0.3).opacity, 0);
+  assert.equal(heatmapFill(1.7).opacity, 1);
+  assert.equal(heatmapFill(NaN).opacity, 0);
+});
+
+const pathPoints = (d) => d.slice(1, -1).split('L').map((p) => p.split(' ').map(Number));
+
+test('ellipsePath of the identity is a circle of radius k', () => {
+  const pts = pathPoints(ellipsePath([1, -2], [[1, 0], [0, 1]], 2));
+  for (const [x, y] of pts) assert.ok(Math.abs(Math.hypot(x - 1, y + 2) - 2) < 1e-6);
+  assert.ok(pts.length >= 36);
+});
+
+test('ellipsePath axes follow the eigenvectors', () => {
+  const pts = pathPoints(ellipsePath([0, 0], [[4, 0], [0, 1]], 1));
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  assert.ok(Math.abs(Math.max(...xs) - 2) < 1e-6);
+  assert.ok(Math.abs(Math.max(...ys) - 1) < 1e-2);
+  // tilted: variance along (1,1) is 3, along (1,-1) is 1
+  const t = pathPoints(ellipsePath([0, 0], [[2, 1], [1, 2]], 1));
+  const far = Math.max(...t.map(([x, y]) => Math.hypot(x, y)));
+  assert.ok(Math.abs(far - Math.sqrt(3)) < 1e-6);
 });
