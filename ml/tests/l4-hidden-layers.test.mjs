@@ -428,3 +428,11 @@ test('p̂ in prose is maths markup, not a combining hat', () => {
   assert.equal((html.match(/p\u0302/g) || []).length, 0);
   assert.match(html, /So far out, <span class="tex" data-tex="\\hat\{p\}">/);
 });
+
+test('the one-neuron line is not called the best line', () => {
+  // The fit gets 57.0% while the best line gets 71.5%, so the page must not call the fit the best.
+  assert.match(html, /The line is one sigmoid neuron fitted as <a href="\/ml\/logistic-regression\/">logistic regression<\/a> \(the previous lesson showed they are the same\)\./);
+  assert.doesNotMatch(html, /best one neuron can do/);
+  const src = readFileSync(new URL('../hidden-layers/stage.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /best straight line/);
+});

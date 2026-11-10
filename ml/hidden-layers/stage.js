@@ -623,7 +623,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   }
 
   const spoken = (i) => {
-    if (i === 0) return `One neuron's best straight line, the logistic regression fit, gets ${pct(oneAccuracy(TR.X, TR.y))} of the training points and ${pct(oneAccuracy(TE.X, TE.y))} of the test points right.`;
+    if (i === 0) return `One sigmoid neuron fitted as logistic regression draws a straight line that gets ${pct(oneAccuracy(TR.X, TR.y))} of the training points and ${pct(oneAccuracy(TE.X, TE.y))} of the test points right.`;
     const s = info(cur(), curH(), loop.running());
     const where = `${s.H} hidden units, epoch ${s.epoch} of ${EPOCHS}: training loss ${num(s.loss, 3)}, train accuracy ${pct(s.train)}, test accuracy ${pct(s.test)}.`;
     if (i === 1) return `Press Train to train the network. ${where}`;
