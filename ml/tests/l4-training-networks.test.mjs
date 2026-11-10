@@ -20,7 +20,9 @@ const nudgedRuns = (scale) => new Promise((resolve, reject) => {
   w.once('message', resolve);
   w.once('error', reject);
 });
-const NUDGED = [1 + 1e-12, 1 - 1e-12].map((scale) => nudgedRuns(scale).then((r) => ({ scale, ...r })));
+// A failed worker is caught here and held as the error, so it fails the test
+// below cleanly instead of surfacing as an unhandled rejection.
+const NUDGED = [1 + 1e-12, 1 - 1e-12].map((scale) => nudgedRuns(scale).then((r) => ({ scale, ...r }), (err) => ({ scale, err })));
 const LITERAL_TRAIN_X0 = 0.11783946381590707;
 
 const meanLoss = (net, D) => D.X.reduce((s, x, i) => s + bceLogit(D.y[i], mlpForward(net, x).out[0]), 0) / D.X.length;
@@ -382,6 +384,29 @@ test('training-networks read-out rows and page', () => {
   assert.ok(T.readout(3, T.bigInfo(freshBig)).some((r) => /not finished/.test(r)));
   assert.ok(!T.readout(3, T.bigInfo(g)).some((r) => /not finished/.test(r)));
   assert.ok(T.readout(4, T.wdInfo(freshBig, { 0: freshBig })).some((r) => /not finished/.test(r)));
+  // Step 5 names an unfinished setting "not run yet" or "not yet at 400", never
+  // "not finished", so it cannot be mixed up with the status row (the shown run).
+  {
+    const fresh0 = T.makeBig(0);
+    const doneW = pageBig(T.LAMBDA);
+    const r0 = T.readout(4, T.wdInfo(doneW, { 0: fresh0, [T.LAMBDA]: doneW }));
+    assert.ok(r0.includes('λ = 0: not run yet'), r0.join('|'));
+    assert.equal(r0.at(-1), 'finished');
+    T.bigAdvance(fresh0, 4);
+    const r1 = T.readout(4, T.wdInfo(doneW, { 0: fresh0, [T.LAMBDA]: doneW }));
+    assert.ok(r1.includes('λ = 0: not yet at 400'), r1.join('|'));
+    assert.ok(r1.includes(`λ = 0.001: ${T.storyValues()['wd-end']}`), r1.join('|'));
+    const r2 = T.readout(4, T.wdInfo(fresh0, { 0: fresh0 }));
+    assert.ok(r2.includes('λ = 0.001: not run yet'), r2.join('|'));
+    assert.equal(r2.at(-1), 'not finished: press Train');
+    for (const rows of [r0, r1, r2]) {
+      assert.equal(rows.filter((r) => /not finished|finished$/.test(r)).length, 1, rows.join('|'));
+      for (const r of rows) assert.ok(r.length <= 26, r);
+    }
+  }
+  // The prose says the read-out reads "finished" once a run is done (fresh runs show "press Train").
+  assert.equal((html.match(/the read-out says finished once the run is done/g) || []).length, 3);
+  assert.doesNotMatch(html, /the read-out says when it is not finished/);
   // Step 2's read-out counts steps and epochs.
   const e = T.makeRun();
   T.advance(e, 25);
@@ -498,7 +523,8 @@ test('the quoted numbers do not hang on rounding', async () => {
   // scale 1 is the page's run exactly.
   assert.deepEqual(base.curves.bigTest, pageBig(0).test);
   assert.deepEqual(base.curves.wdTest, pageBig(T.LAMBDA).test);
-  for (const { scale, values, curves } of await Promise.all(NUDGED)) {
+  for (const { scale, values, curves, err } of await Promise.all(NUDGED)) {
+    assert.equal(err, undefined, `worker for scale ${scale} failed: ${err && err.stack}`);
     // Every number the page quotes from these runs, rounded as the page shows it,
     // including the epochs of the lowest test losses (120, 399) and the 45 rises.
     assert.deepEqual(values, base.values, String(scale));

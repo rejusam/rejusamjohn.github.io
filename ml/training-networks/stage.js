@@ -296,10 +296,12 @@ export function bigInfo(b, running = false) {
   };
 }
 
-// The current run, plus the final test loss of each weight-decay setting that has finished.
+// The current run, plus the final test loss of each weight-decay setting that has
+// finished, and whether each unfinished one has been started.
 export function wdInfo(b, runs, running = false) {
   const end = (r) => (r && bigFinished(r) ? r.test[BIG_EPOCHS] : null);
-  return { ...bigInfo(b, running), end0: end(runs[0]), endW: end(runs[LAMBDA]) };
+  const started = (r) => Boolean(r && r.t.state.iter > 0);
+  return { ...bigInfo(b, running), end0: end(runs[0]), endW: end(runs[LAMBDA]), started0: started(runs[0]), startedW: started(runs[LAMBDA]) };
 }
 
 // The run's state in words: "training…" only while the loop runs; "press Train"
@@ -330,14 +332,16 @@ export function readout(step, s) {
     return [`epoch ${s.epoch} of ${BIG_EPOCHS}`, `train loss: ${num(s.train, 3)}`, `test loss: ${num(s.test, 3)}`, `best test: ${num(s.best.value, 3)} @ ${s.best.epoch}`, trainStatus(s)];
   }
   if (step === 4) {
-    const end = (v) => (v === null ? 'not finished' : num(v, 3));
+    // An unfinished setting reads "not run yet" or "not yet at 400", never
+    // "not finished", so it cannot be confused with the status row below.
+    const end = (v, started) => (v !== null ? num(v, 3) : started ? `not yet at ${BIG_EPOCHS}` : 'not run yet');
     return [
       `λ = ${s.lambda} · epoch ${s.epoch}`,
       `train loss: ${num(s.train, 3)}`,
       `test loss: ${num(s.test, 3)}`,
       'final test loss:',
-      `λ = 0: ${end(s.end0)}`,
-      `λ = ${LAMBDA}: ${end(s.endW)}`,
+      `λ = 0: ${end(s.end0, s.started0)}`,
+      `λ = ${LAMBDA}: ${end(s.endW, s.startedW)}`,
       trainStatus(s),
     ];
   }
