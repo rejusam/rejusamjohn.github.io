@@ -200,6 +200,11 @@ test('stated facts about this run', () => {
   assert.equal(v['friends-at'], '19');
   assert.equal(v['possible'], '63');
   assert.equal(v['unfinished'], 'figs');
+  // Step 1: the space is the most common id.
+  const ids = S.idCounts();
+  assert.equal(ids.indexOf(Math.max(...ids)), 0);
+  assert.equal(v['most-common'], 'space');
+  assert.match(html, /The <span data-value="most-common">space<\/span> is the most common\./);
   // After all possible merges, every word is one token.
   const t = S.trainingText();
   const all = S.allMerges();
@@ -231,6 +236,17 @@ test('page', () => {
   assert.match(html, /Sennrich, Haddow &amp; Birch/);
   assert.match(html, /1508\.07909/);
   assert.match(html, /Words and Tokens/);
+  // Numbers inside maths and quiz text come from spans, not typed by hand.
+  assert.doesNotMatch(html, /data-tex="N = 8/);
+  assert.match(html, /than <span data-value="vocab-end">88<\/span> tokens/);
+  assert.match(html, /data-for="limit"><span data-value="vocab-end">88<\/span> is just/);
+  // Wording fixed in review: no history claim, no overreach about real systems.
+  assert.doesNotMatch(html, /never become more common|was brought to|brought byte-pair|shortest sequences/);
+  assert.match(html, /no pair is more common than the pair just merged/);
+  assert.match(html, /Many tokenisers used with large language models learn merges the same way/);
+  assert.match(html, /tens of thousands of tokens or more/);
+  assert.match(html, /with reduced motion it goes straight to the end/);
+  assert.match(html, /\\mathbf\{e\}_i\^\{\\mathsf\{T\}\}\\mathbf\{W\}/);
   assert.match(html, /<a class="next-lesson" href="\/ml\/embeddings\/">Next lesson: Embeddings: words as points →<\/a>/);
   assert.match(html, /<p class="coffee-line">If this helped, you can <button type="button" data-coffee>buy me a coffee<\/button>\.<\/p>/);
   assert.match(html, /<script type="module" src="https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js" data-cf-beacon='\{"token": "e46c62f910fe4def882feaed064efced"\}'><\/script>/);

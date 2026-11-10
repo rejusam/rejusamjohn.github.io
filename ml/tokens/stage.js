@@ -122,6 +122,7 @@ export function pageValues() {
   return {
     'n-sentences': String(N_SENTENCES),
     'n-chars': count(n),
+    'most-common': (() => { const c = ALPHABET[counts.indexOf(Math.max(...counts))]; return c === ' ' ? 'space' : c; })(),
     'absent': listText(absent),
     'first-pair': mergeText(merges[0]),
     'first-count': String(merges[0][2]),
@@ -531,7 +532,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   });
   input.addEventListener('input', () => {
     // maxlength is the first cap; sanitise caps again (in characters) and lower-cases.
-    typed = input.value.slice(0, MAX_INPUT * 2);
+    typed = Array.from(input.value).slice(0, MAX_INPUT * 2).join('');
     render();
   });
   input.addEventListener('change', () => announce(spoken()));
