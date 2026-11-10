@@ -231,6 +231,26 @@ test('longer contexts: from gibberish to words', () => {
   assert.notEqual(S.generate(S.DEFAULT_PROMPT, 3, 1, 263), S.generate(S.DEFAULT_PROMPT, 3, 1, 264));
 });
 
+test('counts treat every context on its own', () => {
+  // With n = 7, "mia lik" and "zoe lik" are two separate rows, each followed only by e.
+  const e = ALPHABET.indexOf('e');
+  for (const ctx of ['mia lik', 'zoe lik']) {
+    const c = S.countsFor(ctx, 7);
+    assert.equal(c.context, ctx);
+    assert.ok(c.total > 0);
+    assert.equal(c.counts[e], c.total);
+  }
+  const m = S.model(7);
+  const key = (s) => Array.from(s).map((ch) => ALPHABET.indexOf(ch)).join(',');
+  assert.ok(m.counts.has(key('mia lik')) && m.counts.has(key('zoe lik')));
+  assert.notEqual(key('mia lik'), key('zoe lik'));
+  // n = 7 puts the whole name inside the context, so the example holds as worded.
+  assert.match(html, /with n = 7, seeing "mia lik" many times teaches nothing about "zoe lik", although an e comes next in both/);
+  // Generation stories are scoped to n = 3 from the starting text, as tested above.
+  assert.match(html, /\(at n = 3, from the starting text\)/);
+  assert.match(html, /from the starting text, at n = 1/);
+});
+
 test('prompt sanitiser caps, lower-cases and marks unknowns', () => {
   const t = S.promptChips('Mia LIKES 3 Figs!', 3);
   assert.equal(t.text, 'mia likes 3 figs!');

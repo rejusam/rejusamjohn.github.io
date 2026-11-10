@@ -77,7 +77,7 @@ export const bpeDecode = tokens => tokens.join('');
 
 // ---- Character n-gram model ---------------------------------------------------------
 
-// n = context length in characters (1 to 5). Counts the next character after each
+// n = context length in characters (1 to 8 on the pages). Counts the next character after each
 // context, over ALPHABET. Characters outside ALPHABET in `text` are dropped first (and
 // skipped from a context in nextProbs).
 export function ngramModel(text, n, {k = 0.01} = {}) {
