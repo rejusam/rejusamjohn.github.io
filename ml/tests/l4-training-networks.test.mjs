@@ -552,3 +552,13 @@ test('the quoted numbers do not hang on rounding', async () => {
   assert.ok(margin(base.curves.bigTest, 120) > 1e-5);
   assert.ok(margin(base.curves.wdTest, 399) > 1e-3);
 });
+
+test('the read-out box width stays finite with no rows (step 6) or unmeasured rows', () => {
+  // Step 6 shows no read-out, so render() measures an empty list of rows; Math.max()
+  // of that is -Infinity, which was written to the box's width attribute.
+  assert.equal(T.boxWidth([]), 200);
+  assert.equal(T.boxWidth([], 150), 150);
+  assert.equal(T.boxWidth([120, 0]), 200);
+  assert.equal(T.boxWidth([120, 180]), 204);
+  for (const lens of [[], [0], [50, 60]]) assert.ok(Number.isFinite(T.boxWidth(lens)));
+});

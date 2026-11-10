@@ -493,7 +493,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     let wd = 200;
     try {
       const lens = rowsT.slice(0, texts.length).map((r) => r.getComputedTextLength());
-      if (lens.every((len) => len > 0)) wd = Math.max(...lens) + 24;
+      if (lens.length && lens.every((len) => len > 0)) wd = Math.max(...lens) + 24;
     } catch {
       // Keep the fixed width.
     }

@@ -112,6 +112,14 @@ export function makeLogit(net) {
 }
 
 // Mean binary cross-entropy (log-loss) over a data set, from the fast logit.
+// The read-out box's width from its rows' measured lengths. With no rows (step 6
+// has no box) or a row not yet laid out, keep the fallback: Math.max() of an empty
+// list is -Infinity, which is not a valid SVG width.
+export function boxWidth(lens, fallback = 200) {
+  if (!lens.length || !lens.every((len) => len > 0)) return fallback;
+  return Math.max(...lens) + 24;
+}
+
 export function meanLossFast(net, D) {
   const f = makeLogit(net);
   let s = 0;
@@ -739,8 +747,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     });
     let wd = 200;
     try {
-      const lens = rowsT.slice(0, texts.length).map((r) => r.getComputedTextLength());
-      if (lens.every((len) => len > 0)) wd = Math.max(...lens) + 24;
+      wd = boxWidth(rowsT.slice(0, texts.length).map((r) => r.getComputedTextLength()), wd);
     } catch {
       // Keep the fixed width.
     }
