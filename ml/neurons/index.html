@@ -126,7 +126,7 @@
             <div class="happening">
                 <p>The shading shows the neuron's output σ(z) at every spot on the plot: the stronger the violet, the closer to 1; the stronger the cyan, the closer to 0. The solid line is the boundary, where z = 0.</p>
                 <p>Move the sliders. The line turns and slides, and the shading follows, but the line never bends. The weights w₁ and w₂ set its direction and b shifts it. With w₁ = w₂ = 0 there is no line at all: z = b everywhere.</p>
-                <p>The activation does not change this. The output depends on the point only through z, so all points with the same z get the same output, and those points lie on a straight line.</p>
+                <p>None of the four activations on this page changes this. The output depends on the point only through z, so all points with the same z get the same output, and those points lie on a straight line. All four only rise or stay flat as z rises, so the side of the line with z &gt; 0 always gets the higher output, and one straight boundary is all there is.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -143,7 +143,7 @@
             <div class="happening">
                 <p>New made-up data: <span data-value="n-xor">80</span> points in four groups around the corners (±1, ±1). A point is class 1 when its corner's two signs differ, top left and bottom right, and class 0 otherwise. This pattern is called XOR, "exclusive or".</p>
                 <p>Move the sliders and try to split them. Whatever line you find, some group ends up on the wrong side.</p>
-                <p>The page checks every line it can: 360 directions, and for each direction every place the line could cut between points, with class 1 on either side. The best of all those lines gets <span data-value="xor-best">77.5%</span> right. A second check, which tries every way a straight line can split these 80 points, finds the same <span data-value="xor-best">77.5%</span>.</p>
+                <p>The page checks every line it can: <span data-value="xor-angles">360</span> directions, and for each direction every place the line could cut between points, with class 1 on either side. The best of all those lines gets <span data-value="xor-best">77.5%</span> right. A second check, which tries every way a straight line can split these 80 points, finds the same <span data-value="xor-best">77.5%</span>.</p>
                 <p>For scale, <span data-value="xor-ones">42</span> of the 80 points are class 1, so calling everything class 1 already gets <span data-value="xor-major">52.5%</span>. The best line does better than that, but it still gets <span data-value="xor-wrong">18</span> of the 80 wrong, whatever the weights.</p>
             </div>
             <details class="maths">
@@ -198,7 +198,7 @@
                 <label><input type="radio" name="q2" value="train"> The weights were not trained for long enough</label>
             </fieldset>
             <p class="why" data-for="line">Right. On these data the best line of all gets 77.5% right. The corners alone already rule a line out: the conditions for the four corners contradict each other.</p>
-            <p class="why" data-for="act">The output depends on the point only through z, so with any activation the neuron's regions are split by a straight line.</p>
+            <p class="why" data-for="act">The output depends on the point only through z, and ReLU, like the sigmoid, only rises or stays flat as z rises. With any of the four activations here, the neuron's regions are split by one straight line.</p>
             <p class="why" data-for="data">More points in the same four groups would not help. Even the four corners on their own cannot be split by a line.</p>
             <p class="why" data-for="train">The page checked every possible line, not just one found by training. None does better than 77.5%.</p>
         </form>
@@ -209,14 +209,14 @@
         <ul>
             <li>A neuron computes z = <strong>w</strong>·<strong>x</strong> + b and outputs a = g(z), where g is its activation: step, sigmoid, tanh or ReLU.</li>
             <li>With a sigmoid, one neuron is exactly logistic regression, and fitting it means making the log-loss (binary cross-entropy) small.</li>
-            <li>Whatever the activation, one neuron's boundary is a straight line, so it cannot split XOR data.</li>
+            <li>With any of the four activations here (all only rise or stay flat as z rises), one neuron's boundary is a straight line, so it cannot split XOR data.</li>
             <li>Two neurons can draw two lines and a third can combine them. Learning where to put the lines is the next lesson.</li>
         </ul>
 
         <h3>Common misconceptions</h3>
         <ul class="misconceptions">
             <li>"An artificial neuron works like a brain cell." The name is a loose analogy. The neuron is a weighted sum, a bias and an activation.</li>
-            <li>"A different activation would let one neuron bend the boundary." The output depends on the point only through z, so the boundary stays straight with any activation.</li>
+            <li>"A different activation would let one neuron bend the boundary." The output depends on the point only through z, and step, sigmoid, tanh and ReLU only rise or stay flat as z rises, so with any of them the boundary stays one straight line.</li>
             <li>"The sigmoid makes the boundary curved." It curves the output along the direction of <strong>w</strong>; the boundary z = 0 is still a line.</li>
         </ul>
 

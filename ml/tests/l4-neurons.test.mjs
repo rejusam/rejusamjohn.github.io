@@ -211,3 +211,28 @@ test('neurons page values match the computations', () => {
   assert.equal(L.num(-1.5, 2), '−1.50');
   assert.equal(L.pct(1), '100%');
 });
+
+test('all four activations only rise or stay flat as z rises', () => {
+  // This is what makes one neuron's boundary a single straight line on this page.
+  for (const key of L.ACT_KEYS) {
+    let prev = -Infinity;
+    for (let z = -8; z <= 8; z += 0.01) {
+      const a = L.ACTS[key].f(z);
+      assert.ok(a >= prev, `${key} at ${z}`);
+      prev = a;
+    }
+  }
+  assert.equal(L.pageValues()['xor-angles'], String(L.ANGLES));
+  assert.match(html, /<span data-value="xor-angles">360<\/span> directions/);
+});
+
+test('moving one slider after Fit keeps the other fitted weights exact', () => {
+  const f = L.fit();
+  let st = { w: f.w.slice(), b: f.w0 };
+  st = L.applySlider(st, 0, 1.25);
+  assert.deepEqual(st, { w: [1.25, f.w[1]], b: f.w0 });
+  st = L.applySlider({ w: f.w.slice(), b: f.w0 }, 1, -9);
+  assert.deepEqual(st, { w: [f.w[0], L.RANGE.min], b: f.w0 });
+  st = L.applySlider({ w: f.w.slice(), b: f.w0 }, 2, 0.5);
+  assert.deepEqual(st, { w: f.w, b: 0.5 });
+});

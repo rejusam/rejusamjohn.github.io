@@ -37,6 +37,15 @@ export function neuron(w, b, x, g = 'sigmoid') {
   return { z, a: ACTS[g].f(z) };
 }
 
+// A slider moved: replace only that weight (0: w₁, 1: w₂, 2: b), clamped to
+// the range, and keep the other two exactly as they were.
+export function applySlider({ w, b }, which, value) {
+  const v = Math.min(RANGE.max, Math.max(RANGE.min, value));
+  if (which === 0) return { w: [v, w[1]], b };
+  if (which === 1) return { w: [w[0], v], b };
+  return { w: w.slice(), b: v };
+}
+
 let FIT = null;
 export const fit = () => (FIT ??= logisticFit(BL.X, BL.y));
 
@@ -466,13 +475,14 @@ export function createStage(svg, { controls, announce = () => {} }) {
     };
   })();
 
-  const onSlide = () => {
-    w = [clamp(Number(w1S.input.value), RANGE.min, RANGE.max), clamp(Number(w2S.input.value), RANGE.min, RANGE.max)];
-    b = clamp(Number(bS.input.value), RANGE.min, RANGE.max);
+  // Only the weight whose slider moved is read back, so exact fitted values in
+  // the other two survive (the inputs snap them to the 0.05 grid).
+  const onSlide = (which) => () => {
+    ({ w, b } = applySlider({ w, b }, which, Number([w1S, w2S, bS][which].input.value)));
     render();
     say(spoken(step));
   };
-  for (const s of [w1S, w2S, bS]) s.input.addEventListener('input', onSlide);
+  [w1S, w2S, bS].forEach((s, k) => s.input.addEventListener('input', onSlide(k)));
 
   fitBtn.addEventListener('click', () => {
     w = f.w.slice();
