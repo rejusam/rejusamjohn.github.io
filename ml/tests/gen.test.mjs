@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {gauss1Fit, gauss2Fit, blobs3, BLOBS, spiral2D, gmmInit, gmmEM, gmmLogLik, gmmSample,
-  ddpmSchedule, qSample, timeFeatures, denoiserInit, denoiserForward, denoiserPreacts,
+  ddpmSchedule, qSample, timeFeatures, inputFeatures, LESSON_SPIRAL, denoiserInit, denoiserForward, denoiserPreacts,
   denoiserGrad, denoiserFlatten, denoiserUnflatten, ddpmTrainer, ddpmStep, ddpmSample,
   nearestDist} from '../assets/gen.js';
 import {gradCheck, spiralData} from '../assets/nn.js';
@@ -156,6 +156,19 @@ test('ddpmStep matches Algorithm 2 by hand', () => {
   assert.deepEqual(ddpmStep(net, x, 7, z, s), ddpmStep(f, x, 7, z, s));
 });
 
+test('inputFeatures by hand', () => {
+  const f = inputFeatures(Math.PI / 2, 0);
+  const want = [Math.PI / 2, 0,
+    1, 0, 0, 1,    // k = 1: sin(pi/2), cos(pi/2), sin 0, cos 0
+    0, -1, 0, 1,   // k = 2: sin(pi), cos(pi)
+    0, 1, 0, 1];   // k = 4: sin(2 pi), cos(2 pi)
+  assert.equal(f.length, 14);
+  want.forEach((w, i) => near(f[i], w, 1e-15, `feature ${i}`));
+  // the network's first layer sees exactly these, then the time features
+  const net = denoiserInit({hidden: [3], seed: 1});
+  assert.equal(net.sizes[0], 14 + 7);
+});
+
 const smallBatch = () => {
   const rng = mulberry32(77);
   return Array.from({length: 3}, (_, i) => ({
@@ -184,18 +197,18 @@ test('denoiser gradient check', () => {
 
 test('denoiser init: He scale, zero biases, flatten round trip', () => {
   const net = denoiserInit({hidden: [64, 64], seed: 5});
-  assert.deepEqual(net.sizes, [9, 64, 64, 2]);
+  assert.deepEqual(net.sizes, [21, 64, 64, 2]);
   const v = denoiserFlatten(net);
   assert.ok(v instanceof Float64Array);
-  assert.equal(v.length, 9 * 64 + 64 + 64 * 64 + 64 + 64 * 2 + 2);
+  assert.equal(v.length, 21 * 64 + 64 + 64 * 64 + 64 + 64 * 2 + 2);
   assert.deepEqual(denoiserFlatten(denoiserUnflatten(net, v)), v);
   v[0] = 99;
   assert.notEqual(denoiserFlatten(net)[0], 99);
   // second layer weights: variance near 2 / 64
-  const W2 = net.params.slice(9 * 64 + 64, 9 * 64 + 64 + 64 * 64);
+  const W2 = net.params.slice(21 * 64 + 64, 21 * 64 + 64 + 64 * 64);
   const m2 = W2.reduce((s, w) => s + w * w, 0) / W2.length;
   near(m2, 2 / 64, 0.004);
-  assert.ok(net.params.slice(9 * 64, 9 * 64 + 64).every(b => b === 0));
+  assert.ok(net.params.slice(21 * 64, 21 * 64 + 64).every(b => b === 0));
 });
 
 const spiralSetup = () => ({X: spiral2D({n: 400, seed: 305}), sched: ddpmSchedule(50)});
@@ -244,4 +257,20 @@ test('nearestDist by hand', () => {
   near(nearestDist(A, B), 2.5, 1e-15);
   near(nearestDist(B, A), 2, 1e-15);
   assert.equal(nearestDist(A, A), 0);
+});
+
+test('trained diffusion samples sit far closer to the spiral than noise does', () => {
+  const X = spiral2D(LESSON_SPIRAL), sched = ddpmSchedule(50);
+  assert.deepEqual(LESSON_SPIRAL, {n: 400, seed: 305, turns: 1, noise: 0.1});
+  const tr = ddpmTrainer({net: denoiserInit({hidden: [64, 64], seed: 311}), X, sched,
+    batch: 128, hyper: {eta: 3e-3}, seed: 312});
+  const s = tr.step(6000);
+  assert.equal(s.diverged, false);
+  const {X: S, path} = ddpmSample(s.net, 400, sched, 313, {keepPath: true});
+  const noise = path[0]; // the very points the samples started from
+  const prec = nearestDist(S, X), cov = nearestDist(X, S);
+  const prec0 = nearestDist(noise, X), cov0 = nearestDist(X, noise);
+  // measured: samples 0.079 / 0.062, noise 0.222 / 0.112
+  assert.ok(prec < 0.6 * prec0, `precision ${prec} vs noise ${prec0}`);
+  assert.ok(cov < 0.8 * cov0, `coverage ${cov} vs noise ${cov0}`);
 });

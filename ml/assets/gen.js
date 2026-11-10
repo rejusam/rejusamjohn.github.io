@@ -60,6 +60,9 @@ export function spiral2D({n, seed, turns, noise}) {
   return X.map(p => [(p[0] - st[0][0]) / st[0][1], (p[1] - st[1][0]) / st[1][1]]);
 }
 
+// The spiral both generative lessons use (mixtures and diffusion).
+export const LESSON_SPIRAL = Object.freeze({n: 400, seed: 305, turns: 1, noise: 0.1});
+
 // ---- Gaussian mixtures -------------------------------------------------------------
 
 const LOG2PI = Math.log(2 * Math.PI);
@@ -184,10 +187,22 @@ export function timeFeatures(t, T) {
 }
 
 // ---- denoiser: a flat-array ReLU MLP ---------------------------------------------------
-// Input (x, y, ...timeFeatures) = 9 values, output the predicted noise (2 values).
+// Input: inputFeatures(x, y) (14 values) followed by timeFeatures(t, T) (7 values),
+// 21 in all. Output: the predicted noise (2 values).
 // params holds, layer by layer, W (out x in, row-major) then b (out).
 
-const N_IN = 9;
+const FREQS = [1, 2, 4];
+
+// Position features of a point: x, y, then for k = 1, 2, 4 in turn
+// sin(k x), cos(k x), sin(k y), cos(k y). 14 values. The sines and cosines let a
+// small network bend its output sharply enough to follow a spiral.
+export function inputFeatures(x, y) {
+  const f = [x, y];
+  for (const k of FREQS) f.push(Math.sin(k * x), Math.cos(k * x), Math.sin(k * y), Math.cos(k * y));
+  return f;
+}
+
+const N_IN = 2 + 4 * FREQS.length + 7;
 
 export function denoiserInit({hidden = [64, 64], seed}) {
   const sizes = [N_IN, ...hidden, 2];
@@ -209,7 +224,7 @@ export const denoiserUnflatten = (net, v) => ({sizes: net.sizes, params: Float64
 // Forward pass keeping every layer's input (acts) and pre-activation (pre).
 function forward(net, x, tf) {
   const {sizes, params} = net, L = sizes.length - 1;
-  let a = Float64Array.of(x[0], x[1], ...tf);
+  let a = Float64Array.of(...inputFeatures(x[0], x[1]), ...tf);
   const acts = [a], pre = [];
   let o = 0;
   for (let l = 0; l < L; l++) {
