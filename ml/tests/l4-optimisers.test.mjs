@@ -323,7 +323,13 @@ test('network η from the grid and the story of step 6', () => {
     const L = nets[kind].losses;
     assert.ok(L.slice(1).some((v, i) => v > L[i]), kind);
   }
+  // A large step can overshoot even with no batch noise: with full batches
+  // RMSProp's loss still goes up between epochs; the other three do not.
+  assert.ok(O.fullBatchUps('rmsprop') > 0);
+  for (const kind of ['sgd', 'momentum', 'adam']) assert.equal(O.fullBatchUps(kind), 0, kind);
+  assert.equal(sv['rms-full-ups'], String(O.fullBatchUps('rmsprop')));
   const rows = O.readout(5, O.netInfo());
+  assert.equal(rows[0], 'train loss · test acc.');
   for (const kind of O.KINDS) assert.ok(rows.some((r) => r.includes(sv[`net-${kind}`]) && r.includes(sv[`acc-${kind}`])), rows.join('|'));
 });
 
@@ -345,6 +351,7 @@ test('optimisers read-out rows and page', () => {
     }
   }
   assert.ok(O.readout(4, O.raceInfo(runs, 0)).some((r) => /press Train/.test(r)));
+  assert.ok(O.readout(4, O.raceInfo(runs, 0)).includes('all four start together'));
 
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Optimisers: momentum and Adam · ML Explorer<\/title>/);

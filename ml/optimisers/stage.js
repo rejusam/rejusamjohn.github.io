@@ -182,6 +182,16 @@ export function netRun(kind) {
 }
 export const netInfo = () => ({ nets: Object.fromEntries(KINDS.map((k) => [k, NETS.get(k) || null])) });
 
+// How many times the training loss goes up from one epoch to the next.
+export const ups = (losses) => losses.slice(1).filter((v, i) => v > losses[i]).length;
+
+// The same run with every batch holding all 200 points (a noise-free gradient).
+export function fullBatchUps(kind) {
+  const t = trainer({ net: startNet(), X: TR.X, y: TR.y, batch: N_TRAIN, kind, hyper: { eta: NET_ETA[kind] }, seed: SEED_SHUFFLE });
+  t.step(NET_EPOCHS);
+  return ups(t.state.epochLoss);
+}
+
 // The grid search behind NET_ETA (used by the tests, not by the page).
 export function tuneNet(kind) {
   const table = GRID.map((eta) => {
@@ -222,13 +232,14 @@ export function readout(step, s) {
   }
   if (step === 4) {
     const head = s.k === 0 ? 'press Train to race' : `step ${s.k}`;
-    return [head, ...KINDS.map((k) => {
+    const note = s.k === 0 ? ['all four start together'] : [];
+    return [head, ...note, ...KINDS.map((k) => {
       const name = `${LABEL[k]} η ${s.runs[k].eta}`;
       return s.done[k] ? `${name}: at ${s.runs[k].reached}` : `${name}: ℒ ${num(s.loss[k], 2)}`;
     })];
   }
   if (step === 5) {
-    return ['epoch 100: loss · test', ...KINDS.map((k) => {
+    return ['train loss · test acc.', ...KINDS.map((k) => {
       const r = s.nets[k];
       return r ? `${LABEL[k]}: ${num(r.final, 3)} · ${pct(r.test)}` : `${LABEL[k]}: computing…`;
     })];
@@ -286,6 +297,7 @@ export function storyValues() {
     v[`net-${k}`] = num(r.final, 3);
     v[`acc-${k}`] = pct(r.test);
   }
+  v['rms-full-ups'] = String(fullBatchUps('rmsprop'));
   STORY = v;
   return v;
 }
@@ -548,7 +560,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     const rows = readout(i, s);
     if (i <= 3) return `${rows.join(', ')}.`;
     if (i === 4) return raceK === 0 ? 'Press Train to start the race.' : `${rows.join(', ')}.`;
-    return `Training loss after 100 epochs and test accuracy: ${rows.slice(1).join(', ')}.`;
+    return `After 100 epochs, training loss and test accuracy: ${rows.slice(1).join(', ')}.`;
   };
 
   // Steps 1 to 4: the path is drawn step by step, about a second in all.
