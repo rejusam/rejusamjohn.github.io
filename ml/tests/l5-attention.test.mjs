@@ -451,6 +451,9 @@ test('page', () => {
   // Wording fixed in review.
   assert.match(html, /Softmax, from <a href="\/ml\/embeddings\/">embeddings<\/a>/);
   assert.doesNotMatch(html, /not a contest of size/);
+  // Only k = 1, 2, 4 and 8 are run: no phrase may claim the whole range 1 to 8.
+  assert.doesNotMatch(html.replace(/<[^>]*>/g, ''), /from 1 to 8|every k from|1–8|k = 1 to 8/);
+  assert.match(html, /k = 1, 2, 4 and 8 all end at/);
   assert.match(html, /so this is not a like-for-like contest/);
   assert.match(html, /in the rows with a target, the dots sit k cells left of the diagonal/);
   assert.match(html, /Suppose all the <span class="tex" data-tex="2 d_k">/);
