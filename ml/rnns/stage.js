@@ -24,6 +24,8 @@ export const NH = 8;
 export const ETA = 0.02;
 export const BATCH = 10;
 // The budget: every run on the page is 10 epochs, 200 batches of 10 sequences.
+// Beyond about epoch 17 the k = 8 run is sensitive to last-digit rounding of the
+// starting weights, so its numbers there could differ between browsers.
 export const EPOCHS = 10;
 export const ITERS = (EPOCHS * N_TRAIN) / BATCH;
 export const K_LIVE = 2;
@@ -42,6 +44,29 @@ export const trainSet = (k) => cached(`tr${k}`, () => echoData({ n: N_TRAIN, T, 
 export const testSet = (k) => cached(`te${k}`, () => echoData({ n: N_TEST, T, k, seed: SEED_TEST }));
 export const startNet = () => rnnInit({ nh: NH, seed: SEED_INIT });
 export const maskedCount = (k) => N_TEST * (T - k);
+export const BATCHES_PER_EPOCH = N_TRAIN / BATCH;
+
+// The most input bits the hidden state must carry at once: after reading x_t it
+// still needs every x_j with t − k ≤ j ≤ t whose target step j + k is at most T.
+export function bitsAtOnce(k, len = T) {
+  let most = 0;
+  for (let t = 1; t <= len; t++) {
+    let c = 0;
+    for (let j = Math.max(1, t - k); j <= t; j++) if (j + k <= len) c++;
+    most = Math.max(most, c);
+  }
+  return most;
+}
+
+// Pacing of the live run (frames only; the training itself is unchanged): during
+// the first epoch one batch every SLOW_FRAMES frames, so the rise can be watched,
+// then one batch per frame. waited counts the frames still to wait.
+export const SLOW_FRAMES = 8;
+export function paceFrame(iter, waited) {
+  if (iter >= BATCHES_PER_EPOCH) return { take: 1, waited: 0 };
+  if (waited <= 0) return { take: 1, waited: SLOW_FRAMES - 1 };
+  return { take: 0, waited: waited - 1 };
+}
 
 // ---- predictions, accuracy and loss --------------------------------------------
 
@@ -344,6 +369,10 @@ export function pageValues() {
     'n-params': String(rnnFlatten(startNet()).length),
     'masked-k2': count(maskedCount(2)),
     'masked-k8': count(maskedCount(8)),
+    'held-k1': String(bitsAtOnce(1)),
+    'held-k2': String(bitsAtOnce(2)),
+    'held-k4': String(bitsAtOnce(4)),
+    'held-k8': String(bitsAtOnce(8)),
   };
 }
 
@@ -813,9 +842,14 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   const spoken = () => `${readout(step, info()).join('. ')}.`;
 
-  // ---- step 3's live run: one batch per frame, about three seconds for the 200.
+  // ---- step 3's live run: the first epoch slowly (about 2.7 s), then one batch per frame.
+  let waited = 0;
   const loop = createTrainLoop({
-    step: () => getLive().advance(1),
+    step: () => {
+      const r = paceFrame(getLive().trainer.state.iter, waited);
+      waited = r.waited;
+      if (r.take) getLive().advance(r.take);
+    },
     render,
     done: () => getLive().done(),
     onStop: () => {
@@ -825,7 +859,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     },
   });
   const buttons = trainButtons(trainGroup, loop, {
-    onReset: () => getLive().reset(),
+    onReset: () => { waited = 0; getLive().reset(); },
     reduced,
     runToEnd: () => getLive().advance(ITERS),
     render: () => { render(); announce(spoken()); },

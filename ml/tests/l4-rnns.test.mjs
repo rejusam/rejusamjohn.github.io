@@ -376,6 +376,58 @@ test('spectral norm of W_h', () => {
   assert.equal(S.storyValues()['wh-norm'], S.num(norm, 2));
 });
 
+test('bits the hidden state must carry at once', () => {
+  // Written out again: after reading x_t (t = 1..12) the bits still needed now or
+  // later are the x_j whose target step s = j + k satisfies t ≤ s ≤ min(12, t + k).
+  const most = (k) => {
+    let m = 0;
+    for (let t = 1; t <= 12; t++) {
+      let c = 0;
+      for (let s = Math.max(k + 1, t); s <= Math.min(12, t + k); s++) c++;
+      m = Math.max(m, c);
+    }
+    return m;
+  };
+  for (const k of S.K_CHOICES) assert.equal(S.bitsAtOnce(k), most(k), String(k));
+  assert.deepEqual(S.K_CHOICES.map((k) => S.bitsAtOnce(k)), [2, 3, 5, 4]);
+  // k = 8 needs fewer at once than k = 4, which reached 100% within the budget.
+  assert.ok(S.bitsAtOnce(8) < S.bitsAtOnce(4));
+  assert.equal(pageRuns()[4].testOk[10], pageRuns()[4].n);
+  // k = 8's only targets are x_1..x_4, at steps 9 to 12 (zero-based 8..11).
+  const D = S.testSet(8);
+  D.mask.forEach((m, i) => {
+    assert.deepEqual(m.map((v, t) => (v ? t : -1)).filter((t) => t >= 0), [8, 9, 10, 11]);
+    assert.deepEqual([8, 9, 10, 11].map((t) => D.targets[i][t]), D.seqs[i].slice(0, 4));
+  });
+  const pv = S.pageValues();
+  for (const k of S.K_CHOICES) assert.equal(pv[`held-k${k}`], String(S.bitsAtOnce(k)));
+});
+
+test('live pacing: first epoch slow, then one batch per frame, same run', () => {
+  assert.equal(S.BATCHES_PER_EPOCH, 20);
+  assert.equal(S.SLOW_FRAMES, 8);
+  const live = S.makeLive();
+  let waited = 0;
+  let frames = 0;
+  const takenAt = [];
+  while (!live.done()) {
+    const r = S.paceFrame(live.trainer.state.iter, waited);
+    waited = r.waited;
+    assert.ok(r.take === 0 || r.take === 1);
+    if (r.take) { live.advance(r.take); takenAt.push(frames); }
+    frames++;
+  }
+  // The first batch on the first frame; then 8 frames per batch for the first epoch.
+  assert.equal(takenAt[0], 0);
+  for (let i = 1; i < 20; i++) assert.equal(takenAt[i] - takenAt[i - 1], 8, String(i));
+  for (let i = 21; i < 200; i++) assert.equal(takenAt[i] - takenAt[i - 1], 1, String(i));
+  // The rise (to batch 18 and beyond) takes about 2.5 s at 60 frames a second.
+  assert.ok(takenAt[18] / 60 > 2 && takenAt[19] / 60 < 3);
+  // Pacing changes nothing about the run.
+  assert.deepEqual(live.testOk, liveRun().testOk);
+  assert.deepEqual(live.trainer.state.epochLoss, liveRun().trainer.state.epochLoss);
+});
+
 test('the quoted numbers do not hang on rounding', () => {
   const sv = S.storyValues();
   const runs = pageRuns();
@@ -510,6 +562,10 @@ test('page', () => {
   assert.doesNotMatch(html, /understands|learns like|it decided|always better|can learn anything|solves? (the )?(long|memory)|solved/i);
   assert.doesNotMatch(html, /delve|in today's world|unlock|harness the power|it's important to note|dive in/i);
   assert.doesNotMatch(html, /Next lesson: /);
+  assert.doesNotMatch(html, /last 8 bits|next three targets|only needs the last 2/);
+  assert.match(html, /epoch 17/);
+  assert.match(html, /measured on the k = 8 test targets/);
+  assert.match(html, /above the 50% of chance/);
   assert.equal((html.match(/<form class="q"/g) || []).length, 2);
   assert.match(html, /What does the hidden state carry\?/);
   assert.match(html, /Why is k = 8 harder to learn than k = 2\?/);
