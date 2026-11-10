@@ -62,7 +62,8 @@ export function parseWeight(raw) {
   const v = Number(String(raw ?? '').trim().replace(/−/g, '-'));
   if (Number.isNaN(v) || String(raw ?? '').trim() === '') return 0;
   const c = Math.min(W_MAX, Math.max(W_MIN, v));
-  const snapped = Math.round(c / W_STEP) * W_STEP;
+  // Ties go away from 0 on both sides: 0.25 → 0.5 and −0.25 → −0.5.
+  const snapped = Math.sign(c) * Math.round(Math.abs(c) / W_STEP) * W_STEP;
   return snapped === 0 ? 0 : snapped;
 }
 export const parseFilter = (raw) => raw.map((row) => row.map(parseWeight));
@@ -154,6 +155,8 @@ export function fmtV(v) {
   const s = String(Math.abs(r));
   return r < 0 ? `−${s}` : s;
 }
+// A map cell carries a minus sign whenever its value reads as negative at two decimals.
+export const minusShown = (v) => v < 0 && fmtV(v) !== '0';
 const fmtW = (w) => (Math.abs(w - 1 / 9) < 1e-12 ? '1/9' : fmtV(w));
 const fmtCount = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
@@ -589,7 +592,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
           mapRects[k].setAttribute('class', f.cls);
           mapRects[k].setAttribute('opacity', on ? P(f.opacity) : 0);
           mapDots[k].setAttribute('visibility', on ? 'hidden' : 'visible');
-          mapMarks[k].setAttribute('visibility', on && v < 0 && scale > 0 && -v >= 0.1 * scale ? 'visible' : 'hidden');
+          mapMarks[k].setAttribute('visibility', on && minusShown(v) ? 'visible' : 'hidden');
         }
       }
       const [i, j] = clampPos(s.m);
@@ -654,7 +657,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   };
   for (const sl of [rowS, colS]) {
     sl.input.addEventListener('input', () => {
-      if (step === 2 && filled !== null) stopSweep();
+      if (filled !== null) stopSweep();
       const a = Number(rowS.input.value) || 0;
       const b = Number(colS.input.value) || 0;
       setCursor(a, b);
@@ -769,7 +772,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       step = i;
       token++;
       filled = null;
-      posGroup.style.display = i <= 2 ? 'flex' : 'none';
+      posGroup.style.display = 'flex';
       replay.style.display = i === 2 ? '' : 'none';
       filtGroup.style.display = i === 3 ? 'flex' : 'none';
       sizeGroup.style.display = i === 4 ? 'flex' : 'none';

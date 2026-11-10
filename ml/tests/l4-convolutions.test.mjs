@@ -105,7 +105,9 @@ test('vertical-edge map is largest on the square\'s vertical edges', () => {
 });
 
 test('shifting the image shifts the map', () => {
-  // The page's image: nothing falls off for shifts of up to 2, so the whole map moves.
+  // The page's image: no pixel falls off the image for shifts of up to 2. Every map value
+  // that stays on the map moves exactly d columns right; columns j < d of the shifted map
+  // are 0; the original map's last d columns slide out of view (some of them are not 0).
   for (const d of C.SHIFTS) {
     const a = C.mapFor(C.cleanImage(), VERT);
     const b = C.mapFor(C.shiftRight(C.cleanImage(), d), VERT);
@@ -114,6 +116,13 @@ test('shifting the image shifts the map', () => {
         if (j >= d) assert.equal(b[i][j], a[i][j - d], `${d} ${i} ${j}`);
         else assert.equal(b[i][j], 0);
       }
+    }
+    const kept = C.cleanImage().flat().reduce((t, v) => t + v, 0);
+    assert.equal(C.shiftRight(C.cleanImage(), d).flat().reduce((t, v) => t + v, 0), kept, 'no pixel pushed off');
+    if (d === 2) {
+      const lost = [];
+      a.forEach((row, i) => row.forEach((v, j) => { if (j >= 10 - d && v !== 0) lost.push([i, j]); }));
+      assert.deepEqual(lost, [[4, 9], [5, 8], [5, 9], [6, 8], [6, 9], [7, 8]]);
     }
     const hb = cellsOf(b, 'max');
     assert.deepEqual(hb.cells, [[2, d], [2, 1 + d], [3, d], [3, 1 + d]]);
@@ -156,6 +165,17 @@ test('editable filter output equals conv2d', () => {
   assert.equal(C.parseWeight('Infinity'), 2);
   assert.equal(C.parseWeight(undefined), 0);
   assert.ok(Object.is(C.parseWeight('-0.1'), 0));
+  // Ties are snapped away from 0 on both sides.
+  assert.equal(C.parseWeight('0.25'), 0.5);
+  assert.equal(C.parseWeight('-0.25'), -0.5);
+  assert.equal(C.parseWeight('0.75'), 1);
+  assert.equal(C.parseWeight('-0.75'), -1);
+  assert.equal(C.parseWeight('1.75'), 2);
+  assert.equal(C.parseWeight('-1.75'), -2);
+  for (let k = -40; k <= 40; k++) {
+    const v = k / 10;
+    assert.equal(C.parseWeight(String(v)), -C.parseWeight(String(-v)) || 0, String(v));
+  }
   const rng = mulberry32(11);
   for (let t = 0; t < 20; t++) {
     const raw = Array.from({ length: 3 }, () => Array.from({ length: 3 }, () => String((rng() * 6 - 3).toFixed(2))));
@@ -198,6 +218,19 @@ test('window products sum to the map value at every position', () => {
       }
     }
   }
+});
+
+test('every negative map value that reads as negative carries a minus sign', () => {
+  for (const img of [C.cleanImage(), C.noisyImage()]) {
+    for (const W of [...Object.values(C.FILTERS), C.TRY_LINE]) {
+      for (const v of C.mapFor(img, W).flat()) {
+        assert.equal(C.minusShown(v), C.fmtV(v).startsWith('\u2212'), String(v));
+        if (v <= -0.005) assert.ok(C.minusShown(v), String(v));
+      }
+    }
+  }
+  assert.ok(!C.minusShown(-0.001));
+  assert.ok(!C.minusShown(0.4));
 });
 
 test('weight sharing counts', () => {
