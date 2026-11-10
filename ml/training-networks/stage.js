@@ -125,25 +125,42 @@ export function meanAbsChange(ys) {
 // ---- step 1: the same 1600 examples in batches of 1, 8 and 160
 
 const NOISE = new Map();
+const JOBS = new Map();
+
+// Runs batch size b for k more optimiser steps (never past its 1600 examples)
+// and returns true once its result is ready. The page calls this in small
+// slices so no single task is long; the result does not depend on the slicing.
+export function noiseWork(b, k) {
+  if (NOISE.has(b)) return true;
+  if (!JOBS.has(b)) {
+    JOBS.set(b, trainer({ net: startNet(), X: TR.X, y: TR.y, batch: b, kind: 'adam', hyper: { eta: ETA }, seed: SEED_SHUFFLE }));
+  }
+  const t = JOBS.get(b);
+  const steps = NOISE_EXAMPLES / b;
+  t.step(Math.max(0, Math.min(k, steps - t.state.iter)));
+  if (t.state.iter < steps) return false;
+  const ys = t.state.batchLoss.slice();
+  NOISE.set(b, {
+    b, steps, ys,
+    xs: ys.map((_, i) => (i + 1) * b),
+    noise: meanAbsChange(ys),
+    end: t.state.epochLoss[NOISE_EXAMPLES / N_TRAIN],
+  });
+  JOBS.delete(b);
+  return true;
+}
+
+export const noiseReady = (b) => NOISE.has(b);
+
 // The loss on each step's batch, measured just before that step, plotted at the
 // number of examples seen once that batch is used.
 export function noiseRun(b) {
-  if (!NOISE.has(b)) {
-    const t = trainer({ net: startNet(), X: TR.X, y: TR.y, batch: b, kind: 'adam', hyper: { eta: ETA }, seed: SEED_SHUFFLE });
-    const steps = NOISE_EXAMPLES / b;
-    t.step(steps);
-    const ys = t.state.batchLoss.slice();
-    NOISE.set(b, {
-      b, steps, ys,
-      xs: ys.map((_, i) => (i + 1) * b),
-      noise: meanAbsChange(ys),
-      end: t.state.epochLoss[NOISE_EXAMPLES / N_TRAIN],
-    });
-  }
+  noiseWork(b, Infinity);
   return NOISE.get(b);
 }
 
-export const noiseInfo = (b) => noiseRun(b);
+// The read-out's numbers, or only the batch size while the run is being computed.
+export const noiseInfo = (b) => (NOISE.has(b) ? NOISE.get(b) : { b, pending: true });
 
 // ---- steps 2 and 3: the spiral run
 
@@ -274,6 +291,7 @@ const NOT_DONE = 'not finished: press Train';
 
 export function readout(step, s) {
   if (step === 0) {
+    if (s.pending) return [`batch size ${s.b}${s.b === N_TRAIN ? ' (all)' : ''}`, `${N_TRAIN / s.b} steps per epoch`, 'computing…'];
     return [
       `batch size ${s.b}${s.b === N_TRAIN ? ' (all)' : ''}`,
       `${N_TRAIN / s.b} steps per epoch`,
@@ -366,7 +384,7 @@ export function storyValues() {
   const bw = earlyStop(w.test);
   v['wd-end'] = num(w.test[BIG_EPOCHS], 3);
   v['wd-best'] = num(bw.value, 3);
-  v['wd-rise'] = `${Math.round((w.test[BIG_EPOCHS] / bw.value - 1) * 100)}%`;
+  v['wd-best-epoch'] = String(bw.epoch);
   v['wd-train-end'] = num(w.t.state.epochLoss[BIG_EPOCHS], 3);
   v['wd-train-acc'] = pct(accuracyNet(w.t.state.net, SM.X, SM.y));
   v['wd-test-acc'] = pct(accuracyNet(w.t.state.net, TE.X, TE.y));
@@ -478,7 +496,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   });
   const drawCurve = (b) => {
     const c = curves.get(b);
-    if (c.drawn) return;
+    if (c.drawn || !noiseReady(b)) return;
     const r = noiseRun(b);
     c.path.setAttribute('d', r.ys.map((v, i) => `${i ? 'L' : 'M'}${P(NX(r.xs[i]))},${P(NY(v))}`).join(''));
     if (b === N_TRAIN) r.ys.forEach((v, i) => el('circle', { cx: P(NX(r.xs[i])), cy: P(NY(v)), r: 3, fill: STRONG }, c.g));
@@ -529,16 +547,43 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   // ---- Step 6: the knobs.
   const knobG = el('g', {}, svg);
-  const KX = [40, 200, 330];
-  ['knob', 'on this page', 'watch for'].forEach((t, c) => el('text', { x: KX[c], y: 60, fill: MUTED, style: 'font-size: 15px', text: t }, knobG));
-  el('line', { x1: KX[0], x2: 570, y1: 70, y2: 70, stroke: LINE }, knobG);
+  const KX = [24, 150, 270, 400];
+  ['knob', 'steps 2–3', 'steps 4–5', 'general caution'].forEach((t, c) => el('text', { x: KX[c], y: 60, fill: MUTED, style: 'font-size: 15px', text: t }, knobG));
+  el('line', { x1: KX[0], x2: 586, y1: 70, y2: 70, stroke: LINE }, knobG);
   [
-    ['batch size', String(BATCH), 'small: noisy steps'],
-    ['epochs', String(EPOCHS), 'many: memorising'],
-    ['η', String(ETA), 'large: unsteady'],
-    ['λ', String(LAMBDA), 'large: underfitting'],
-  ].forEach((row, r) => row.forEach((t, c) => el('text', { x: KX[c], y: 104 + 42 * r, fill: STRONG, style: 'font-size: 18px', text: t }, knobG)));
+    ['batch size', String(BATCH), String(BIG_BATCH), 'small: noisier'],
+    ['epochs', String(EPOCHS), String(BIG_EPOCHS), 'many: memorise'],
+    ['η', String(ETA), String(ETA), 'large: unsteady'],
+    ['λ', '0', `0 or ${LAMBDA}`, 'large: underfit'],
+  ].forEach((row, r) => row.forEach((t, c) => el('text', { x: KX[c], y: 104 + 42 * r, fill: STRONG, style: 'font-size: 17px', text: t }, knobG)));
   el('text', { x: KX[0], y: 290, fill: MUTED, style: 'font-size: 15px', text: 'judge them on held-back points, not the training loss' }, knobG);
+
+  // ---- Step 1's three runs, computed when the step is first shown, in slices
+  // of about 6 ms per animation frame; the picked batch size first.
+  const CHUNK = { 1: 16, 8: 4, 160: 1 };
+  let job = null;
+  const cancelCurves = () => {
+    if (job !== null) cancelAnimationFrame(job);
+    job = null;
+  };
+  const computeCurves = () => {
+    if (job !== null || BATCHES.every(noiseReady)) return;
+    const tick = () => {
+      job = null;
+      if (step !== 0) return;
+      const t0 = performance.now();
+      while (performance.now() - t0 < 6) {
+        const b = [pick, ...BATCHES.filter((x) => x !== pick)].find((x) => !noiseReady(x));
+        if (b === undefined) break;
+        if (noiseWork(b, CHUNK[b])) {
+          render(true);
+          if (b === pick) announce(spoken(0));
+        }
+      }
+      if (!BATCHES.every(noiseReady)) job = requestAnimationFrame(tick);
+    };
+    job = requestAnimationFrame(tick);
+  };
 
   // ---- Read-out box.
   const box = el('g', {}, svg);
@@ -588,6 +633,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
     if (step === 0) {
       for (const b of BATCHES) drawCurve(b);
+      for (const b of BATCHES) show(curves.get(b).g, noiseReady(b));
       // Fixed order (batch 1 at the back); the picked curve is opaque, the others faint.
       for (const b of BATCHES) curves.get(b).g.style.opacity = b === pick ? 1 : b === 1 ? 0.22 : 0.45;
       pickBtns.forEach((btn, k) => btn.setAttribute('aria-pressed', String(BATCHES[k] === pick)));
@@ -658,6 +704,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   const spoken = (i) => {
     const s = info();
+    if (i === 0 && s.pending) return `Batch size ${s.b}: computing the run.`;
     if (i === 0) return `Batch size ${s.b}: ${s.steps} steps in ${NOISE_EXAMPLES} examples; the batch loss changes by ${sig3(s.noise)} from one step to the next on average.`;
     if (i === 1) return `Press Train to run slowly. ${s.iter} steps, ${s.epoch} epochs done, batch ${s.batch} of ${ITERS_PER_EPOCH} in this epoch. Training loss ${num(s.loss, 3)}.`;
     if (i === 2) return `Epoch ${s.epoch} of ${EPOCHS}: training loss ${num(s.loss, 3)}, train accuracy ${pct(s.train)}, test accuracy ${pct(s.test)}.`;
@@ -718,6 +765,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     show(i) {
       buttons.stop();
       step = i;
+      if (i === 0) computeCurves(); else cancelCurves();
       showGroup(pickGroup, i === 0);
       showGroup(wdGroup, i === 4);
       showGroup(trainGroup, i >= 1 && i <= 4);

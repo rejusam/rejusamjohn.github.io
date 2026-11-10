@@ -30,6 +30,18 @@ let BIGW = null;
 const big0 = () => (BIG0 ??= directBig(0));
 const bigW = () => (BIGW ??= directBig(T.LAMBDA));
 
+// The page's own big runs, each trained once to the end in odd-sized chunks
+// (7 and 11 steps, so chunks cross epoch boundaries) and shared by the tests below.
+const RUNS = new Map();
+function pageBig(lambda) {
+  if (!RUNS.has(lambda)) {
+    const b = T.makeBig(lambda);
+    while (!T.bigFinished(b)) T.bigAdvance(b, lambda ? 11 : 7);
+    RUNS.set(lambda, b);
+  }
+  return RUNS.get(lambda);
+}
+
 test('data reproducible', () => {
   assert.equal(T.SEED_TRAIN, 171);
   assert.equal(T.SEED_TEST, 172);
@@ -111,6 +123,8 @@ test('batch size 1 curve is noisier than full batch', () => {
     assert.equal(r.noise, s / (r.ys.length - 1));
     for (const v of r.ys) assert.ok(v > 0 && v < T.NOISE_MAX, String(v));
   });
+  // The page computes these runs in slices; the slicing does not change them.
+  for (const b of T.BATCHES) assert.ok(T.noiseReady(b));
   // Story: mean |Δ loss| between consecutive steps falls as the batch grows.
   assert.ok(runs[0].noise > runs[1].noise && runs[1].noise > runs[2].noise);
   assert.ok(runs[0].noise > 10 * runs[2].noise);
@@ -201,8 +215,7 @@ test('spiral net reaches train accuracy ≥ 0.95', () => {
 
 test('big net: test loss argmin is before the last epoch and test loss at the end is ≥ 10% above its min', () => {
   const { t, testL } = big0();
-  const b = T.makeBig(0);
-  while (!T.bigFinished(b)) T.bigAdvance(b, 7);
+  const b = pageBig(0);
   assert.equal(b.t.state.epoch, 400);
   assert.equal(b.test.length, 401);
   testL.forEach((v, i) => { if (v !== null) assert.ok(Math.abs(v - b.test[i]) < 1e-12, String(i)); });
@@ -237,28 +250,28 @@ test('big net: test loss argmin is before the last epoch and test loss at the en
 test('weight decay lowers final test loss', () => {
   assert.equal(T.LAMBDA, 0.001);
   const w = bigW();
-  const b = T.makeBig(T.LAMBDA);
-  while (!T.bigFinished(b)) T.bigAdvance(b, 11);
+  const b = pageBig(T.LAMBDA);
+  assert.equal(b.test.length, 401);
   w.testL.forEach((v, i) => { if (v !== null) assert.ok(Math.abs(v - b.test[i]) < 1e-12, String(i)); });
   assert.deepEqual(b.t.state.epochLoss, w.t.state.epochLoss);
-  const a = T.makeBig(0);
-  while (!T.bigFinished(a)) T.bigAdvance(a, 50);
+  const a = pageBig(0);
   const plain = a.test;
   assert.ok(b.test[400] < plain[400]);
-  // "Flatter": it ends much closer to its own lowest value than the run without weight decay.
+  // "The test loss does not turn up: it is still falling overall at the end,
+  // lowest at epoch 399", against lowest at epoch 120 and climbing without it.
   const bestW = T.earlyStop(b.test);
   const best0 = T.earlyStop(plain);
-  const riseW = b.test[400] / bestW.value - 1;
-  const rise0 = plain[400] / best0.value - 1;
-  assert.ok(riseW < 0.1 && riseW < rise0 / 3, `${riseW} ${rise0}`);
-  // Its lowest test loss is lower than the lowest without, too.
+  assert.ok(bestW.epoch >= 380, String(bestW.epoch));
   assert.ok(bestW.value < best0.value);
+  const mean = (lo, hi) => b.test.slice(lo, hi + 1).reduce((s, v) => s + v, 0) / (hi - lo + 1);
+  assert.ok(mean(351, 400) < mean(301, 350) && mean(301, 350) < mean(201, 300));
+  assert.ok(best0.epoch < 200 && plain[400] > 1.1 * best0.value);
   // The curves show the data loss, without the penalty: the trainer's epoch loss.
   const tl = b.t.state.epochLoss;
   assert.ok(Math.abs(tl[400] - meanLoss(b.t.state.net, T.smallSet())) < 1e-12);
   const sv = T.storyValues();
   assert.equal(sv['wd-end'], T.num(b.test[400], 3));
-  assert.equal(sv['wd-rise'], `${Math.round(riseW * 100)}%`);
+  assert.equal(sv['wd-best-epoch'], String(bestW.epoch));
   assert.equal(sv['wd-best'], T.num(bestW.value, 3));
   assert.equal(sv['wd-train-end'], T.num(tl[400], 3));
   assert.equal(sv['wd-train-acc'], T.pct(accuracyNet(b.t.state.net, T.smallSet().X, T.smallSet().y)));
@@ -308,6 +321,11 @@ test('training-networks read-out rows and page', () => {
   const g = T.makeBig(0);
   const w = T.makeBig(T.LAMBDA);
   for (let k = 0; k < 3; k++) {
+    if (k === 2) {
+      // The end states, shared with the tests above.
+      g.t = pageBig(0).t; g.test = pageBig(0).test;
+      w.t = pageBig(T.LAMBDA).t; w.test = pageBig(T.LAMBDA).test;
+    }
     for (const b of T.BATCHES) {
       const rows = T.readout(0, T.noiseInfo(b));
       assert.ok(rows.length >= 1 && rows.length <= 6);
@@ -332,8 +350,10 @@ test('training-networks read-out rows and page', () => {
       }
     }
     T.advance(t, 1500);
-    T.bigAdvance(g, 600);
-    T.bigAdvance(w, 600);
+    if (k === 0) {
+      T.bigAdvance(g, 61);
+      T.bigAdvance(w, 61);
+    }
   }
   // Steps whose prose gives end-of-run numbers say when the run is not finished.
   const fresh = T.makeRun();
@@ -395,4 +415,21 @@ test('training-networks read-out rows and page', () => {
     assert.equal(text, sv[key], key);
   }
   for (const v of [...Object.values(pv), ...Object.values(sv)]) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+});
+
+test('step 1 runs computed in slices equal the runs computed at once', async () => {
+  // A second, fresh copy of the module, so nothing is cached yet.
+  const F = await import('../training-networks/stage.js?sliced');
+  for (const b of F.BATCHES) {
+    assert.equal(F.noiseReady(b), false);
+    const pending = F.readout(0, F.noiseInfo(b));
+    assert.ok(pending.includes('computing…'), pending.join('|'));
+    assert.ok(!pending.some((r) => /NaN|undefined/.test(r)));
+    let slices = 0;
+    while (!F.noiseWork(b, 7)) slices++;
+    assert.ok(slices >= Math.floor(1600 / b / 7) - 1);
+    assert.equal(F.noiseReady(b), true);
+    assert.deepEqual(F.noiseRun(b), T.noiseRun(b));
+    assert.deepEqual(F.noiseInfo(b), T.noiseRun(b));
+  }
 });
