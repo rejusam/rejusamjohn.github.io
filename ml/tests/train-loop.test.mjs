@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { adaptSteps, createTrainLoop } from '../assets/train-loop.js';
+import { adaptSteps, createTrainLoop, trainButtons } from '../assets/train-loop.js';
 import { xorData, mlpInit, trainer } from '../assets/nn.js';
 
 // Fake frame scheduler: frames run only when the test calls tick().
@@ -107,4 +107,131 @@ test('reset then train repeats the same states', () => {
   assert.equal(t.state.batchLoss.length, 0);
   const second = run();
   assert.deepEqual(second, first);
+});
+
+test('start, pause, start leaves one queued frame', () => {
+  const f = fakes();
+  const loop = createTrainLoop({ step() {}, render() {}, raf: f.raf, caf: f.caf, now: f.now, doc: f.doc });
+  loop.start();
+  loop.pause();
+  loop.start();
+  assert.equal(f.queued(), 1);
+  assert.equal(loop.running(), true);
+});
+
+test('pause and reset do not call onStop', () => {
+  const f = fakes();
+  let stops = 0;
+  const loop = createTrainLoop({ step() {}, render() {}, raf: f.raf, caf: f.caf, now: f.now, doc: f.doc, onStop: () => stops++ });
+  loop.start();
+  loop.pause();
+  loop.start();
+  loop.reset();
+  assert.equal(stops, 0);
+  assert.equal(loop.running(), false);
+});
+
+test('hidden then visible does not resume', () => {
+  const f = fakes();
+  const loop = createTrainLoop({ step() {}, render() {}, raf: f.raf, caf: f.caf, now: f.now, doc: f.doc });
+  loop.start();
+  f.doc.hidden = true;
+  f.fire();
+  f.doc.hidden = false;
+  f.fire();
+  assert.equal(loop.running(), false);
+  assert.equal(f.queued(), 0);
+});
+
+test('a throwing step halts the loop and calls onStop', () => {
+  const f = fakes();
+  let stops = 0;
+  const loop = createTrainLoop({
+    step() { throw new Error('boom'); }, render() {},
+    raf: f.raf, caf: f.caf, now: f.now, doc: f.doc, onStop: () => stops++,
+  });
+  loop.start();
+  assert.throws(() => f.tick(), /boom/);
+  assert.equal(loop.running(), false);
+  assert.equal(f.queued(), 0);
+  assert.equal(stops, 1);
+  const g = fakes();
+  let s2 = 0;
+  const l2 = createTrainLoop({
+    step() {}, render() { throw new Error('draw'); },
+    raf: g.raf, caf: g.caf, now: g.now, doc: g.doc, onStop: () => s2++,
+  });
+  l2.start();
+  assert.throws(() => g.tick(), /draw/);
+  assert.equal(l2.running(), false);
+  assert.equal(s2, 1);
+});
+
+// Minimal DOM stand-in: elements with the few members trainButtons touches.
+function fakeDom() {
+  const makeEl = (tag) => {
+    const handlers = {};
+    return {
+      tag, className: '', type: '', textContent: '', children: [], attrs: {},
+      setAttribute(k, v) { this.attrs[k] = v; },
+      append(...kids) { this.children.push(...kids); },
+      appendChild(k) { this.children.push(k); },
+      addEventListener(type, fn) { handlers[type] = fn; },
+      click() { handlers.click(); },
+    };
+  };
+  const doc = { createElement: makeEl };
+  const controls = makeEl('div');
+  controls.ownerDocument = doc;
+  return { controls };
+}
+
+test('trainButtons toggles label, stop() resyncs, reduced runs to end once', () => {
+  const f = fakes();
+  const { controls } = fakeDom();
+  let buttons;
+  const loop = createTrainLoop({
+    step() {}, render() {}, raf: f.raf, caf: f.caf, now: f.now, doc: f.doc,
+    onStop: () => buttons.sync(),
+  });
+  buttons = trainButtons(controls, loop);
+  assert.equal(controls.children[0], buttons.el);
+  assert.equal(buttons.el.className, 'train-buttons');
+  const [train, reset] = buttons.el.children;
+  assert.equal(train.textContent, 'Train');
+  assert.equal(reset.textContent, 'Reset');
+  assert.equal('aria-pressed' in train.attrs, false);
+  train.click();
+  assert.equal(loop.running(), true);
+  assert.equal(train.textContent, 'Pause');
+  train.click();
+  assert.equal(loop.running(), false);
+  assert.equal(train.textContent, 'Train');
+  train.click();
+  buttons.stop();
+  assert.equal(loop.running(), false);
+  assert.equal(train.textContent, 'Train');
+  assert.equal(f.queued(), 0);
+  train.click();
+  f.doc.hidden = true;
+  f.fire();
+  assert.equal(train.textContent, 'Train');
+  let resets = 0;
+  const r = trainButtons(controls, loop, { onReset: () => resets++ });
+  r.el.children[1].click();
+  assert.equal(resets, 1);
+
+  // Reduced motion: Train runs to the end and renders once, no loop starts.
+  const g = fakes();
+  const dom = fakeDom();
+  let ends = 0;
+  let draws = 0;
+  const l2 = createTrainLoop({ step() {}, render() {}, raf: g.raf, caf: g.caf, now: g.now, doc: g.doc });
+  const b2 = trainButtons(dom.controls, l2, { reduced: true, runToEnd: () => ends++, render: () => draws++ });
+  b2.el.children[0].click();
+  assert.equal(ends, 1);
+  assert.equal(draws, 1);
+  assert.equal(l2.running(), false);
+  assert.equal(g.queued(), 0);
+  assert.equal(b2.el.children[0].textContent, 'Train');
 });

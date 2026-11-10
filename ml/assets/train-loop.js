@@ -39,9 +39,16 @@ export function createTrainLoop({
     if (!on) return;
     if (done()) { halt(); onStop(); return; }
     const t0 = clock();
-    step(n);
-    const elapsed = clock() - t0;
-    render();
+    let elapsed;
+    try {
+      step(n);
+      elapsed = clock() - t0;
+      render();
+    } catch (err) {
+      halt();
+      onStop();
+      throw err;
+    }
     n = adaptSteps(n, elapsed, budgetMs);
     if (done()) { halt(); onStop(); return; }
     id = request(frame);
@@ -73,8 +80,11 @@ export function createTrainLoop({
 
 // Train / Pause / Reset buttons, appended to `controls` inside a .train-buttons
 // container. Pass `onStop: () => buttons.sync()` to createTrainLoop so the label
-// returns to "Train" when the loop finishes or the tab is hidden. Under `reduced`
-// Train runs to the end state (runToEnd) and renders once; nothing animates.
+// returns to "Train" when the loop finishes or the tab is hidden. Lessons call
+// buttons.stop() in their show(i), never a bare loop.pause(), so the label stays
+// true. The Train label flips Train / Pause and carries the state (no aria-pressed).
+// Under `reduced` Train runs to the end state (runToEnd) and renders once; nothing
+// animates.
 export function trainButtons(controls, loop, { onReset, reduced = false, runToEnd = () => {}, render = () => {} } = {}) {
   const doc = controls.ownerDocument;
   const el = doc.createElement('div');
@@ -90,7 +100,6 @@ export function trainButtons(controls, loop, { onReset, reduced = false, runToEn
   const sync = () => {
     const on = loop.running();
     train.textContent = on ? 'Pause' : 'Train';
-    train.setAttribute('aria-pressed', on ? 'true' : 'false');
   };
   train.addEventListener('click', () => {
     if (reduced) {
@@ -108,5 +117,12 @@ export function trainButtons(controls, loop, { onReset, reduced = false, runToEn
     sync();
   });
   sync();
-  return { el, sync };
+  return {
+    el,
+    sync,
+    stop() {
+      loop.pause();
+      sync();
+    },
+  };
 }
