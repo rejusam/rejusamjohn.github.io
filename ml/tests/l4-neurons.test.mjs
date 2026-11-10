@@ -242,3 +242,14 @@ test('p̂ in prose is maths markup, not a combining hat', () => {
   assert.equal((html.match(/p\u0302/g) || []).length, 0);
   assert.ok((html.match(/data-tex="\\hat\{p\}"/g) || []).length >= 5);
 });
+
+test('load: the shaded maps are built on first show of their step', () => {
+  const src = readFileSync(new URL('../neurons/stage.js', import.meta.url), 'utf8');
+  const ctor = src.slice(src.indexOf('export function createStage'));
+  for (const name of ['blobRegion', 'xorRegion', 'handRegion']) assert.match(ctor, new RegExp(`let ${name} = null;`));
+  // One regionMap call, inside quietMap; the three builds sit behind their step's check in render.
+  assert.equal((ctor.match(/regionMap\(/g) || []).length, 1);
+  assert.match(ctor, /if \(step === 3\) \{\n\s+if \(blobRegion\) blobRegion\.update\(prob\);\n\s+else blobRegion = quietMap/);
+  assert.match(ctor, /if \(step === 4\) \{\n\s+if \(xorRegion\) xorRegion\.update\(prob\);\n\s+else xorRegion = quietMap/);
+  assert.match(ctor, /if \(step === 5\) handRegion \?\?= quietMap/);
+});

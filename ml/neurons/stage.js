@@ -263,8 +263,10 @@ export function createStage(svg, { controls, announce = () => {} }) {
   const BX = linearScale(BLOB_DOM, [QX0, QX1]);
   const BY = linearScale(BLOB_DOM, [QY0, QY1]);
   const blobG = el('g', {}, svg);
-  const blobRegion = regionMap(blobG, BX, BY, (a, c) => ACTS.sigmoid.f(neuron(w, b, [a, c]).z), { nx: GRID[0], ny: GRID[1], mode: 'prob' });
-  blobRegion.g.querySelector('.boundary').style.display = 'none';
+  // The three shaded maps (several ms of drawing each) are built when their step
+  // is first shown, each in a group made now so the layering stays the same.
+  const blobRegionG = el('g', {}, blobG);
+  let blobRegion = null;
   axes(blobG, BX, BY, { xLabel: 'x₁', yLabel: 'x₂' });
   const blobLineG = el('g', { 'clip-path': 'url(#l41-plot)' }, blobG);
   const blobLine = el('line', { stroke: STRONG, 'stroke-width': 2 }, blobLineG);
@@ -277,11 +279,15 @@ export function createStage(svg, { controls, announce = () => {} }) {
   const XY = linearScale(XOR_DOM, [QY0, QY1]);
   const xorG = el('g', {}, svg);
   const xorRegionG = el('g', {}, xorG);
-  const xorRegion = regionMap(xorRegionG, XX, XY, (a, c) => ACTS.sigmoid.f(neuron(w, b, [a, c]).z), { nx: GRID[0], ny: GRID[1], mode: 'prob' });
-  xorRegion.g.querySelector('.boundary').style.display = 'none';
+  let xorRegion = null;
   const handRegionG = el('g', {}, xorG);
-  const handRegion = regionMap(handRegionG, XX, XY, (a, c) => handPredict([a, c]), { nx: GRID[0], ny: GRID[1], mode: 'class' });
-  handRegion.g.querySelector('.boundary').style.display = 'none';
+  let handRegion = null;
+  // A region map with its staircase boundary hidden (the exact line is drawn on top).
+  const quietMap = (parent, X, Y, fn, mode) => {
+    const m = regionMap(parent, X, Y, fn, { nx: GRID[0], ny: GRID[1], mode });
+    m.g.querySelector('.boundary').style.display = 'none';
+    return m;
+  };
   axes(xorG, XX, XY, { xLabel: 'x₁', yLabel: 'x₂' });
   const xorLineG = el('g', { 'clip-path': 'url(#l41-plot)' }, xorG);
   const xorLine = el('line', { stroke: STRONG, 'stroke-width': 2 }, xorLineG);
@@ -404,7 +410,7 @@ export function createStage(svg, { controls, announce = () => {} }) {
     show(xorG, xor);
     show(actG, step === 1);
     show(keyG, step !== 1);
-    show(blobRegion.g, step === 3);
+    show(blobRegionG, step === 3);
     show(blobLineG, step === 2 || step === 3);
     show(ring, step <= 2);
     show(xorRegionG, step === 4);
@@ -415,8 +421,16 @@ export function createStage(svg, { controls, announce = () => {} }) {
     show(net1G, step <= 4);
     show(net2G, step === 5);
 
-    if (step === 3) blobRegion.update((a, c) => ACTS.sigmoid.f(neuron(w, b, [a, c]).z));
-    if (step === 4) xorRegion.update((a, c) => ACTS.sigmoid.f(neuron(w, b, [a, c]).z));
+    const prob = (a, c) => ACTS.sigmoid.f(neuron(w, b, [a, c]).z);
+    if (step === 3) {
+      if (blobRegion) blobRegion.update(prob);
+      else blobRegion = quietMap(blobRegionG, BX, BY, prob, 'prob');
+    }
+    if (step === 4) {
+      if (xorRegion) xorRegion.update(prob);
+      else xorRegion = quietMap(xorRegionG, XX, XY, prob, 'prob');
+    }
+    if (step === 5) handRegion ??= quietMap(handRegionG, XX, XY, (a, c) => handPredict([a, c]), 'class');
     setLine(blobLine, lineEnds(w, b, BX, BY));
     setLine(xorLine, step === 4 ? lineEnds(w, b, XX, XY) : null);
     if (step === 1) drawAct();
