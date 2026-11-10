@@ -568,3 +568,8 @@ test('page', () => {
   for (const key of Object.keys(sv)) assert.ok(used.has(key), `unused story value ${key}`);
   for (const v of [...Object.values(pv), ...Object.values(sv)]) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
 });
+
+test('the cross is labelled by the network, not named by it', () => {
+  assert.match(html, /the network labels this image a cross because neither filter responds/);
+  assert.doesNotMatch(html, /is called a cross/);
+});
