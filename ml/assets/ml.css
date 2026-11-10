@@ -2101,7 +2101,12 @@ html:not(.js) .coffee-line {
 }
 
 .px-sign {
+  /* Dark glyph in a light ink halo: bg on ink is about 14:1 at every cell shade. */
   fill: var(--ml-bg);
+  stroke: var(--ml-ink);
+  stroke-width: 2.5;
+  paint-order: stroke;
+  stroke-linejoin: round;
   font-family: var(--ml-mono);
   font-size: 12px;
   font-weight: 700;
