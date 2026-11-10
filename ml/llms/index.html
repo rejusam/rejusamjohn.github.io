@@ -38,7 +38,7 @@
     <header class="lesson-head">
         <p class="crumbs"><a href="/ml/">ML Explorer</a> · Level 5 · Modern AI</p>
         <h1>Large language models, in miniature</h1>
-        <p class="promise">A large language model is a transformer trained to predict the next token on a very large amount of text. Train a tiny one here, live, watch its writing go from noise to sentences, and then check how many of those sentences are true.</p>
+        <p class="promise">Most large language models today are transformers trained to predict the next token on a very large amount of text. Train a tiny one here, live, watch its writing go from noise to sentences, and then check how many of those sentences are true.</p>
         <p class="meta">About 12 minutes · The model trains in your browser in about a minute on a laptop; every number is computed in your browser, and the formulas are in The maths</p>
     </header>
 
@@ -65,7 +65,7 @@
             <p class="lede">The model predicts the next character, as the counting models did, but from up to 32 characters before it.</p>
             <div class="happening">
                 <p>The picture shows one sentence of the invented world. Under each character is the character that follows it: that is what the model must predict there. One piece of text gives one prediction per position.</p>
-                <p>Look at the outlined column, the prediction after "tom likes ". The food depends on the name, which is 10 characters back. A 5-gram model, counting the last 5 characters "ikes␣", cannot see it: in the training text it gives a only <span data-value="p5-a">0.26</span>, because two of the eight people like apples. This model can look at every earlier character in its window of 32, through attention, so it can learn to use the name.</p>
+                <p>Look at the outlined column, the prediction after "tom likes ". The food depends on the name, which starts 10 characters back. The counting model with n = 5, which uses the last 5 characters "ikes␣", cannot see it: in the training text it gives a only <span data-value="p5-a">0.26</span>, because two of the eight people like apples. This model can look at every earlier character in its window of 32, through attention, so it can learn to use the name.</p>
                 <p>The model is one transformer block, as in <a href="/ml/transformers/">Transformers</a>, with two attention heads, but causal: each position may look only at itself and the positions before it. Its 28 tokens are the characters of the invented world, letters, the space and the full stop, as in <a href="/ml/tokens/">Tokens: text as numbers</a>.</p>
             </div>
             <details class="maths">
@@ -80,9 +80,9 @@
             <h2>Train it</h2>
             <p class="lede">Press Train. The line is the held-out loss; under the picture, a new sample appears every 100 steps.</p>
             <div class="happening">
-                <p>Play steps through the lesson, and Train trains the model. Each step takes 8 windows of 33 characters at random from the training text of <span data-value="n-train">2,000</span> sentences (<span data-value="train-chars">42,030</span> characters) and makes one Adam update (from <a href="/ml/optimisers/">optimisers</a>) with η = 0.003. The run is <span data-value="run">2,500</span> steps: about a minute on a laptop, up to about two minutes on a slower phone. Every 100 steps the page measures the model on held-out text and writes a sample of 60 characters at τ = 1.</p>
-                <p>The line is in bits per character on the <span data-value="n-held">300</span> held-out sentences of <a href="/ml/language-models/">Predicting the next token</a>, never used for training. The dashed lines are the counting models of that lesson for n = 1, 3 and 5, measured on exactly the same <span data-value="scored">6,240</span> characters (from the 6th character on, so the 5-gram always has its 5 characters of context): <span data-story="ngram-1">1.99</span>, <span data-story="ngram-3">0.47</span> and <span data-story="ngram-5">0.39</span> bits.</p>
-                <p>These numbers are for the whole run. The model starts at <span data-story="bits-start">4.95</span> bits, about the cost of a uniform guess (<span data-value="uniform-bits">4.81</span>). It is below the n = 1 line from step <span data-story="below-1-at">200</span>, and below the n = 3 line from step <span data-story="below-3-at">800</span> on. It first dips below the 5-gram line at step <span data-story="dip-at">2,400</span>, and ends level with it: <span data-story="bits-end">0.393</span> bits against <span data-story="ngram-5-3">0.391</span>. In this short run it does not beat counting: on this small, regular world a 5-gram already does well, and the previous lesson's longer contexts do better still. What the samples show is the change: noise first, then word shapes, then sentences.</p>
+                <p>Play steps through the lesson, and Train trains the model. Each step takes 8 windows of 33 characters at random from the training text of <span data-value="n-train">2,000</span> sentences (<span data-value="train-chars">42,030</span> characters) and makes one Adam update (from <a href="/ml/optimisers/">optimisers</a>) with η = 0.003. The run is <span data-value="run">2,500</span> steps: about a minute on a laptop, about two minutes or more on a slow phone. Every 100 steps the page measures the model on held-out text and writes a sample of 60 characters at τ = 1.</p>
+                <p>The line is in bits per character on the <span data-value="n-held">300</span> held-out sentences of <a href="/ml/language-models/">Predicting the next token</a>, never used for training. The dashed lines are the counting models of that lesson for n = 1, 3 and 5, measured on exactly the same <span data-value="scored">6,240</span> characters (from the 6th character on, so the n = 5 model always has its 5 characters of context): <span data-story="ngram-1">1.99</span>, <span data-story="ngram-3">0.47</span> and <span data-story="ngram-5">0.39</span> bits.</p>
+                <p>These numbers are for the whole run. The model starts at <span data-story="bits-start">4.95</span> bits, about the cost of a uniform guess (<span data-value="uniform-bits">4.81</span>). It is below the n = 1 line from step <span data-story="below-1-at">200</span>, and below the n = 3 line from step <span data-story="below-3-at">800</span> on. It first dips below the n = 5 line at step <span data-story="dip-at">2,400</span>, and ends just above it: <span data-story="bits-end">0.393</span> bits against <span data-story="ngram-5-3">0.391</span>. In this short run it does not beat counting: on this small, regular world counting with n = 5 already does well, and the previous lesson's longer contexts do better still. What the samples show is the change from noise to the words of this world. Of the complete words in each sample shown (the first and last may be cut off), <span data-story="words-start">0%</span> are words of the invented world at step 0; from step <span data-story="words-90-from">700</span> on at least 90% are, and from step <span data-story="words-all-from">1,100</span> on all of them are.</p>
                 <p>Each sample starts after ". " and uses its own seed, so watching the run or not gives the same samples. With reduced motion, Train computes the run without drawing it, then shows the end. Reset goes back to the same starting weights, and the next run is the same as the last.</p>
             </div>
             <details class="maths">
@@ -111,19 +111,19 @@
 
         <li class="step" id="step-4">
             <h2>Fluent is not the same as true</h2>
-            <p class="lede">After "ana likes ", any food makes a fluent sentence, but only one is true in this world. The bars give the exact probability that the model writes a true one.</p>
+            <p class="lede">After "ana likes ", any food makes a fluent sentence, but only one is true in this world. The bars give the exact probability, averaged over the 8 people, that the model writes a true one.</p>
             <div class="happening">
                 <p>For each of the 8 people and both prompts, "&lt;name&gt; likes " and "&lt;name&gt; lives ", the bars give the probability that the sentence the model samples next is true, false (a real food or place of this world, but the wrong one) or anything else. They are exact, multiplied out from the model's probabilities, not counted from samples. Write 16 sentences samples one sentence per prompt and marks each one ✓ true, ✗ false or – other; the counts add up press by press.</p>
                 <p>These numbers are for the stated run at τ = 1. The mean probability of the true food rises from <span data-story="food-500">0.19</span> at step 500 to <span data-story="food-1000">0.36</span> at step 1,000, <span data-story="food-1500">0.69</span> at 1,500, <span data-story="food-2000">0.74</span> at 2,000 and <span data-story="food-2500">0.85</span> at 2,500; a false food keeps <span data-story="food-false-end">0.11</span>. The true place rises more slowly: <span data-story="place-500">0.13</span>, <span data-story="place-1000">0.28</span>, <span data-story="place-1500">0.34</span>, <span data-story="place-2000">0.41</span> and <span data-story="place-2500">0.45</span>, and at the end a false place gets more, <span data-story="place-false-end">0.51</span>. The model gives each person's own "by" or "in" <span data-story="prep-end">0.94</span> on average, but of the two places that share that word, the true one gets only <span data-story="pair-end">0.50</span>, about half.</p>
-                <p>So the model learned the shape of the sentences before it linked each name to its facts: at step 500 it already gives <span data-story="form-first">0.72</span> to a well-formed food sentence, true or false, but only <span data-story="food-500">0.19</span> to the true one. This is what is often called "hallucination": fluent output that is false. Here you can see why it happens. The model gives probabilities to characters; sampling picks likely ones; nothing checks the sentence against the facts table. A false place is a perfectly likely-looking sentence.</p>
+                <p>So the model learned the shape of the sentences before it linked each name to its facts: at step 500 it already gives <span data-story="form-first">0.72</span> to a well-formed food sentence, true or false, but only <span data-story="food-500">0.19</span> to the true one. This is what is often called "hallucination": fluent output that is false. Here you can see why it happens in this model. The model gives probabilities to characters; sampling draws characters according to those probabilities; nothing checks the sentence against the facts table. A false place is a perfectly likely-looking sentence.</p>
                 <p>Temperature changes the odds, at the end of the run (true · false · anything else):</p>
                 <ul>
-                    <li>τ = 0: food <span data-story="tau-0-ft">0.88</span> · <span data-story="tau-0-ff">0.13</span> · <span data-story="tau-0-fo">0.00</span>; place <span data-story="tau-0-pt">0.50</span> · <span data-story="tau-0-pf">0.50</span> · <span data-story="tau-0-po">0.00</span>. Greedy writes one sentence per prompt: the true food for <span data-story="greedy-food">7</span> of the 8 people and the true place for <span data-story="greedy-place">4</span>.</li>
+                    <li>τ = 0: greedy writes one sentence per prompt, always a fact sentence: the true food for <span data-story="greedy-food">7</span> of the 8 people and the true place for <span data-story="greedy-place">4</span>, a false one for the rest.</li>
                     <li>τ = 0.5: food <span data-story="tau-1-ft">0.93</span> · <span data-story="tau-1-ff">0.07</span> · <span data-story="tau-1-fo">0.00</span>; place <span data-story="tau-1-pt">0.49</span> · <span data-story="tau-1-pf">0.51</span> · <span data-story="tau-1-po">0.00</span>.</li>
                     <li>τ = 1: food <span data-story="tau-2-ft">0.85</span> · <span data-story="tau-2-ff">0.11</span> · <span data-story="tau-2-fo">0.04</span>; place <span data-story="tau-2-pt">0.45</span> · <span data-story="tau-2-pf">0.51</span> · <span data-story="tau-2-po">0.04</span>.</li>
                     <li>τ = 1.5: food <span data-story="tau-3-ft">0.62</span> · <span data-story="tau-3-ff">0.16</span> · <span data-story="tau-3-fo">0.21</span>; place <span data-story="tau-3-pt">0.31</span> · <span data-story="tau-3-pf">0.39</span> · <span data-story="tau-3-po">0.30</span>.</li>
                 </ul>
-                <p>From τ = 0.5 up, a higher τ takes probability away from the true sentence. For foods it makes false sentences more likely at every step; for places, going from τ = 1 to 1.5 sends probability to broken text instead. Longer training raises the true share, as the steps above show, but sampling from a model never guarantees a true sentence.</p>
+                <p>From τ = 0.5 up, a higher τ takes probability away from the true sentence. For foods, each step up in τ makes false sentences more likely; for places, going from τ = 1 to 1.5 sends probability to broken text instead. Longer training raises the true share, as the steps above show, but sampling from a model never guarantees a true sentence.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -152,7 +152,7 @@
             <p class="lede">Training to predict the next token on a large amount of text is called pretraining. The models people talk to are usually trained further.</p>
             <div class="happening">
                 <p>Instruction tuning continues training on examples of requests paired with good replies, so the model's likeliest continuation of a request is a reply. Preference tuning then trains the model towards replies that people preferred when shown two or more.</p>
-                <p>Both change the probabilities the model gives; neither adds a step that checks a sentence against the facts. The model in this lesson stops after pretraining, in miniature.</p>
+                <p>Both change the probabilities the model gives, and can make true replies likelier; neither adds a step that checks each sentence against the facts. The model in this lesson stops after pretraining, in miniature.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -188,7 +188,7 @@
             </fieldset>
             <p class="why" data-for="sampled">Right. At the end of the run a false place gets <span data-story="place-false-end">0.51</span> of the probability at τ = 1, more than the true one.</p>
             <p class="why" data-for="lie">A model has no aims. It gives probabilities and a random draw picks from them; a false sentence is just a likely string of characters.</p>
-            <p class="why" data-for="false-text">Every sentence in the training text is true in the invented world. The false ones come from probabilities that have not linked each name to its facts.</p>
+            <p class="why" data-for="false-text">Every likes and lives sentence in the training text is true in the invented world. The false ones come from probabilities that have not linked each name to its facts.</p>
             <p class="why" data-for="tau">At τ = 0 the model writes its likeliest sentence, and at the end of the run that is the true place for only <span data-story="greedy-place">4</span> of the 8 people.</p>
         </form>
     </section>
@@ -196,14 +196,14 @@
     <section class="complete" aria-labelledby="complete-title">
         <h2 id="complete-title">Lesson complete</h2>
         <ul>
-            <li>A large language model is a causal transformer trained to predict the next token; the causal mask lets one window train every position at once.</li>
+            <li>The large language models people talk to are mostly causal transformers trained to predict the next token; the causal mask lets one window train every position at once.</li>
             <li>It writes by sampling one token at a time from its probabilities, and temperature reshapes them.</li>
             <li>Its sentences are likely, not checked: a fluent sentence can be false, and here the model learned word shapes before it linked names to facts.</li>
         </ul>
 
         <h3>Common misconceptions</h3>
         <ul class="misconceptions">
-            <li>"A lower loss means the model tells the truth." The held-out loss here is level with the 5-gram line, yet a false place still gets more probability than the true one.</li>
+            <li>"A lower loss means the model tells the truth." The held-out loss here ends level with the n = 5 counting line, yet a false place still gets more probability than the true one.</li>
             <li>"Greedy decoding gives the correct answer." It gives the likeliest one; at the end of this run greedy writes the true place for only <span data-story="greedy-place">4</span> of the 8 people.</li>
             <li>"The model looks facts up." It has only weights; what it gives a fact is a probability learned from the training text.</li>
         </ul>

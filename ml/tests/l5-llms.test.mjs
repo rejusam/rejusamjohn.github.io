@@ -167,21 +167,38 @@ test('held-out bits per character after the run is below the n = 1 baseline', ()
   const end = RUN.curve.at(-1).bits;
   const [n1, n3, n5] = [1, 3, 5].map(S.ngramBits);
   assert.ok(end < n1);
-  // Reported as computed; no win over the 5-gram is required. The page's sentences:
+  // Reported as computed; no win over the n = 5 line is required. The page's sentences:
   assert.equal(SV['bits-start'], RUN.curve[0].bits.toFixed(2));
   assert.ok(RUN.curve[0].bits > Math.log2(28));        // the random start is worse than a uniform guess
   const firstBelow = (b) => RUN.curve.find((c) => c.bits < b).iter;
   assert.equal(SV['below-1-at'], S.count(firstBelow(n1)));
+  const i1 = RUN.curve.findIndex((c) => c.bits < n1);
+  assert.ok(RUN.curve.slice(i1).every((c) => c.bits < n1));
   assert.equal(SV['below-3-at'], S.count(firstBelow(n3)));
   // After it first drops below the 3-gram line it stays below it.
   const i3 = RUN.curve.findIndex((c) => c.bits < n3);
   assert.ok(RUN.curve.slice(i3).every((c) => c.bits < n3));
   assert.equal(SV['bits-end'], end.toFixed(3));
   assert.equal(SV['ngram-5-3'], n5.toFixed(3));
-  // Level with the 5-gram line at the end: just above it, after first dipping below it.
+  // At the end just above the n = 5 line, after first dipping below it.
   assert.ok(end > n5 && end - n5 < 0.005);
   assert.equal(SV['dip-at'], S.count(RUN.curve.find((c) => c.bits < n5).iter));
   assert.ok(RUN.curve.find((c) => c.bits < n5).iter < 2500);
+});
+
+test('samples go from noise to the words of the invented world', () => {
+  // Written out again: complete words (first and last dropped) found in the training text.
+  const vocab = new Set(rewrite(2000, 261).split(/[ .]+/).filter(Boolean));
+  const share = (t) => { const w = t.split(/[ .]+/).slice(1, -1).filter(Boolean); return w.filter((x) => vocab.has(x)).length / w.length; };
+  const s = RUN.samples.map((x) => share(x.text));
+  s.forEach((v, i) => assert.ok(Math.abs(v - S.worldWordShare(RUN.samples[i].text)) < 1e-15));
+  assert.equal(s[0], 0);
+  assert.equal(SV['words-start'], '0%');
+  const from = (level) => { let i = s.length; while (i > 0 && s[i - 1] >= level) i--; return RUN.samples[i].iter; };
+  assert.equal(SV['words-90-from'], S.count(from(0.9)));
+  assert.equal(SV['words-all-from'], S.count(from(1)));
+  assert.ok(s[s.findIndex((v, i) => RUN.samples[i].iter === from(0.9)) - 1] < 0.9);
+  assert.equal(s.at(-1), 1);
 });
 
 test('true-fact probability rises across checkpoints', () => {
@@ -226,11 +243,13 @@ test('true-fact probability rises across checkpoints', () => {
   // Places: from τ = 1 to 1.5 the false share falls; the probability goes to broken text.
   assert.ok(byTau[3].lives.f < byTau[2].lives.f);
   S.TAUS.forEach((tau, i) => {
+    if (i === 0) return;
     const r = byTau[i];
     assert.deepEqual(['ft', 'ff', 'fo', 'pt', 'pf', 'po'].map((k) => SV[`tau-${i}-${k}`]),
       [r.likes.t, r.likes.f, r.likes.o, r.lives.t, r.lives.f, r.lives.o].map((x) => Math.max(0, x).toFixed(2)), `τ ${tau}`);
   });
-  // τ = 0: one sentence per prompt; the counts out of 8.
+  // τ = 0: one sentence per prompt, always true or false; the counts out of 8.
+  for (const r of byTau[0].per) for (const kind of ['likes', 'lives']) assert.equal(r[kind].t + r[kind].f, 1);
   assert.equal(SV['greedy-food'], String(byTau[0].per.filter((r) => r.likes.t === 1).length));
   assert.equal(SV['greedy-place'], String(byTau[0].per.filter((r) => r.lives.t === 1).length));
   assert.equal(Number(SV['greedy-food']) / 8, byTau[0].likes.t);
@@ -370,7 +389,7 @@ test('samples: one per checkpoint, each from its own seed, alphabet only', () =>
   assert.equal(RUN.samples.at(-1).text, s);
 });
 
-test('step 1: a 5-gram cannot see the name', () => {
+test('step 1: the n = 5 counting model cannot see the name', () => {
   const m5 = ngramModel(rewrite(2000, 261), 5);
   const p = nextProbs(m5, 'ikes ')[ALPHABET.indexOf('a')];
   assert.equal(S.pageValues()['p5-a'], p.toFixed(2));

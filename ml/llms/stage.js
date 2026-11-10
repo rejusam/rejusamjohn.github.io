@@ -27,7 +27,7 @@ export const BATCH = 8;
 export const ETA = 0.003;
 export const RUN = 2500;
 export const EVAL_EVERY = 100;
-// Held-out scoring starts at character EVAL_FROM + 1, so the 5-gram line has a full context
+// Held-out scoring starts at character EVAL_FROM + 1, so the n = 5 counting line has a full context
 // at every scored position and all four lines score the same characters.
 export const EVAL_FROM = 5;
 export const NS = [1, 3, 5];
@@ -286,6 +286,21 @@ export function runFrom(model) {
 }
 export const fullRun = () => cached('run', () => runFrom(startModel()));
 
+// Complete words of a sample (the first and last may be cut off, so they are dropped), and
+// the share of them that are words of the training text.
+export function worldWordShare(text) {
+  const vocab = cached('words', () => new Set(trainText().split(/[ .]+/).filter(Boolean)));
+  const words = text.split(/[ .]+/).slice(1, -1).filter(Boolean);
+  return words.length ? words.filter((w) => vocab.has(w)).length / words.length : 0;
+}
+// The first step from which every later sample's share is at least `level`.
+export function sharesFrom(live, level) {
+  const s = live.samples.map((x) => worldWordShare(x.text));
+  let i = s.length;
+  while (i > 0 && s[i - 1] >= level) i--;
+  return live.samples[i].iter;
+}
+
 // Mean probabilities of the true and false sentences at τ = 1, at each checkpoint.
 export const checkpointFacts = (live) => CHECKPOINTS.map((iter) => ({ iter, ...factProbs(live.models.get(iter), [1])[0] }));
 
@@ -304,6 +319,9 @@ export function storyValuesFor(model, live = runFrom(model)) {
   v['below-1-at'] = count(c.find((p) => p.bits < n1).iter);
   v['below-3-at'] = count(c.find((p) => p.bits < n3).iter);
   v['bits-end'] = c.at(-1).bits.toFixed(3);
+  v['words-start'] = `${Math.round(worldWordShare(live.samples[0].text) * 100)}%`;
+  v['words-90-from'] = count(sharesFrom(live, 0.9));
+  v['words-all-from'] = count(sharesFrom(live, 1));
   const cps = checkpointFacts(live);
   for (const cp of cps) {
     v[`food-${cp.iter}`] = num2(cp.likes.t);
@@ -319,6 +337,7 @@ export function storyValuesFor(model, live = runFrom(model)) {
   v['pair-end'] = num2(split.pair);
   const byTau = factProbs(live.trainer.state.model, TAUS);
   TAUS.forEach((_, i) => {
+    if (i === 0) return;   // τ = 0 is given as counts out of 8 (greedy-food, greedy-place)
     const r = byTau[i];
     v[`tau-${i}-ft`] = num2(r.likes.t);
     v[`tau-${i}-ff`] = num2(r.likes.f);
@@ -407,7 +426,7 @@ export function promptInfo(model, raw, tau, iter) {
 }
 
 export function readout(step, s) {
-  if (step === 0) return ['each position predicts the character after it', `5-gram after ␣ikes␣: p(a) = ${s.p5}`, 'this model sees up to 32 characters back'];
+  if (step === 0) return ['each position predicts the character after it', `n = 5 counting, after ␣ikes␣: p(a) = ${s.p5}`, 'this model sees up to 32 characters back'];
   if (step === 1) {
     const pt = s.last ? `held-out: ${s.last.bits.toFixed(2)} bits/char (step ${count(s.last.iter)})` : 'held-out: not measured yet';
     return [`step ${count(s.iter)} of ${count(RUN)} · ${trainStatus(s)}`, pt, `n-grams: n = 1, 3, 5 dashed`];
@@ -493,7 +512,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       el('path', { d: `M${x0},${y - 8}L${x0},${y}L${x1},${y}L${x1},${y - 8}`, fill: 'none', stroke: colour, 'stroke-width': 2, 'stroke-dasharray': dash }, oneG);
       label(oneG, x0, y + 18, text, 'start', colour, 12);
     };
-    brk(5, 9, 150, 'a 5-gram uses only these', VIOLET, '5 3');
+    brk(5, 9, 150, 'counting with n = 5 uses only these', VIOLET, '5 3');
     brk(0, 9, 196, 'this model can use all of them (up to 32)', CYAN, null);
     label(oneG, X0, 248, 'one prediction per column: 16 here, 32 per window', 'start', MUTED, 12);
   }
@@ -780,6 +799,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     show(inRow, step === 2);
     show(pTitle, step === 2);
     show(chipsBox, step === 2);
+    show(chipsSaid, step === 2);
     show(factTotals, step === 3);
     factBox.style.display = step === 3 ? 'grid' : 'none';
     if (step === 1) {
@@ -808,7 +828,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   function ariaFor(texts) {
     const rest = texts.filter(Boolean).join('. ');
-    if (step === 0) return `The text tom likes apples, one character per column, with the character that follows each one underneath. Brackets show that a 5-gram uses only the last 5 characters before the prediction after likes, while this model can use all of them. ${rest}.`;
+    if (step === 0) return `The text tom likes apples, one character per column, with the character that follows each one underneath. Brackets show that the counting model with n = 5 uses only the last 5 characters before the prediction after likes, while this model can use all of them. ${rest}.`;
     if (step === 1) return `A line of held-out bits per character against training step, with dashed lines for the n-gram models with n = 1, 3 and 5. ${rest}.`;
     if (step === 2) return `Bars of the probability of each of the ${A} possible next characters after your text, with dashed outlines at temperature 1. ${rest}.`;
     if (step === 3) return `Two stacked bars, for likes and lives sentences: the probability that the sampled sentence is true, false, or anything else. ${rest}.`;
@@ -843,7 +863,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   });
   contBtn.addEventListener('click', () => {
     const ps = promptState(typed);
-    if (!ps.ids.length || ps.text.length >= MAX_INPUT) return;
+    if (!ps.ids.length) { announce('Type a letter first: there is nothing to continue.'); return; }
+    if (Array.from(ps.text).length >= MAX_INPUT) { announce(`The text is at its ${MAX_INPUT}-character limit.`); return; }
     typed = ps.text + continueOne(model(), ps.ids, tau(), contRng);
     input.value = typed;
     render();
