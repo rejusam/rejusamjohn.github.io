@@ -235,6 +235,9 @@ test('backpropagation read-out rows and page', () => {
   assert.ok(B.readout(5, { net, link: B.LINKS[4], nudge: 0, run: runs[1] }).some((r) => /not finished/.test(r)));
   assert.ok(!B.readout(5, { net, link: B.LINKS[4], nudge: 0, run: runs[2] }).some((r) => /not finished/.test(r)));
   assert.match(html, /the end-of-run numbers here are for the full 200-step run/);
+  // The prose says the read-out reads "finished" once the run is done (a fresh run shows "press Train").
+  assert.match(html, /the end-of-run numbers here are for the full 200-step run; the read-out says finished once the run is done\)/);
+  assert.doesNotMatch(html, /the read-out says when it is not finished/);
   assert.match(html, /seed 162/);
   assert.match(html, /the same kind of four-clump data as in/);
   assert.match(html, /<strong>x<\/strong> = \(1\.0, −0\.5\)/);
