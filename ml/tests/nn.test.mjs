@@ -146,6 +146,16 @@ test('momentum and rmsprop by hand', () => {
   near(r.params[0], 1.8, 1e-15);
 });
 
+test('optimiser defaults match the brief', () => {
+  const p = [1, -2], g = [0.3, -0.7];
+  const explicit = {eta: 0.1, beta: 0.9, beta1: 0.9, beta2: 0.999, eps: 1e-8};
+  for (const kind of ['momentum', 'rmsprop', 'adam']) {
+    const a = optStep(kind, {eta: 0.1}, optInit(kind, 2), p, g);
+    const b = optStep(kind, explicit, optInit(kind, 2), p, g);
+    assert.deepEqual(a, b, kind);
+  }
+});
+
 const makeTrainer = (extra = {}) => {
   const {X, y} = xorData({n: 200, seed: 3});
   const net = mlpInit([2, 4, 1], {hidden: 'tanh', seed: 4});

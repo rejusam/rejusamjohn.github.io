@@ -219,11 +219,11 @@ export function optInit(kind, nParams) {
   return {};
 }
 
-// hyper: eta, beta (momentum), beta2 (rmsprop; adam), beta1, eps. Never mutates inputs.
+// hyper: eta, beta (momentum), beta2 (rmsprop; adam; default 0.999), beta1, eps. Never mutates inputs.
 export function optStep(kind, hyper, state, params, grad) {
   const {eta = 0.01, eps = 1e-8} = hyper;
   const beta = hyper.beta ?? 0.9, beta1 = hyper.beta1 ?? 0.9;
-  const beta2 = hyper.beta2 ?? (kind === 'adam' ? 0.999 : 0.9);
+  const beta2 = hyper.beta2 ?? 0.999;
   if (kind === 'momentum') {
     const v = state.v.map((vi, i) => beta * vi + grad[i]);
     return {params: params.map((p, i) => p - eta * v[i]), state: {v}};
