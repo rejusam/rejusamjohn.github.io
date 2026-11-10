@@ -231,6 +231,7 @@ export function info(t, H) {
     test: accuracyNet(net, TE.X, TE.y),
     hidden: H === 2 ? outputAccuracyHidden(net, TR.X, TR.y) : null,
     far: Math.min(...farRing(net, FAR_R, 360)),
+    done: finished(t),
   };
 }
 
@@ -240,12 +241,25 @@ export function readout(step, s) {
   }
   const head = `H = ${s.H} · epoch ${s.epoch}`;
   if (step === 4) {
-    return [head, `loss: ${num(s.loss, 3)}`, `line on (a₁,a₂): ${pct(s.hidden ?? 0)}`, `network: ${pct(s.train)}`];
+    return [head, `loss: ${num(s.loss, 3)}`, 'train accuracy:', `line on (a₁,a₂): ${pct(s.hidden ?? 0)}`, `network: ${pct(s.train)}`];
   }
   if (step === 5) {
-    return [head, `train: ${pct(s.train)}`, `test: ${pct(s.test)}`, `min p̂, r = ${FAR_R}: ${num(s.far, 2)}`];
+    const far = `min p̂, r = ${FAR_R}: ${num(s.far, 2)}`;
+    if (!s.done) return [head, `test: ${pct(s.test)}`, far, 'run not finished:', 'press Train'];
+    return [head, `train: ${pct(s.train)}`, `test: ${pct(s.test)}`, far];
   }
   return [head, `loss: ${num(s.loss, 3)}`, `train: ${pct(s.train)}`, `test: ${pct(s.test)}`];
+}
+
+// Run t to the end. Returns the epoch during which test accuracy first reaches
+// 95% (checked after every step): iteration k belongs to epoch ⌈k / 10⌉.
+export function first95Epoch(t) {
+  let firstIter = null;
+  while (!finished(t)) {
+    advance(t, 1);
+    if (firstIter === null && accuracyNet(t.state.net, TE.X, TE.y) >= 0.95) firstIter = t.state.iter;
+  }
+  return firstIter === null ? null : Math.ceil(firstIter / ITERS_PER_EPOCH);
 }
 
 // Filled into the page at run time (cheap to compute).
@@ -285,12 +299,7 @@ export function storyValues() {
     v[`h${H}-test`] = pct(r.test);
   }
   const t = makeRun(4);
-  let first = null;
-  while (!finished(t)) {
-    advance(t, ITERS_PER_EPOCH);
-    if (first === null && accuracyNet(t.state.net, TE.X, TE.y) >= 0.95) first = t.state.epoch;
-  }
-  v['h4-first95'] = String(first);
+  v['h4-first95'] = String(first95Epoch(t));
   v['best-line'] = pct(bestLine(TR.X, TR.y));
   v['h4-loss0'] = num(t.state.epochLoss[0], 2);
   v['h4-loss'] = num(t.state.epochLoss[EPOCHS], 3);
@@ -629,6 +638,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       step = i;
       showGroup(hGroup, i === 3);
       showGroup(trainGroup, i >= 1);
+      controls.classList.toggle('has-train', i >= 1);
       render(true);
       announce(spoken(i));
       return Promise.resolve();

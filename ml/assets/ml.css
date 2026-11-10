@@ -2141,3 +2141,30 @@ html:not(.js) .coffee-line {
   border-color: var(--ml-cyan);
   color: var(--ml-cyan);
 }
+
+/* On a step with live training, Train is the main action: it takes the filled
+   cyan look and the lesson's Play button steps back to an outlined one. The
+   stage adds .has-train to its tools slot on those steps. */
+.ml-tools.has-train .train-buttons button:first-child {
+  background: var(--ml-cyan);
+  border-color: var(--ml-cyan);
+  color: var(--ml-bg);
+  font-weight: 600;
+}
+
+.ml-tools.has-train .train-buttons button:first-child:hover {
+  background: var(--ml-cyan-2);
+  border-color: var(--ml-cyan-2);
+}
+
+.controls:has(.ml-tools.has-train) .ml-nav .ml-play {
+  background: transparent;
+  border-color: var(--ml-line);
+  color: var(--ml-ink);
+  font-weight: 500;
+}
+
+.controls:has(.ml-tools.has-train) .ml-nav .ml-play:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ml-ink) 6%, transparent);
+  border-color: var(--ml-muted);
+}

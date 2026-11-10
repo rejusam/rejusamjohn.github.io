@@ -87,7 +87,23 @@ test('H = 4 reaches test accuracy ≥ 0.95 within 150 epochs', () => {
   assert.ok(first !== null && first <= L.EPOCHS);
   const sv = L.storyValues();
   assert.equal(sv['h4-test'], L.pct(acc));
-  assert.equal(sv['h4-first95'], String(first));
+  // At epoch ends, 95% first shows at the end of epoch 19. Checked after every
+  // step it is reached part-way through epoch 19, while the read-out still shows
+  // 18 finished epochs; the page says so.
+  assert.equal(first, 19);
+  let firstIter = null;
+  const u = L.makeRun(4);
+  while (!L.finished(u)) {
+    L.advance(u, 1);
+    if (firstIter === null && accuracyNet(u.state.net, te.X, te.y) >= 0.95) firstIter = u.state.iter;
+  }
+  assert.ok(firstIter % L.ITERS_PER_EPOCH !== 0);
+  const during = Math.ceil(firstIter / L.ITERS_PER_EPOCH);
+  assert.equal(sv['h4-first95'], String(during));
+  assert.equal(sv['h4-first95'], '19');
+  assert.equal(Math.floor(firstIter / L.ITERS_PER_EPOCH), 18);
+  assert.equal(L.first95Epoch(L.makeRun(4)), during);
+  assert.match(html, /part-way through epoch <span data-story="h4-first95">19<\/span>, while the read-out still shows 18 finished epochs/);
   // The loss falls a long way: the end loss is under a tenth of the start.
   const el = t.state.epochLoss;
   assert.ok(el[L.EPOCHS] < el[0] / 10, `${el[0]} → ${el[L.EPOCHS]}`);
@@ -266,6 +282,13 @@ test('hidden-layers read-out rows and page', () => {
       }
     }
   }
+  // Step 6 says when its run is not finished, and stops saying so at the end.
+  const fresh = L.makeRun(4);
+  assert.ok(L.readout(5, L.info(fresh, 4)).includes('run not finished:'));
+  L.advance(fresh, L.MAX_ITER);
+  assert.ok(!L.readout(5, L.info(fresh, 4)).some((r) => /not finished/.test(r)));
+  assert.match(html, /The numbers in this text are for the end of its 150-epoch run/);
+  assert.match(html, /Play steps through the lesson, and Train trains the network/);
   assert.equal((html.match(/<li class="step"/g) || []).length, 6);
   assert.match(html, /<title>Hidden layers: bending the boundary · ML Explorer<\/title>/);
   assert.match(html, /<h1>Hidden layers: bending the boundary<\/h1>/);
