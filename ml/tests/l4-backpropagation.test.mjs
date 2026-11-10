@@ -231,7 +231,8 @@ test('backpropagation read-out rows and page', () => {
     }
   }
   // Step 6 says when its run is not finished, and stops saying so at the end.
-  assert.ok(B.readout(5, { net, link: B.LINKS[4], nudge: 0, run: runs[0] }).some((r) => /not finished/.test(r)));
+  assert.ok(B.readout(5, { net, link: B.LINKS[4], nudge: 0, run: runs[0] }).includes('press Train'));
+  assert.ok(B.readout(5, { net, link: B.LINKS[4], nudge: 0, run: runs[1] }).some((r) => /not finished/.test(r)));
   assert.ok(!B.readout(5, { net, link: B.LINKS[4], nudge: 0, run: runs[2] }).some((r) => /not finished/.test(r)));
   assert.match(html, /the end-of-run numbers here are for the full 200-step run/);
   assert.match(html, /seed 162/);
@@ -277,4 +278,86 @@ test('backpropagation read-out rows and page', () => {
     assert.equal(text, sv[key], key);
   }
   for (const v of [...Object.values(pv), ...Object.values(sv)]) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+});
+
+test('the read-out says whether the run is training, paused, not started or finished', () => {
+  assert.equal(B.trainStatus({ running: false, iter: 0, done: false }), 'press Train');
+  assert.equal(B.trainStatus({ running: true, iter: 0, done: false }), 'training…');
+  assert.equal(B.trainStatus({ running: true, iter: 40, done: false }), 'training…');
+  assert.equal(B.trainStatus({ running: false, iter: 40, done: false }), 'not finished: press Train');
+  assert.equal(B.trainStatus({ running: false, iter: B.XOR_STEPS, done: true }), 'finished');
+  assert.equal(B.trainStatus({ running: true, iter: B.XOR_STEPS, done: true }), 'finished');
+  const net = B.startNet();
+  const t = B.makeRun();
+  const last = (run) => B.readout(5, { net, link: B.LINKS[4], nudge: 0, run }).at(-1);
+  assert.equal(last(B.runInfo(t)), 'press Train');
+  assert.equal(last(B.runInfo(t, true)), 'training…');
+  B.advance(t, 40);
+  assert.equal(last(B.runInfo(t, true)), 'training…');
+  assert.equal(last(B.runInfo(t, false)), 'not finished: press Train');
+  B.advance(t, B.XOR_STEPS);
+  assert.equal(last(B.runInfo(t)), 'finished');
+  // The stage passes the loop's state in and redraws the read-out when Pause is pressed.
+  const src = readFileSync(new URL('../backpropagation/stage.js', import.meta.url), 'utf8');
+  assert.match(src, /runInfo\(run, loop\.running\(\)\)/);
+  assert.match(src, /trainGroup\.addEventListener\('click', \(\) => \{ if \(step === 5\) render\(\); \}\)/);
+});
+
+// Another browser may round Math.exp in the last place. Scaling every starting
+// weight by 1 ± 1e-12 stands in for that: every number the page quotes, rounded as
+// the page shows it, must not move.
+test('the quoted numbers do not hang on rounding', () => {
+  const D = B.xorSet();
+  const pv = B.pageValues();
+  const sv = B.storyValues();
+  const base = B.makeRun();
+  B.advance(base, B.XOR_STEPS);
+  const scaled = (f) => {
+    const net = B.startNet();
+    for (const M of net.W) for (const row of M) row.forEach((v, i) => { row[i] = v * f; });
+    for (const row of net.b) row.forEach((v, i) => { row[i] = v * f; });
+    return net;
+  };
+  for (const f of [1 + 1e-12, 1 - 1e-12]) {
+    // Steps 1 to 5: the one example, worked by hand.
+    const net = scaled(f);
+    const g = B.backwardPass(net, B.X_EX, B.Y_EX);
+    const k = B.LINKS[B.DEFAULT_LINK];
+    const nt = B.nudgeTable(net, k);
+    const got = {
+      z1: g.f.z1[0], z1b: g.f.z1[1], a1: g.f.a1[0], a1b: g.f.a1[1], z2: g.f.z2, p: g.f.p, loss: g.f.loss,
+      delta2: g.delta2, delta1: g.delta1[0], delta1b: g.delta1[1],
+      'grad-h1o': B.linkGrad(net, k), 'grad-x1h1': B.linkGrad(net, B.LINKS[0]),
+      'nudge-real': nt[0].real, 'nudge-est': nt[0].est,
+      'step-loss': B.oneStep(net, B.X_EX, B.Y_EX, B.ETA).after,
+    };
+    for (const [key, v] of Object.entries(got)) assert.equal(B.sig3(v), pv[key], `${f} ${key}`);
+    // Step 6: the XOR run.
+    const t = trainer({ net: scaled(f), X: D.X, y: D.y, batch: 20, kind: 'sgd', hyper: { eta: 3 }, seed: B.SEED_SHUFFLE });
+    let first = null;
+    while (t.state.iter < B.XOR_STEPS) {
+      t.step(1);
+      if (first === null && accuracyNet(t.state.net, D.X, D.y) === 1) first = t.state.iter;
+    }
+    const e = t.state.epochLoss;
+    assert.equal(B.sig3(e[0]), sv['xor-loss0']);
+    assert.equal(B.sig3(e[B.XOR_STEPS]), sv['xor-loss']);
+    assert.equal(B.pct(accuracyNet(scaled(f), D.X, D.y)), sv['xor-acc0']);
+    assert.equal(B.pct(accuracyNet(t.state.net, D.X, D.y)), sv['xor-acc']);
+    // "first reaching 100% at step 174"
+    assert.equal(String(first), sv['xor-first']);
+    // "lower at every one of the 200 steps", by a clear margin each step.
+    for (let i = 1; i <= B.XOR_STEPS; i++) assert.ok(e[i - 1] - e[i] > 1e-6, String(i));
+    const gap = Math.max(...e.map((v, i) => Math.abs(v - base.state.epochLoss[i])));
+    assert.ok(gap < 1e-9, String(gap));
+  }
+  // Why step 174 is not a knife edge: at step 173 the one wrong point's logit is
+  // clearly below 0, and at step 174 every logit is clearly on its side.
+  const t = B.makeRun();
+  B.advance(t, 173);
+  const z173 = D.X.map((x) => mlpForward(t.state.net, x).out[0]);
+  assert.equal(accuracyNet(t.state.net, D.X, D.y), 19 / 20);
+  for (const z of z173) assert.ok(Math.abs(z) > 0.01, String(z));
+  B.advance(t, 1);
+  for (const x of D.X) assert.ok(Math.abs(mlpForward(t.state.net, x).out[0]) > 0.01);
 });

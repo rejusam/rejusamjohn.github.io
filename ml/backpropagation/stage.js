@@ -130,9 +130,17 @@ export function advance(t, k) {
 }
 export const frameStep = (t, n) => advance(t, Math.min(n, PACE));
 
-export function runInfo(t) {
+export function runInfo(t, running = false) {
   const e = t.state.epochLoss;
-  return { iter: t.state.iter, loss: e[e.length - 1], acc: accuracyNet(t.state.net, XOR.X, XOR.y), done: finished(t) };
+  return { iter: t.state.iter, loss: e[e.length - 1], acc: accuracyNet(t.state.net, XOR.X, XOR.y), done: finished(t), running };
+}
+
+// The run's state in words: "training…" only while the loop runs; "press Train"
+// before the first step; "not finished: press Train" when paused part-way.
+export function trainStatus({ running = false, iter = 0, done = false }) {
+  if (done) return 'finished';
+  if (running) return 'training…';
+  return iter === 0 ? 'press Train' : 'not finished: press Train';
 }
 
 // ---- formatting
@@ -154,7 +162,7 @@ export function readout(step, { net, link, nudge = 0, run }) {
     const r = oneStep(startNet(), X_EX, Y_EX, ETA);
     const rows = [`one step on x, η = ${ETA}:`, `ℒ ${sig3(r.before)} → ${sig3(r.after)}`,
       `XOR train: step ${run.iter} of ${XOR_STEPS}`, `loss ${sig3(run.loss)} · acc ${pct(run.acc)}`];
-    if (!run.done) rows.push('not finished: press Train');
+    rows.push(trainStatus(run));
     return rows;
   }
   const shown = step === 4 && nudge ? withWeight(net, link, linkWeight(net, link) + nudge * NUDGE) : net;
@@ -439,7 +447,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     }
     nudgeBtns.forEach((b, n) => b.setAttribute('aria-pressed', String(nudge === (n ? -1 : 1))));
 
-    const texts = readout(step, { net, link: LINKS[sel], nudge, run: runInfo(run) });
+    const texts = readout(step, { net, link: LINKS[sel], nudge, run: runInfo(run, loop.running()) });
     rowsT.forEach((r, i) => {
       r.textContent = texts[i] || '';
       r.style.display = i < texts.length ? '' : 'none';
@@ -519,6 +527,9 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     runToEnd: () => { advance(run, XOR_STEPS); },
     render: () => { render(); announce(spoken(5)); },
   });
+
+  // Pausing does not call render, so redraw the read-out after any Train/Pause/Reset click.
+  trainGroup.addEventListener('click', () => { if (step === 5) render(); });
 
   const filled = pageValues();
   for (const span of doc.querySelectorAll('main.lesson [data-value]')) {
