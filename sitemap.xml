@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url><loc>https://rejusamjohn.pages.dev/</loc><lastmod>2026-10-19</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/</loc><lastmod>2026-11-11</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/nz-car-theft/</loc><lastmod>2026-09-26</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/rag-pipeline/</loc><lastmod>2026-10-19</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ClinicalDataAnalysis/</loc><lastmod>2026-09-26</lastmod></url>
-    <url><loc>https://rejusamjohn.pages.dev/ml/</loc><lastmod>2026-11-10</lastmod></url>
-    <url><loc>https://rejusamjohn.pages.dev/ml/notation/</loc><lastmod>2026-11-10</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/notation/</loc><lastmod>2026-11-11</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ml/what-is-a-model/</loc><lastmod>2026-11-10</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ml/data-as-numbers/</loc><lastmod>2026-11-10</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ml/centre-and-spread/</loc><lastmod>2026-11-10</lastmod></url>
@@ -33,5 +33,13 @@
     <url><loc>https://rejusamjohn.pages.dev/ml/deep-networks/</loc><lastmod>2026-11-10</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ml/convolutions/</loc><lastmod>2026-11-10</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ml/cnns/</loc><lastmod>2026-11-10</lastmod></url>
-    <url><loc>https://rejusamjohn.pages.dev/ml/rnns/</loc><lastmod>2026-11-10</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/rnns/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/tokens/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/embeddings/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/language-models/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/attention/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/transformers/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/llms/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/generative-models/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/diffusion/</loc><lastmod>2026-11-11</lastmod></url>
 </urlset>

@@ -2,6 +2,8 @@
 // DOM and window are only touched inside function bodies so this module
 // can be imported in Node for tests.
 
+import { eig2Sym } from './maths.js';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 export function clamp(v, lo, hi) {
@@ -428,4 +430,96 @@ export function pixelGrid(parent, img, { x = 0, y = 0, cell = 16, mode = 'grey' 
   };
   update(img);
   return { update, g };
+}
+
+// Opacity for one attention weight in [0, 1]. Out-of-range values are clamped
+// and anything that is not a number draws as zero.
+export function heatmapFill(v) {
+  return { opacity: Number.isFinite(v) ? clamp(v, 0, 1) : 0 };
+}
+
+// Attention weights as a grid of cyan cells whose opacity is the weight.
+// A small dot marks the largest weight in each row. A masked cell (value null,
+// not allowed) is an empty outline with a diagonal hatch, so "not allowed"
+// never looks like "zero". Each cell has a <title> that is updated in place.
+export function heatmap(parent, rows, cols, { x = 0, y = 0, cell = 24, rowLabels, colLabels, title } = {}) {
+  const g = el('g', { class: 'heatmap' }, parent);
+  if (title) el('title', { text: title }, g);
+  const cells = [];
+  const hatches = [];
+  const dots = [];
+  for (let a = 0; a < rows; a++) {
+    for (let b = 0; b < cols; b++) {
+      const cx = x + b * cell;
+      const cy = y + a * cell;
+      const rect = el('rect', { class: 'hm-cell', x: cx, y: cy, width: cell, height: cell }, g);
+      el('title', {}, rect);
+      cells.push(rect);
+      hatches.push(el('path', { class: 'hm-hatch', d: `M${cx + 3} ${cy + cell - 3}L${cx + cell - 3} ${cy + 3}`, visibility: 'hidden' }, g));
+    }
+    dots.push(el('circle', { class: 'hm-max', r: Math.max(2, cell * 0.12), cx: 0, cy: 0, visibility: 'hidden' }, g));
+  }
+  if (rowLabels) {
+    rowLabels.forEach((t, a) => el('text', { class: 'hm-label', x: x - 6, y: y + (a + 0.5) * cell, 'text-anchor': 'end', 'dominant-baseline': 'central', text: t }, g));
+  }
+  if (colLabels) {
+    colLabels.forEach((t, b) => el('text', { class: 'hm-label', x: x + (b + 0.5) * cell, y: y - 6, 'text-anchor': 'middle', text: t }, g));
+  }
+  el('rect', { class: 'hm-frame', x, y, width: cols * cell, height: rows * cell }, g);
+  const update = (m) => {
+    for (let a = 0; a < rows; a++) {
+      let best = -1;
+      let bestV = 0;
+      for (let b = 0; b < cols; b++) {
+        const v = m[a][b];
+        const k = a * cols + b;
+        const masked = v === null || v === undefined;
+        cells[k].setAttribute('class', masked ? 'hm-cell hm-masked' : 'hm-cell');
+        cells[k].setAttribute('fill-opacity', masked ? 0 : heatmapFill(v).opacity);
+        hatches[k].setAttribute('visibility', masked ? 'visible' : 'hidden');
+        const label = masked ? 'not allowed' : fmt(Number(v.toFixed(2)));
+        cells[k].firstChild.textContent = `row ${a + 1}, column ${b + 1}: ${label}`;
+        if (!masked && Number.isFinite(v) && v > bestV) { bestV = v; best = b; }
+      }
+      if (best >= 0) {
+        dots[a].setAttribute('cx', x + (best + 0.5) * cell);
+        dots[a].setAttribute('cy', y + (a + 0.5) * cell);
+        dots[a].setAttribute('visibility', 'visible');
+      } else dots[a].setAttribute('visibility', 'hidden');
+    }
+  };
+  update(Array.from({ length: rows }, () => Array(cols).fill(0)));
+  return { update, g };
+}
+
+// Closed SVG path of the k-standard-deviation ellipse of N(mu, S), S a 2x2
+// symmetric matrix. Semi-axes are k times the square roots of the eigenvalues
+// of S, along its eigenvectors. The path is a 72-sided polygon.
+export function ellipsePath(mu, S, k = 2) {
+  const [l1, l2] = eig2Sym(S);
+  const r1 = k * Math.sqrt(Math.max(l1, 0));
+  const r2 = k * Math.sqrt(Math.max(l2, 0));
+  const th = 0.5 * Math.atan2(2 * S[0][1], S[0][0] - S[1][1]);
+  const c = Math.cos(th);
+  const s = Math.sin(th);
+  const n = 72;
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const t = (2 * Math.PI * i) / n;
+    const u = r1 * Math.cos(t);
+    const v = r2 * Math.sin(t);
+    pts.push(`${Number((mu[0] + u * c - v * s).toPrecision(8))} ${Number((mu[1] + u * s + v * c).toPrecision(8))}`);
+  }
+  return 'M' + pts.join('L') + 'Z';
+}
+
+// A k-sigma ellipse in data coordinates (xs, ys are scales). Mapping the
+// polygon through the scales keeps it right when the axes differ in scale.
+export function ellipse(parent, xs, ys, { k = 2, dashed = false } = {}) {
+  const path = el('path', { class: dashed ? 'ellipse ellipse-2' : 'ellipse' }, parent);
+  const update = (mu, S) => {
+    const nums = ellipsePath(mu, S, k).slice(1, -1).split('L').map((p) => p.split(' ').map(Number));
+    path.setAttribute('d', pathFrom(nums, xs, ys) + 'Z');
+  };
+  return { update, path };
 }

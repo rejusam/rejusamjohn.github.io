@@ -556,7 +556,8 @@ test('page', () => {
   assert.match(html, /href="\/ml\/backpropagation\/"/);
   assert.match(html, /href="\/ml\/optimisers\/"/);
   assert.match(html, /href="\/ml\/train-test\/"/);
-  assert.match(html, /<a class="next-lesson" href="\/ml\/">Back to the path →<\/a>/);
+  assert.match(html, /<a class="next-lesson" href="\/ml\/tokens\/">Next lesson: Tokens: text as numbers →<\/a>/);
+  assert.match(html, /<a href="\/ml\/attention\/">attention<\/a>/);
   assert.match(html, /<p class="coffee-line">If this helped, you can <button type="button" data-coffee>buy me a coffee<\/button>\.<\/p>/);
   assert.match(html, /<script type="module" src="https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js" data-cf-beacon='\{"token": "e46c62f910fe4def882feaed064efced"\}'><\/script>/);
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)(?![^>]*application\/ld\+json)[^>]*>/);
@@ -564,7 +565,7 @@ test('page', () => {
   assert.doesNotMatch(html, /Taylor/);
   assert.doesNotMatch(html, /understands|learns like|it decided|always better|can learn anything|solves? (the )?(long|memory)|solved/i);
   assert.doesNotMatch(html, /delve|in today's world|unlock|harness the power|it's important to note|dive in/i);
-  assert.doesNotMatch(html, /Next lesson: /);
+  assert.doesNotMatch(html, /Back to the path/);
   assert.doesNotMatch(html, /last 8 bits|next three targets|only needs the last 2/);
   // Quiz q2's distractor is refuted by the page's own numbers: k = 4 holds more bits at
   // once than k = 8, with the same 8 hidden numbers, and got every masked test step right.

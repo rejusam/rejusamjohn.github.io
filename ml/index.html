@@ -182,6 +182,46 @@
           "@type": "LearningResource",
           "name": "Recurrent networks",
           "url": "https://rejusamjohn.pages.dev/ml/rnns/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Tokens: text as numbers",
+          "url": "https://rejusamjohn.pages.dev/ml/tokens/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Embeddings: words as points",
+          "url": "https://rejusamjohn.pages.dev/ml/embeddings/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Predicting the next token",
+          "url": "https://rejusamjohn.pages.dev/ml/language-models/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Attention",
+          "url": "https://rejusamjohn.pages.dev/ml/attention/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Transformers",
+          "url": "https://rejusamjohn.pages.dev/ml/transformers/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Large language models, in miniature",
+          "url": "https://rejusamjohn.pages.dev/ml/llms/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Generative models",
+          "url": "https://rejusamjohn.pages.dev/ml/generative-models/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Diffusion: from noise to data",
+          "url": "https://rejusamjohn.pages.dev/ml/diffusion/"
         }
       ]
     }
@@ -211,7 +251,7 @@
 
     <section class="hub-path-sec" id="path" aria-labelledby="path-title">
         <h2 id="path-title">The path</h2>
-        <p class="hub-sub">Each lesson builds on the ones before it. L0 to L4 are ready; L5 and L6 are coming next. Your progress is kept in this browser only.</p>
+        <p class="hub-sub">Each lesson builds on the ones before it. L0 to L5 are ready; L6 is coming next. Your progress is kept in this browser only.</p>
         <!-- Safari drops list semantics when list-style is none; role="list" restores them. -->
         <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
         <ol class="hub-path" role="list">
@@ -385,10 +425,51 @@
                     </li>
                 </ol>
             </li>
-            <li class="hub-level is-soon" data-level="L5">
+            <li class="hub-level" data-level="L5">
                 <div class="hub-level-head"><span class="hub-lv">L5</span> <h3 class="hub-lt">Modern AI</h3></div>
-                <p class="hub-topics">Attention, transformers, LLMs, embeddings</p>
-                <p class="hub-soon">Coming next</p>
+                <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
+                <ol class="hub-lessons" role="list">
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 29 · About 9 min</p>
+                        <a data-slug="tokens" href="/ml/tokens/"><span class="hub-title">Tokens: text as numbers</span></a>
+                        <p class="hub-promise">A model reads text as a list of numbers. Watch a tokeniser build its vocabulary by merging the commonest pair of pieces, again and again, and type a sentence of your own to see it split.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 30 · About 10 min</p>
+                        <a data-slug="embeddings" href="/ml/embeddings/"><span class="hub-title">Embeddings: words as points</span></a>
+                        <p class="hub-promise">An embedding is a short list of numbers for each word, learned from text. Train one live and watch words that are used in the same way end up pointing the same way.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 31 · About 10 min</p>
+                        <a data-slug="language-models" href="/ml/language-models/"><span class="hub-title">Predicting the next token</span></a>
+                        <p class="hub-promise">A language model does one job: given the text so far, it gives a probability to every possible next token. Build one from counts, type a few letters to see its guesses, and make it write.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 32 · About 11 min</p>
+                        <a data-slug="attention" href="/ml/attention/"><span class="hub-title">Attention</span></a>
+                        <p class="hub-promise">Attention lets every position in a sequence look straight back at any earlier one. Drag a query and watch the weights shift, then train a small attention model live on the task a recurrent network found hard.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 33 · About 10 min</p>
+                        <a data-slug="transformers" href="/ml/transformers/"><span class="hub-title">Transformers</span></a>
+                        <p class="hub-promise">A transformer block is attention plus a small network, each wrapped in a shortcut and layer normalisation. Build one, train it live to reverse eight digits, and watch its attention maps turn into a mirror image.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 34 · About 12 min</p>
+                        <a data-slug="llms" href="/ml/llms/"><span class="hub-title">Large language models, in miniature</span></a>
+                        <p class="hub-promise">Most large language models today are transformers trained to predict the next token on a very large amount of text. Train a tiny one here, live, watch its writing go from noise to words, and then check how many of the sentences it writes are true.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 35 · About 10 min</p>
+                        <a data-slug="generative-models" href="/ml/generative-models/"><span class="hub-title">Generative models</span></a>
+                        <p class="hub-promise">A generative model learns where the data falls, as a probability distribution, and then makes new data by sampling from it. Fit one live with EM and press Sample.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 36 · About 12 min</p>
+                        <a data-slug="diffusion" href="/ml/diffusion/"><span class="hub-title">Diffusion: from noise to data</span></a>
+                        <p class="hub-promise">Add noise to a spiral, step by step, until almost nothing of it is left. Train a small network to guess that noise. Then start from pure noise, take the guesses back out step by step, and watch 400 points walk back into a spiral.</p>
+                    </li>
+                </ol>
             </li>
             <li class="hub-level is-soon" data-level="L6">
                 <div class="hub-level-head"><span class="hub-lv">L6</span> <h3 class="hub-lt">In practice</h3></div>

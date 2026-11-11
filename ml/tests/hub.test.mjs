@@ -11,6 +11,10 @@ import { inertia, pca2 } from '../assets/unsupervised.js';
 import { mlpForward, ACT, bceLogit, optInit, optStep } from '../assets/nn.js';
 import { convOutSize, conv2d, cnnInit, cnnParamCount } from '../assets/conv.js';
 import { rnnForward } from '../assets/rnn.js';
+import { ALPHABET } from '../assets/world.js';
+import { softmax } from '../assets/text.js';
+import { scaledDot, layerNorm } from '../assets/attn.js';
+import { ddpmSchedule } from '../assets/gen.js';
 
 const ML = fileURLToPath(new URL('..', import.meta.url));
 const read = (p) => readFileSync(ML + p, 'utf8');
@@ -149,6 +153,15 @@ test('notation page links only to lessons that exist', () => {
   for (const l of LIVE) assert.ok(existsSync(`${ML}${l.slug}/index.html`));
 });
 
+test('notation page: Lesson 35 EM start and Lesson 33 permutation matrix', () => {
+  const html = notation();
+  assert.match(html, /for a mixture component\), though its EM start uses the <span class="tex" data-tex="n - 1">/);
+  assert.match(html, /sample covariance, as the lesson says; and <a href="\/ml\/diffusion\/">Lesson 36<\/a> scales/);
+  assert.doesNotMatch(html, /for a mixture component\), and <a href="\/ml\/diffusion\/">/);
+  assert.match(html, /bold capital <span class="tex" data-tex="\\boldsymbol\{\\Pi\}">/);
+  assert.match(html, /is a permutation matrix, a shuffle of the positions; it has nothing to do with <span class="tex" data-tex="\\pi_k">/);
+});
+
 test('notation page covers the symbols the lessons use', () => {
   const tex = new Set([...notation().matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1])));
   const has = (t) => [...tex].some((s) => s.includes(t));
@@ -209,9 +222,9 @@ test('notation worked examples match the computed values', () => {
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
-test('TOTAL_LIVE equals the count of lessons in PATH', () => {
+test('TOTAL_LIVE is 36', () => {
   assert.equal(TOTAL_LIVE, PATH.flatMap((l) => l.lessons).length);
-  assert.equal(TOTAL_LIVE, 28);
+  assert.equal(TOTAL_LIVE, 36);
 });
 
 test('L3 is live: not marked soon, nine lessons, each with a page whose h1 is its title', () => {
@@ -242,9 +255,26 @@ test('L4 is live: not marked soon, nine lessons, each with a page whose h1 is it
   }
 });
 
-test('landing intro says L0 to L4 are ready', () => {
+test('L5 is live: not marked soon, eight lessons, each with a page whose h1 is its title', () => {
+  const l5 = PATH.find((l) => l.level === 'L5');
+  assert.ok(!l5.soon);
+  assert.equal(l5.topics, undefined);
+  assert.equal(l5.name, 'Modern AI');
+  assert.deepEqual(l5.lessons.map((l) => l.slug), [
+    'tokens', 'embeddings', 'language-models', 'attention',
+    'transformers', 'llms', 'generative-models', 'diffusion',
+  ]);
+  for (const l of l5.lessons) {
+    const html = read(`${l.slug}/index.html`);
+    assert.equal(stripTags(/<h1>([\s\S]*?)<\/h1>/.exec(html)[1]), l.title, l.slug);
+  }
+  const l6 = PATH.find((l) => l.level === 'L6');
+  assert.ok(l6.soon, 'L6 is still coming');
+});
+
+test('landing intro says L0 to L5 are ready', () => {
   const sub = stripTags(/<p class="hub-sub">([\s\S]*?)<\/p>/.exec(landing())[1]);
-  assert.ok(sub.includes('L0 to L4 are ready; L5 and L6 are coming next.'), sub);
+  assert.ok(sub.includes('L0 to L5 are ready; L6 is coming next.'), sub);
 });
 
 test('landing numbers the lessons in order and quotes each page\'s promise and time', () => {
@@ -268,6 +298,15 @@ test("overfitting's next link points to /ml/k-nearest-neighbours/", () => {
   const html = read('overfitting/index.html');
   assert.ok(html.includes('<a class="next-lesson" href="/ml/k-nearest-neighbours/">Next lesson: k-nearest neighbours →</a>'));
   assert.ok(!html.includes('Back to the path'));
+});
+
+test("rnns' next link points to /ml/tokens/", () => {
+  const html = read('rnns/index.html');
+  assert.ok(html.includes('<a class="next-lesson" href="/ml/tokens/">Next lesson: Tokens: text as numbers →</a>'));
+  assert.ok(!html.includes('Back to the path'));
+  assert.ok(html.includes('<p>That is the end of Level 4. Level 5 starts with how text becomes numbers.</p>'));
+  assert.ok(!html.includes('is coming next'));
+  assert.ok(html.includes('<a href="/ml/attention/">attention</a>'), 'the attention paragraph links the attention lesson');
 });
 
 test("pca's next link points to /ml/neurons/", () => {
@@ -299,11 +338,11 @@ test('sitemap lists every lesson URL in PATH', () => {
   }
 });
 
-test('home page card names levels 0 to 4', () => {
+test('home page card names levels 0 to 5', () => {
   const html = readFileSync(`${ROOT}index.html`, 'utf8');
-  assert.ok(html.includes('<div class="project-label">Interactive guide · Levels 0–4 live</div>'));
-  assert.ok(!html.includes('Levels 0–3 live'));
-  assert.ok(html.includes('classic models such as decision trees, random forests, k-means and PCA, then neural networks.'));
+  assert.ok(html.includes('<div class="project-label">Interactive guide · Levels 0–5 live</div>'));
+  assert.ok(!html.includes('Levels 0–4 live'));
+  assert.ok(html.includes('classic models such as decision trees, random forests, k-means and PCA, then neural networks, attention and transformers.'));
 });
 
 // Every HTML page under ml/, vendor files aside.
@@ -483,4 +522,98 @@ test('notation Level 4 worked examples match the computed values', () => {
   assert.ok(Math.abs(adam.params[0] + 0.1) < 1e-6 && Math.abs(adamSmall.params[0] + 0.1) < 1e-5);
   const adamEntry = stripTags(/<div class="sym" id="adam">[\s\S]*?<\/div>/.exec(notation())[0]);
   assert.ok(adamEntry.includes('moves each weight by about η'), adamEntry);
+});
+
+test('notation page lists the Level 5 symbols', () => {
+  const html = notation();
+  const tex = new Set([...html.matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1])));
+  const has = (t) => [...tex].some((s) => s.includes(t));
+  for (const t of [
+    '\\mathcal{V}', '|\\mathcal{V}|', '\\mathbf{e}_i', '\\mathbf{E}', '\\mathbf{P}', '\\mathbf{x}_t = \\mathbf{E}_{i_t} + \\mathbf{P}_t',
+    '\\mathbf{Q}', '\\mathbf{K}', '\\mathbf{V}', '\\mathbf{A}', 'd_k',
+    '\\operatorname{Attention}(\\mathbf{Q}, \\mathbf{K}, \\mathbf{V}) = \\operatorname{softmax}\\!\\Big(\\frac{\\mathbf{Q}\\mathbf{K}^{\\top}}{\\sqrt{d_k}}\\Big)\\mathbf{V}',
+    'h = 1, \\dots, H', '\\mathbf{W}^{O}',
+    '\\operatorname{softmax}(\\mathbf{z})_i = \\frac{\\exp(z_i)}{\\sum_j \\exp(z_j)}', '\\tau', '\\operatorname{softmax}(\\mathbf{z}/\\tau)',
+    '\\operatorname{LN}(\\mathbf{x}) = \\boldsymbol{\\gamma} \\odot \\frac{\\mathbf{x} - \\mu}{\\sqrt{s^2 + \\varepsilon}} + \\boldsymbol{\\beta}',
+    '\\log_2', '\\pi_k', '\\boldsymbol{\\mu}_k', '\\boldsymbol{\\Sigma}_k', 'r_{ik}', '\\mathcal{N}', 'L(\\theta)', '\\ell(\\theta)',
+    '\\beta_t', '\\alpha_t = 1 - \\beta_t', '\\bar\\alpha_t = \\alpha_1 \\alpha_2 \\cdots \\alpha_t', '\\boldsymbol{\\varepsilon}',
+    '\\hat{\\boldsymbol{\\varepsilon}}_\\theta(\\mathbf{x}_t, t)', '\\mathbb{E}', '\\cos\\theta',
+  ]) assert.ok(has(t), `notation page shows ${t}`);
+  for (const id of ['vocab', 'embed', 'softmax', 'attn', 'heads', 'layernorm', 'mixture', 'normal', 'likelihood', 'bits', 'diffusion', 'epshat', 'cos']) {
+    assert.ok(html.includes(`id="${id}"`), `notation page has #${id}`);
+  }
+  const entry = (id) => stripTags(new RegExp(`<div class="sym" id="${id}">[\\s\\S]*?</div>`).exec(html)[0]);
+  assert.ok(entry('layernorm').includes('population variance'), 'LN says population variance');
+  assert.ok(entry('mixture').includes('not 3.14'), 'pi_k is not the constant');
+  assert.ok(entry('bits').includes('base 2'), 'bits are base 2');
+  for (const l of PATH.find((x) => x.level === 'L5').lessons) {
+    assert.ok(html.includes(`href="${lessonHref(l.slug)}"`), `notation page links ${l.slug}`);
+  }
+});
+
+test('notation page lists the Level 5 clashes', () => {
+  const sec = /<section class="sym-group" id="clashes"[\s\S]*?<\/section>/.exec(notation());
+  const items = [...sec[0].matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1]);
+  const tex = (item) => [...item.matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1]));
+  const find = (...ts) => items.find((it) => ts.every((t) => tex(it).some((s) => s === t)));
+  assert.ok(find('\\mathbf{V}', '\\mathcal{V}'), 'V (values) vs curly V (vocabulary)');
+  const T = find('T', 'X^{\\top}');
+  assert.ok(T && stripTags(T).includes('noising steps'), 'T: sequence length and diffusion steps');
+  assert.ok(find('\\beta', '\\boldsymbol{\\beta}', '\\beta_t'), 'beta: momentum, LN shift, schedule');
+  assert.ok(find('\\gamma', '\\boldsymbol{\\gamma}'), 'gamma: eigenvalues vs LN scale');
+  assert.ok(find('\\pi_k', '\\pi'), 'pi_k vs the constant');
+  assert.ok(find('\\tau', 'T'), 'tau: temperature, because T is taken');
+  assert.ok(find('\\mathbf{E}', '\\mathbb{E}', 'E'), 'E: embeddings, expectation, epochs');
+  const H = items.find((it) => tex(it).includes('H') && ['Hessian', 'bits', 'heads'].every((w) => stripTags(it).includes(w)));
+  assert.ok(H, 'H: Hessian, bits, heads');
+  assert.ok(find('\\boldsymbol{\\varepsilon}', '\\varepsilon'), 'bold epsilon noise vs tiny constants');
+  const S = find('S', '\\Sigma');
+  assert.ok(S && tex(S).includes('\\boldsymbol{\\Sigma}_k'), 'S vs Sigma mentions the mixture covariances');
+  const d = find('d');
+  assert.ok(d && tex(d).includes('d_k') && stripTags(d).includes('embedding'), 'd: embedding width and key width');
+  const sigma = items.find((it) => tex(it).includes('\\sigma(z)'));
+  assert.ok(tex(sigma).includes('\\sigma_t'), 'sigma clash mentions the diffusion sigma_t');
+});
+
+// The Level 5 worked examples, computed with the lessons' own helpers.
+test('notation Level 5 worked examples match the computed values', () => {
+  const f2 = (v) => v.toFixed(2).replace(/\.?0+$/, '');
+  const pair = (v) => `(${f2(v[0])},\\ ${f2(v[1])})`;
+  assert.equal(ALPHABET.length, 28);
+  assert.equal(ALPHABET[2], 'a');
+  const sm1 = softmax([0, Math.log(3)]);
+  const sm2 = softmax([0, Math.log(3)], 2);
+  const s1 = scaledDot([1, 0], [2, 0]);
+  const s2 = scaledDot([1, 0], [0, 2]);
+  const a = softmax([s1, s2]);
+  const o = [a[0] * 2 + a[1] * -2, a[0] * 2 + a[1] * 2];
+  const ln = layerNorm([1, 2, 3], [1, 1, 1], [0, 0, 0], 0);
+  assert.ok(Math.abs(ln.mu - 2) < 1e-12 && Math.abs(1 / ln.inv ** 2 - 2 / 3) < 1e-12);
+  const phi = (x, m, v) => Math.exp(-((x - m) ** 2) / (2 * v)) / Math.sqrt(2 * Math.PI * v);
+  const r1 = (0.5 * phi(0.5, 0, 1)) / (0.5 * phi(0.5, 0, 1) + 0.5 * phi(0.5, 2, 1));
+  assert.ok(Math.abs(r1 - 1 / (1 + Math.exp(-1))) < 1e-12, 'r equals sigma(1)');
+  const sched = ddpmSchedule(2, { beta1: 0.1, betaT: 0.1 });
+  const expected = [
+    `|\\mathcal{V}| = ${ALPHABET.length}`,
+    `\\mathbf{e}_2 = (0, 0, 1, 0, \\dots, 0)`,
+    `27 \\times 2 = ${27 * 2}`,
+    `\\operatorname{softmax}(0, \\ln 3) = ${pair(sm1)}`,
+    `\\operatorname{softmax}\\big((0, \\ln 3)/2\\big) \\approx ${pair(sm2)}`,
+    `s_1 = \\mathbf{q}\\cdot\\mathbf{k}_1/\\sqrt{2} \\approx ${f2(s1)},\\ s_2 = ${f2(s2)}`,
+    `(a_1, a_2) = \\operatorname{softmax}(${f2(s1)}, ${f2(s2)}) \\approx ${pair(a)}`,
+    `\\mathbf{o} = a_1 \\mathbf{v}_1 + a_2 \\mathbf{v}_2 \\approx ${pair(o)}`,
+    `d_k = d/H = 32/2 = ${32 / 2}`,
+    `\\operatorname{LN}(\\mathbf{x}) \\approx (${f2(ln.y[0])},\\ ${f2(ln.y[1])},\\ ${f2(ln.y[2])})`,
+    `\\log_2 28 \\approx ${f2(Math.log2(28))}`,
+    `\\mathcal{N}(0 \\mid 0, 1) = 1/\\sqrt{2\\pi} \\approx ${f2(phi(0, 0, 1))}`,
+    `r_{i1} = \\sigma(1) \\approx ${f2(r1)}`,
+    `L(\\theta) = 0.5 \\times 0.2 = ${0.5 * 0.2}`,
+    `\\ell(\\theta) = \\ln 0.1 \\approx ${f2(Math.log(0.1))}`,
+    `\\bar\\alpha_2 = 0.9 \\times 0.9 = ${f2(sched.abar[2])}`,
+    `\\sqrt{\\bar\\alpha_2} = ${f2(Math.sqrt(sched.abar[2]))}`,
+    `\\cos\\theta = \\frac{1}{1 \\times \\sqrt{2}} \\approx ${f2(1 / Math.SQRT2)}`,
+    `\\mathbb{E}\\,\\lVert \\boldsymbol{\\varepsilon} \\rVert^2 = 1 + 1 = ${1 + 1}`,
+  ];
+  const tex = [...notation().matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1]));
+  for (const t of expected) assert.ok(tex.includes(t), `notation page shows ${t}`);
 });
