@@ -420,7 +420,7 @@ export async function startLesson(main, { progress, reduced = false, stageModule
     if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
     if (main.classList.contains('stage-failed')) return;
     if (!shouldHandleKey(e.target, e.key)) return;
-    if (e.target instanceof Element && e.target.closest('dialog, [role="dialog"], .ml-path')) return;
+    if (e.target instanceof Element && e.target.closest('dialog, [role="dialog"], .ml-path, .site-nav')) return;
     if (e.key === 'ArrowRight') userGo(current + 1);
     else if (e.key === 'ArrowLeft') userGo(current - 1);
     else if ((e.key === ' ' || e.key === 'Spacebar') && !e.shiftKey && stageVisible) {

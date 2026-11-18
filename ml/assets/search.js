@@ -104,8 +104,8 @@ export function initSearch(top, { isDone = () => false, here = null } = {}) {
   const hint = make('kbd', 'ml-search-kbd', mac ? '⌘K' : 'Ctrl K');
   hint.setAttribute('aria-hidden', 'true');
   open.append(hint);
-  const site = top.querySelector('.ml-site');
-  if (site) site.after(open);
+  const bar = top.querySelector('.ml-progress');
+  if (bar) bar.before(open);
   else top.appendChild(open);
 
   const dialog = make('dialog', 'ml-search');
