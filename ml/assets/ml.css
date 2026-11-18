@@ -1006,7 +1006,8 @@ html:not(.js) .steps {
   align-items: start;
 }
 
-.js .lesson:not(.stage-failed) > .lesson-head {
+.js .lesson:not(.stage-failed) > .lesson-head,
+.js .lesson:not(.stage-failed) > .ml-player > .lesson-head {
   grid-area: head;
 }
 
@@ -1015,7 +1016,8 @@ html:not(.js) .steps {
   margin-top: var(--ml-s7);
 }
 
-.js .lesson:not(.stage-failed) > .stage {
+.js .lesson:not(.stage-failed) > .stage,
+.js .lesson:not(.stage-failed) > .ml-player > .stage {
   grid-area: stage;
 }
 
@@ -1104,6 +1106,509 @@ html:not(.js) .steps {
 
 .stage-failed .step-count {
   display: none;
+}
+
+/* ---------- The player: step panel, timeline, panel controls ---------- */
+/* Wide screens: lesson title and stage on the left, the current step in a
+   panel on the right that stays in view while the stage is on screen.
+   Narrow screens: the panel is flattened (display: contents) and the step
+   parts take the slots set in the 1100px block below. */
+
+.ml-player,
+.ml-panel {
+  display: contents;
+}
+
+.ml-panel-foot,
+.ml-panel-nav,
+.ml-keys {
+  display: none;
+}
+
+.ml-timeline {
+  list-style: none;
+  display: flex;
+  margin: var(--ml-s3) 0 0;
+  padding: var(--ml-s3) 0 var(--ml-s1);
+  border-top: 1px solid var(--ml-line);
+}
+
+.ml-timeline li {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* The line joining this node to the one before it. */
+.ml-timeline li + li::before {
+  content: '';
+  position: absolute;
+  top: 13px;
+  left: -50%;
+  right: 50%;
+  height: 2px;
+  z-index: 0;
+  background: var(--ml-line);
+  transition: background-color var(--ml-mid) var(--ml-ease);
+}
+
+.ml-timeline li.is-seen::before,
+.ml-timeline li.is-current::before {
+  background: var(--ml-cyan);
+}
+
+.ml-timeline button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--ml-radius-sm);
+  background: transparent;
+  color: var(--ml-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ml-tl-n {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--ml-line);
+  border-radius: 50%;
+  background: var(--ml-surface);
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--ml-mid) var(--ml-ease), border-color var(--ml-mid) var(--ml-ease), color var(--ml-mid) var(--ml-ease);
+}
+
+.ml-tl-t {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.ml-timeline button:hover .ml-tl-n {
+  border-color: var(--ml-muted);
+  color: var(--ml-ink);
+}
+
+.ml-timeline button:hover .ml-tl-t {
+  color: var(--ml-ink);
+}
+
+.ml-timeline li.is-seen .ml-tl-n {
+  border-color: var(--ml-cyan);
+  color: var(--ml-cyan);
+}
+
+.ml-timeline li.is-current .ml-tl-n {
+  border-color: var(--ml-cyan);
+  background: var(--ml-cyan);
+  color: var(--ml-bg);
+  font-weight: 500;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ml-cyan) 25%, transparent);
+}
+
+.ml-timeline li.is-current .ml-tl-t {
+  color: var(--ml-strong);
+  font-weight: 600;
+}
+
+/* The timeline replaces the dots wherever it is shown. */
+.lesson.is-live .controls .ml-dots {
+  display: none;
+}
+
+@media (min-width: 1101px) {
+  .js .lesson:not(.stage-failed) {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-rows: auto 1fr auto auto auto;
+    grid-template-areas:
+      'head  panel'
+      'stage panel'
+      'over  over'
+      'quiz  quiz'
+      'done  done';
+  }
+
+  .js .lesson:not(.stage-failed) .stage {
+    margin-top: var(--ml-s4);
+  }
+
+  /* Before the engine wraps the steps, they hold the panel's place. */
+  .js .lesson:not(.is-live):not(.stage-failed) > .steps {
+    grid-area: panel;
+    margin: 0;
+    padding-top: 0;
+  }
+
+  /* Head, stage and panel share one box, so the sticky panel stops at
+     the foot of the stage instead of riding down over the quiz. */
+  .lesson.is-live:not(.stage-failed) > .ml-player {
+    grid-column: 1 / -1;
+    grid-row: 1 / 3;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: subgrid;
+    column-gap: var(--ml-s5);
+    align-items: start;
+  }
+
+  .lesson.is-live:not(.stage-failed) .ml-player > .ml-panel {
+    grid-area: panel;
+    position: sticky;
+    top: var(--ml-s4);
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 2 * var(--ml-s4));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--ml-s5) var(--ml-s5) var(--ml-s4);
+    background: var(--ml-surface);
+    border: 1px solid var(--ml-line);
+    border-radius: var(--ml-radius);
+  }
+
+  .lesson.is-live:not(.stage-failed) .ml-panel .step-main {
+    margin: 0;
+  }
+
+  .lesson.is-live:not(.stage-failed) .ml-panel .step h2 {
+    font-size: 1.375rem;
+  }
+
+  .lesson.is-live:not(.stage-failed) .ml-panel .step .lede {
+    font-size: var(--ml-t-body);
+    color: var(--ml-ink);
+  }
+
+  .lesson.is-live:not(.stage-failed) .ml-panel .step-side {
+    margin: var(--ml-s4) 0 0;
+    gap: 0;
+  }
+
+  /* Inside the panel the explanation and the maths are sections, not cards. */
+  .lesson.is-live:not(.stage-failed) .ml-panel .step-side > .happening,
+  .lesson.is-live:not(.stage-failed) .ml-panel .step-side > .maths {
+    padding: var(--ml-s4) 0 0;
+    background: none;
+    border: 0;
+    border-top: 1px solid var(--ml-line);
+    border-radius: 0;
+  }
+
+  .lesson.is-live:not(.stage-failed) .ml-panel .step-side > * + * {
+    margin-top: var(--ml-s4);
+  }
+
+  /* Back and Next stay pinned to the foot of the panel while its text
+     scrolls, so the next step is always one click away. */
+  .lesson.is-live:not(.stage-failed) .ml-panel {
+    padding-bottom: 0;
+  }
+
+  .lesson.is-live:not(.stage-failed) .ml-panel-foot {
+    display: block;
+    position: sticky;
+    bottom: 0;
+    margin: auto calc(-1 * var(--ml-s5)) 0;
+    padding: var(--ml-s4) var(--ml-s5);
+    background: var(--ml-surface);
+    border-top: 1px solid var(--ml-line);
+  }
+
+  .lesson.is-live:not(.stage-failed) .ml-panel-nav {
+    display: flex;
+    gap: var(--ml-s2);
+  }
+
+  .lesson.is-live:not(.stage-failed) .ml-keys {
+    display: block;
+  }
+
+  /* Back and Next live in the panel; the bar keeps Play and the tools. */
+  .lesson.is-live:not(.stage-failed) .ml-nav .ml-back,
+  .lesson.is-live:not(.stage-failed) .ml-nav .ml-next {
+    display: none;
+  }
+}
+
+.ml-panel-nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ml-s2);
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  background: transparent;
+  color: var(--ml-ink);
+  font: inherit;
+  font-size: var(--ml-t-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--ml-fast) var(--ml-ease), background-color var(--ml-fast) var(--ml-ease);
+}
+
+.ml-panel-nav button:hover:not(:disabled) {
+  border-color: var(--ml-muted);
+}
+
+.ml-panel-nav button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ml-panel-nav .ml-pnext {
+  flex: 1;
+  min-width: 0;
+  justify-content: space-between;
+  border-color: var(--ml-cyan);
+  background: var(--ml-cyan);
+  color: var(--ml-bg);
+}
+
+.ml-panel-nav .ml-pnext:hover:not(:disabled) {
+  border-color: var(--ml-cyan-2);
+  background: var(--ml-cyan-2);
+}
+
+.ml-panel-nav .ml-pnext span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ml-pnext svg {
+  flex: none;
+}
+
+.ml-keys {
+  margin-top: var(--ml-s3);
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  color: var(--ml-muted);
+}
+
+.ml-keys kbd + kbd {
+  margin-left: 3px;
+}
+
+.ml-keys kbd:not(:first-child):not(kbd + kbd) {
+  margin-left: var(--ml-s3);
+}
+
+kbd {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 5px;
+  border: 1px solid var(--ml-line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-family: var(--ml-mono);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--ml-ink);
+}
+
+@media (hover: none) {
+  .lesson.is-live:not(.stage-failed) .ml-keys {
+    display: none;
+  }
+}
+
+/* No stage: the reading list needs none of the player parts. */
+.stage-failed .ml-player,
+.stage-failed .ml-panel {
+  display: block;
+}
+
+.stage-failed .ml-panel-foot,
+.stage-failed .ml-panel-nav,
+.stage-failed .ml-keys,
+.stage-failed .ml-timeline {
+  display: none;
+}
+
+/* ---------- Lesson search ---------- */
+
+.ml-search-open {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 6px 0 12px;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  background: transparent;
+  color: var(--ml-muted);
+  font: inherit;
+  font-size: var(--ml-t-small);
+  cursor: pointer;
+}
+
+.ml-search-open:hover {
+  border-color: var(--ml-muted);
+  color: var(--ml-ink);
+}
+
+.ml-search-open ~ .ml-progress {
+  margin-left: 0;
+}
+
+.ml-search {
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(520px, calc(100vh - 96px));
+  margin: 12vh auto auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius);
+  background: var(--ml-surface);
+  color: var(--ml-ink);
+}
+
+.ml-search[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.ml-search::backdrop {
+  background: rgb(2 6 23 / 0.72);
+}
+
+.ml-search-form {
+  display: flex;
+  align-items: center;
+  gap: var(--ml-s2);
+  padding: var(--ml-s3) var(--ml-s3) var(--ml-s3) var(--ml-s4);
+  border-bottom: 1px solid var(--ml-line);
+}
+
+.ml-search-q {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--ml-strong);
+  font: inherit;
+  font-size: var(--ml-t-body);
+  outline: none;
+}
+
+.ml-search-q::-webkit-search-cancel-button {
+  display: none;
+}
+
+.ml-search-q::placeholder {
+  color: var(--ml-muted);
+}
+
+.ml-search-close {
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--ml-line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ml-muted);
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  cursor: pointer;
+}
+
+.ml-search-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--ml-s2);
+  overflow-y: auto;
+}
+
+.ml-search-row {
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: var(--ml-s3);
+  padding: 9px 10px;
+  border-radius: var(--ml-radius-sm);
+  color: var(--ml-ink);
+  text-decoration: none;
+}
+
+.ml-search-item[aria-selected='true'] .ml-search-row {
+  background: color-mix(in srgb, var(--ml-cyan) 14%, transparent);
+  color: var(--ml-strong);
+}
+
+.ml-search-lv {
+  min-width: 22px;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  color: var(--ml-cyan);
+}
+
+.ml-search-title {
+  flex: 1;
+}
+
+.ml-search-tag {
+  font-size: var(--ml-t-label);
+  color: var(--ml-muted);
+}
+
+.ml-search-empty {
+  padding: var(--ml-s4);
+  color: var(--ml-muted);
+  font-size: var(--ml-t-small);
+}
+
+/* ---------- Path levels fold ---------- */
+
+.ml-level-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ml-fold > summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ml-s2);
+  list-style: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.ml-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ml-tally {
+  flex: none;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--ml-muted);
+}
+
+.ml-fold > summary:hover .ml-lt {
+  color: var(--ml-cyan);
 }
 
 /* ---------- Quick check ---------- */
@@ -1427,8 +1932,31 @@ html:not(.js) .coffee-line {
   }
 
   .ml-site,
-  .ml-progress-label {
+  .ml-progress-label,
+  .ml-search-kbd {
     display: none;
+  }
+
+  .ml-search-open {
+    padding: 0 10px;
+  }
+
+  .ml-search-label {
+    display: none;
+  }
+
+  .ml-brand,
+  .ml-progress-count {
+    white-space: nowrap;
+  }
+
+  /* Phones: the dots in the fixed bar stand in for the timeline. */
+  .ml-timeline {
+    display: none;
+  }
+
+  .lesson.is-live .controls .ml-dots {
+    display: flex;
   }
 
   .ml-bar {

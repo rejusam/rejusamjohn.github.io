@@ -187,6 +187,67 @@ export async function startLesson(main, { progress, reduced = false, stageModule
 
   controls.append(nav, tools, dots);
 
+  // Wide screens: the steps sit in a panel beside the stage, with their own
+  // Back and Next, and a labelled timeline runs under the stage. Narrow
+  // screens keep the bar above (back, play, next, dots) and CSS flattens
+  // the panel so each part of the step takes its usual slot.
+  const stepList = main.querySelector('ol.steps');
+  const panel = document.createElement('aside');
+  panel.className = 'ml-panel';
+  panel.setAttribute('aria-label', 'Step');
+  stepList.before(panel);
+  panel.appendChild(stepList);
+
+  const panelNav = document.createElement('div');
+  panelNav.className = 'ml-panel-nav';
+  const pBack = button('ml-pback', '', 'back', 'Back');
+  const pNext = document.createElement('button');
+  pNext.type = 'button';
+  pNext.className = 'ml-pnext';
+  const pNextText = document.createElement('span');
+  pNext.append(pNextText, icon(ICONS.next));
+  panelNav.append(pBack, pNext);
+  const keys = document.createElement('p');
+  keys.className = 'ml-keys';
+  keys.setAttribute('aria-hidden', 'true');
+  const kbd = (t) => Object.assign(document.createElement('kbd'), { textContent: t });
+  keys.append(kbd('←'), kbd('→'), ' step', kbd('Space'), ' next', kbd('/'), ' search');
+  const foot = document.createElement('div');
+  foot.className = 'ml-panel-foot';
+  foot.append(panelNav, keys);
+  panel.appendChild(foot);
+
+  // One box for the title, the stage and the panel (see ml.css).
+  const head = main.querySelector('.lesson-head');
+  const player = document.createElement('div');
+  player.className = 'ml-player';
+  (head || stageBox).before(player);
+  if (head) player.appendChild(head);
+  player.append(stageBox, panel);
+
+  const quizHead = main.querySelector('section.quiz h2');
+
+  const timeline = document.createElement('ol');
+  timeline.className = 'ml-timeline';
+  timeline.setAttribute('aria-label', 'Steps in this lesson');
+  const lineButtons = steps.map((li, i) => {
+    const item = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button';
+    const n = document.createElement('span');
+    n.className = 'ml-tl-n';
+    n.textContent = String(i + 1);
+    const t = document.createElement('span');
+    t.className = 'ml-tl-t';
+    t.textContent = textOf(li.querySelector('h2'));
+    b.append(n, t);
+    b.setAttribute('aria-label', `Step ${i + 1}: ${t.textContent}`);
+    item.appendChild(b);
+    timeline.appendChild(item);
+    return b;
+  });
+  stageBox.appendChild(timeline);
+
   // Two polite regions: one for the step text, one for what the stage
   // reports (a new value, a finished fit), so neither overwrites the other.
   const liveRegion = (className) => {
@@ -255,8 +316,35 @@ export async function startLesson(main, { progress, reduced = false, stageModule
       if (k === current) b.setAttribute('aria-current', 'step');
       else b.removeAttribute('aria-current');
     });
+    lineButtons.forEach((b, k) => {
+      const item = b.parentElement;
+      item.classList.toggle('is-seen', k < current);
+      item.classList.toggle('is-current', k === current);
+      if (k === current) b.setAttribute('aria-current', 'step');
+      else b.removeAttribute('aria-current');
+    });
     back.disabled = current === 0;
     next.disabled = current === count - 1;
+    pBack.disabled = current === 0;
+    if (current < count - 1) {
+      pNextText.textContent = `Next: ${textOf(steps[current + 1].querySelector('h2'))}`;
+      pNext.disabled = false;
+      pNext.dataset.to = 'step';
+    } else if (quizHead) {
+      pNextText.textContent = 'Take the quick check';
+      pNext.disabled = false;
+      pNext.dataset.to = 'quiz';
+    } else {
+      pNextText.textContent = 'Last step';
+      pNext.disabled = true;
+      pNext.dataset.to = '';
+    }
+    // A button that just became disabled drops keyboard focus to the page;
+    // hand it to the matching button that is still usable.
+    const swap = [[pBack, pNext], [pNext, pBack], [back, next], [next, back]];
+    for (const [from, to] of swap) {
+      if (document.activeElement === from && from.disabled && !to.disabled) to.focus();
+    }
 
     if (writeHash) writeStepHash();
 
@@ -287,6 +375,18 @@ export async function startLesson(main, { progress, reduced = false, stageModule
   back.addEventListener('click', () => userGo(current - 1));
   next.addEventListener('click', () => userGo(current + 1));
   dotButtons.forEach((b, i) => b.addEventListener('click', () => userGo(i)));
+  lineButtons.forEach((b, i) => b.addEventListener('click', () => userGo(i)));
+  pBack.addEventListener('click', () => userGo(current - 1));
+  pNext.addEventListener('click', () => {
+    if (pNext.dataset.to === 'quiz' && quizHead) {
+      stopPlay();
+      if (!quizHead.hasAttribute('tabindex')) quizHead.setAttribute('tabindex', '-1');
+      quizHead.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
+      quizHead.focus({ preventScroll: true });
+    } else {
+      userGo(current + 1);
+    }
+  });
 
   play.setAttribute('aria-pressed', 'false');
   play.addEventListener('click', () => {
@@ -318,8 +418,9 @@ export async function startLesson(main, { progress, reduced = false, stageModule
 
   document.addEventListener('keydown', (e) => {
     if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (main.classList.contains('stage-failed')) return;
     if (!shouldHandleKey(e.target, e.key)) return;
-    if (e.target instanceof Element && e.target.closest('[role="dialog"], .ml-path')) return;
+    if (e.target instanceof Element && e.target.closest('dialog, [role="dialog"], .ml-path')) return;
     if (e.key === 'ArrowRight') userGo(current + 1);
     else if (e.key === 'ArrowLeft') userGo(current - 1);
     else if ((e.key === ' ' || e.key === 'Spacebar') && !e.shiftKey && stageVisible) {
