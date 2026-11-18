@@ -5,6 +5,7 @@ import { PATH, TOTAL_LIVE, lessonHref, startLink } from './path.js';
 import { createProgress } from './progress.js';
 import { initCoffee } from './coffee.js';
 import { startLesson } from './engine.js';
+import { initSearch } from './search.js';
 import { prefersReducedMotion } from './plot.js';
 
 const root = document.documentElement;
@@ -36,12 +37,24 @@ function renderPath(nav) {
     if (level.lessons.some((l) => l.slug === here)) li.classList.add('is-here');
 
     const body = make('div', 'ml-level-body');
-    body.appendChild(make('p', 'ml-lt', level.name));
 
     if (level.soon) {
+      body.appendChild(make('p', 'ml-lt', level.name));
       body.appendChild(make('p', 'ml-topics', level.topics || ''));
       body.appendChild(make('p', 'ml-soon', 'Coming next'));
     } else {
+      // Each level folds away; the reader's own level starts open.
+      const box = make('details', 'ml-fold');
+      box.open = level.lessons.some((l) => l.slug === here);
+      const summary = make('summary');
+      const doneHere = level.lessons.filter((l) => progress.get(l.slug).done).length;
+      const tally = make('span', 'ml-tally');
+      const shown = make('span', null, `${doneHere}/${level.lessons.length}`);
+      shown.setAttribute('aria-hidden', 'true');
+      tally.append(shown, make('span', 'vh', `${doneHere} of ${level.lessons.length} done`));
+      summary.append(make('span', 'ml-lt', level.name), tally);
+      box.appendChild(summary);
+      body.appendChild(box);
       const ul = make('ul', 'ml-lessons');
       for (const lesson of level.lessons) {
         const item = make('li');
@@ -55,7 +68,7 @@ function renderPath(nav) {
         item.appendChild(a);
         ul.appendChild(item);
       }
-      body.appendChild(ul);
+      box.appendChild(ul);
     }
 
     li.append(make('span', 'ml-lv', level.level), body);
@@ -116,7 +129,7 @@ function initDrawer(top, nav) {
     scrim.hidden = !open;
     for (const n of behind()) n.inert = open;
     if (open) {
-      const first = nav.querySelector('a');
+      const first = nav.querySelector('summary, a');
       if (first) first.focus();
     } else if (restoreFocus) {
       toggle.focus();
@@ -183,6 +196,7 @@ const nav = document.querySelector('nav.ml-path');
 if (nav) renderPath(nav);
 if (top) renderProgress(top);
 if (top && nav) initDrawer(top, nav);
+if (top) initSearch(top, { isDone: (slug) => progress.get(slug).done, here });
 initCoffee(document);
 
 const hubPath = document.querySelector('ol.hub-path');
