@@ -54,7 +54,13 @@ export const logBound = (p, target) => Math.log(target) / Math.log(p);
 export const chanceText = (x) => (Math.floor(x * 100 + 0.5) / 100).toFixed(2);
 
 export const chartReadout = (p) => `p = ${fmtNumber(p)}: all ${K_EXAMPLE} steps succeed with chance ${chanceText(chainSuccess(p, K_EXAMPLE))}`;
-export const targetReadout = (p) => `chance at least ${fmtNumber(TARGET)} for up to ${plural(stepsForTarget(p, TARGET), 'step')}`;
+export function targetReadout(p) {
+  const k = stepsForTarget(p, TARGET);
+  return `chance at least ${fmtNumber(TARGET)} for up to ${plural(k, 'step')}${k > K_MAX ? ' (past the right edge)' : ''}`;
+}
+
+// Model calls for a run the repeat check does not stop: n steps needed (Infinity if it never answers), limit L.
+export const callsFor = (n, L) => Math.min(n, L);
 
 // ---- cost: one step is one model call ----------------------------------------------------
 
@@ -333,7 +339,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   // Step 5: the chance that all k steps succeed, p to the power k.
   function drawChart() {
-    frame(334);
+    frame(354);
     const p = pOf(pN);
     const X = linearScale([0, K_MAX], [60, 424]);
     const Y = linearScale([0, 1], [212, 14]);
@@ -346,8 +352,11 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     const yk = chainSuccess(p, K_EXAMPLE);
     el('line', { x1: X(K_EXAMPLE), x2: X(K_EXAMPLE), y1: Y(0), y2: Y(yk) + 6, stroke: STRONG, 'stroke-width': 1, 'stroke-dasharray': '2 3' }, svg);
     label(10, 278, chartReadout(p), { fill: STRONG, weight: 700 });
-    label(10, 300, targetReadout(p), { fill: STRONG });
-    label(10, 322, 'assumes the steps are independent');
+    // At phone width the edge note goes on its own line.
+    const [tLine, edge] = targetReadout(p).split(' (');
+    label(10, 300, tLine, { fill: STRONG });
+    if (edge) label(10, 322, `(${edge}`, { fill: STRONG });
+    label(10, edge ? 344 : 322, 'assumes the steps are independent');
     return `Line chart: the chance that all k steps succeed, p to the power k, for k from 1 to ${K_MAX}, with a dashed line at ${fmtNumber(TARGET)}. ${chartReadout(p)}; ${targetReadout(p)}. This assumes each step succeeds or fails independently of the others.`;
   }
 

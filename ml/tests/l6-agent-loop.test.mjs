@@ -49,6 +49,24 @@ test('the loop has three ways out, and the prose facts about the traces hold', (
   assert.deepEqual(calls(S.loopRun(true)).map((m) => m.step), [1, 2]);
 });
 
+test('model calls = min(n, L) for the runs the repeat check does not stop', () => {
+  const n = S.stepsNeeded();
+  for (let L = 1; L <= 10; L++) assert.equal(S.costOf(S.limitRun(L)).calls, S.callsFor(n, L));
+  assert.equal(S.costOf(S.stepRun()).calls, S.callsFor(n, DEFAULT_CONFIG.stepLimit));
+  // kai with the check off never answers: n is unbounded, so it makes L calls.
+  assert.equal(S.costOf(S.loopRun(false)).calls, S.callsFor(Infinity, DEFAULT_CONFIG.stepLimit));
+  for (const c of S.COST_RUNS) {
+    const r = c.run();
+    if (r.stop === 'repeated call') { assert.equal(c.id, 'kai-on'); assert.equal(S.costOf(r).calls, 2); continue; }
+    const need = r.stop === 'done' || c.task === 'eli-shop' ? n : Infinity;
+    assert.equal(S.costOf(r).calls, S.callsFor(need, c.config.stepLimit ?? DEFAULT_CONFIG.stepLimit));
+  }
+  // Other ways out, named in step 1 and shown in a later lesson: waiting for a yes, and a tool error.
+  assert.equal(runAgent('tell-zoe').stop, 'waiting for approval');
+  const failing = { calculator: { run: () => ({ ok: false, text: 'error: bad input' }) } };
+  assert.equal(runAgent('sum', {}, { tools: failing }).stop, 'tool error');
+});
+
 test('step limit story', () => {
   const needed = runAgent('eli-shop').steps;
   assert.equal(S.stepsNeeded(), needed);
@@ -170,6 +188,13 @@ test('quoted 0.60 and 0.35 match', () => {
   assert.equal(S.chartReadout(0.8), 'p = 0.8: all 10 steps succeed with chance 0.11');
   assert.equal(two(0.8 ** 10), '0.11');
   assert.equal(S.targetReadout(0.95), `chance at least 0.5 for up to ${stepsForTarget(0.95, 0.5)} steps`);
+  for (let n = S.P_MIN; n <= S.P_MAX; n++) {
+    const p = S.pOf(n);
+    const k = stepsForTarget(p, 0.5);
+    assert.equal(S.targetReadout(p).endsWith(' (past the right edge)'), k > S.K_MAX, `p ${p}`);
+    assert.equal(k > S.K_MAX, n >= 97, `p ${p}`);
+  }
+  assert.equal(S.targetReadout(0.97), `chance at least 0.5 for up to ${stepsForTarget(0.97, 0.5)} steps (past the right edge)`);
   assert.equal(S.targetReadout(0.8), `chance at least 0.5 for up to ${Math.floor(Math.log(0.5) / Math.log(0.8))} steps`);
 });
 
