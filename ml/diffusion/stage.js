@@ -617,7 +617,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       lossDot.setAttribute('cy', P(ly(ev.at(-1))));
     }
     if (step === 4) {
-      legendRows[0].textContent = gen ? `cyan: ${N} new points, t = ${gen.tNow()}` : 'grey hollow: the 400 data points';
+      legendRows[0].textContent = gen ? `cyan: ${N} new points, t = ${gen.tNow()}` : 'grey: the 400 data points';
       legendRows[1].textContent = gen ? 'grey: the data · lines: their paths' : 'press Generate';
       if (gen) {
         const now = gen.points();
