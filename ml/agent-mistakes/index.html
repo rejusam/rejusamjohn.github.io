@@ -82,9 +82,9 @@
             <h2>Four ways to fail</h2>
             <p class="lede">In Memory a lost fact sent a run in circles. That is one of four ways a run can go wrong.</p>
             <div class="happening">
-                <p>Look at the picture: one box per way to go wrong, with the step that shows it. The dashed one is only named.</p>
+                <p>Look at the picture: one box per way to go wrong, with the step that shows it. A made-up answer reads well, but nothing backs it. Going in circles means the same call again and again.</p>
                 <p>The trace shows a run that goes right. The task: <span data-value="kai-task">What food does kai like?</span> Step 1 writes <span data-value="kai-call">lookup("kai")</span> and gets "<span data-value="kai-result">not found: kai</span>". With the default instruction, "say so", the run is done after <span data-value="sayso-steps">2</span> steps: "<span data-value="sayso-answer">I could not find kai.</span>"</p>
-                <p>Note: the model here is a stand-in that follows fixed rules (see <a href="/ml/agents/">What is an agent?</a>). They never write a broken call, or call a tool that does not exist. A real model can write a wrong call, so that case is only named.</p>
+                <p>Note: the model here is a stand-in that follows fixed rules (see <a href="/ml/agents/">What is an agent?</a>). A real model can write a wrong call: the wrong tool, or one that does not exist. This page only names that case (the dashed box).</p>
             </div>
         </li>
 
@@ -92,9 +92,9 @@
             <h2>When lookup finds nothing</h2>
             <p class="lede">Same task, same "not found". Now try the other two instructions.</p>
             <div class="happening">
-                <p>Look at the picture: the three instructions, and how each run ends. Pick one by the "Run" button.</p>
+                <p>Look at the picture: the three instructions, and how each run ends. Pick one from the "when lookup finds nothing" menu.</p>
                 <p><strong>say so:</strong> done after <span data-value="sayso-steps">2</span> steps: "<span data-value="sayso-answer">I could not find kai.</span>" True, and plain.</p>
-                <p><strong>try again:</strong> step 2 writes <span data-value="kai-call">lookup("kai")</span> again. Same input, same result. The repeat check, which stops a call identical to the one before, ends the run after <span data-value="again-steps">2</span> steps.</p>
+                <p><strong>try again:</strong> step 2 writes <span data-value="kai-call">lookup("kai")</span> again. Same input, same result. The repeat check (the same call twice in a row) stops the run after <span data-value="again-steps">2</span> steps, before it goes in circles.</p>
                 <p><strong>guess:</strong> the stand-in answers with the first food in the food table: "<span data-value="guess-answer">kai likes apples.</span>" It is made up, yet reads like a true answer.</p>
                 <p>Note: a real model needs no guess rule to write an answer that nothing backs up.</p>
             </div>
@@ -122,7 +122,7 @@
             <h2>Only the tools a task needs</h2>
             <p class="lede">A wrong call does less harm if it can reach less. So give each task only the tools it needs.</p>
             <div class="happening">
-                <p>Look at the picture: the tools each of the <span data-value="task-count">6</span> tasks calls in its default run, or asks to use. Pick a task from the "task" menu to see its trace.</p>
+                <p>Look at the picture: the tools each of the <span data-value="task-count">6</span> tasks calls or asks to use in its default run, the run with the starting settings. Pick a task from the "task" menu to see its trace.</p>
                 <p>No task calls <span data-value="unused-tools">notepad</span>. Of the <span data-value="tool-count">4</span> tools, calculator and lookup only read, and notepad only writes the run's own notes. send <span data-value="send-kind">changes things</span>: it sends a message.</p>
                 <p>With only its own tools on, each task's trace is the same as with all four. If the loop runs only the tools it was given, a wrong call to any other tool cannot run.</p>
             </div>
@@ -136,23 +136,21 @@
 
         <li class="step" id="step-5">
             <h2>Ask before sending</h2>
-            <p class="lede">send changes things. So before it runs, the loop asks a person for a yes.</p>
+            <p class="lede">send changes things. So before it runs, the loop waits for a person's yes.</p>
             <div class="happening">
-                <p>Look at the picture: the ask, the answers and the sent list.</p>
-                <p>The task: <span data-value="zoe-task">Tell zoe what pears cost.</span> Step 1 looks up pears. Step 2 writes an ask, not the send call, as "ask before changes" is on (rule 5 of the six). The run stops after <span data-value="wait-steps">2</span> steps, at "Waiting for your yes".</p>
-                <p>Try the buttons by the "Run" button:</p>
+                <p>Look at the picture. The task: <span data-value="zoe-task">Tell zoe what pears cost.</span> Step 2 writes an ask, not the send call, as "ask before changes" is on (rule 5 of the six). The loop stops after <span data-value="wait-steps">2</span> steps, at "Waiting for your yes". Try the buttons by "Run":</p>
                 <ul>
-                    <li><strong>Approve:</strong> send runs; step 3 answers "<span data-value="yes-answer">Told zoe: pears cost $1.10 each.</span>"</li>
-                    <li><strong>Decline:</strong> nothing sent; stopped as declined after <span data-value="no-steps">2</span> steps.</li>
-                    <li><strong>Untick "ask before changes":</strong> no ask; send runs.</li>
+                    <li><strong>Approve:</strong> send runs; done after <span data-value="yes-steps">3</span> steps.</li>
+                    <li><strong>Decline:</strong> nothing sent; stopped as declined.</li>
+                    <li><strong>Untick "ask before changes":</strong> no ask, also <span data-value="off-steps">3</span> steps: waiting is not a step.</li>
                 </ul>
-                <p>Why ask: a sent message cannot be unsent.</p>
+                <p>Why ask: a lookup can run again harmlessly; a sent message cannot be unsent.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
-                <p>Steps count model calls. The call that writes the ask is step <span data-value="wait-steps">2</span>; waiting for the answer is not a step. After a yes, the loop runs send and step 3 writes the answer: <span data-value="yes-steps">3</span> steps. With "ask before changes" off it is also <span data-value="off-steps">3</span> steps, so asking costs no model call.</p>
+                <p>Steps count model calls. The call that writes the ask is step <span data-value="wait-steps">2</span>; waiting for the answer is not a step. After a yes, the loop runs send within step 2, and step 3 answers "<span data-value="yes-answer">Told zoe: pears cost $1.10 each.</span>" After a no, the run stops as declined after <span data-value="no-steps">2</span> steps.</p>
                 <p>The ask in full: a yes before <span data-value="zoe-ask">send("zoe", "pears cost $1.10 each.")</span>. After a yes the sent list holds <span data-value="yes-sent">1</span> message. On this page send only records the message; nothing leaves the page.</p>
-                <p>A lookup can run again with no harm. A yes helps only if the person reads the call first. The same reason to ask holds for tools that pay, delete or book: once done, they may not be undoable.</p>
+                <p>A yes helps only if the person reads the call first. The same reason to ask holds for tools that pay, delete or book: once done, they may not be undoable.</p>
             </details>
         </li>
 
@@ -160,16 +158,15 @@
             <h2>What the safeguards did</h2>
             <p class="lede">Last, all the runs together. No safeguard makes a run correct.</p>
             <div class="happening">
-                <p>Look at the picture: what each safeguard did. Pick a run from the "run" menu; its safeguard, if any, is outlined. Runs ended in <span data-value="stop-count">5</span> ways.</p>
+                <p>Look at the picture: what each safeguard did. Pick a run from the "run" menu to outline its safeguard. Runs ended in <span data-value="stop-count">5</span> ways: done, repeated call, tool error, waiting for approval and declined.</p>
                 <ul>
-                    <li><strong>"say so":</strong> a plain "<span data-value="sayso-answer">I could not find kai.</span>"</li>
-                    <li><strong>Repeat check:</strong> stopped the repeated lookup.</li>
+                    <li><strong>"say so"</strong> (made-up answer): a plain "<span data-value="sayso-answer">I could not find kai.</span>"</li>
+                    <li><strong>Repeat check</strong> (going in circles): stopped the repeated lookup.</li>
                     <li><strong>Stop on a tool error:</strong> nothing built on <code><span data-value="bad-result">cannot read "2+"</span></code>.</li>
-                    <li><strong>Ask before changes:</strong> nothing sent without a yes.</li>
-                    <li><strong>Only the needed tools:</strong> limits what a wrong call can reach.</li>
+                    <li><strong>Ask before changes</strong> (a wrong change): nothing sent without a yes.</li>
+                    <li><strong>Only the needed tools</strong> (wrong tool): limits what a wrong call can reach.</li>
                 </ul>
-                <p>No safeguard caught the guess: "<span data-value="guess-answer">kai likes apples.</span>" ended as done.</p>
-                <p>Note: for a real model, even "say so" cannot rule out a made-up answer.</p>
+                <p>Note: no safeguard caught the guess, "<span data-value="guess-answer">kai likes apples.</span>" It ended as done. For a real model, even "say so" cannot rule that out.</p>
             </div>
         </li>
     </ol>
