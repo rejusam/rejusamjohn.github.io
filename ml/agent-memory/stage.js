@@ -112,7 +112,7 @@ export const COMPARE_RUNS = [
 
 export function outcomeText(r) {
   if (r.stop === 'done') return `done after ${plural(r.steps, 'step')}: ${r.answer}`;
-  return `stopped by the ${r.stop} after ${plural(r.steps, 'step')}, no answer`;
+  return `stopped: ${r.stop} after ${plural(r.steps, 'step')}, no answer`;
 }
 
 // ---- values written into the page ---------------------------------------------------
@@ -148,6 +148,9 @@ export function pageValues() {
     'ana-words': String(countWords(anaResult.text)),
     'again-step': String(again),
     'again-sum': sumText(w),
+    'again-result-words': String(w.kept[0].words),
+    'again-call-words': String(w.kept[1].words),
+    'again-plan-words': String(w.kept[2].words),
     'again-over': `${w.total} + ${w.next.words} = ${w.total + w.next.words}`,
     'small-steps': String(small.steps),
     'ana-lookups': String(callTexts.filter((t) => t === anaCall.text).length),
@@ -371,7 +374,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   // Step 5: the three runs, the one in the trace drawn with a thick outline and bold text.
   function drawCompare() {
     frame(232);
-    label(10, 20, `the pair task, step limit ${STEP_LIMIT}`, { fill: STRONG, weight: 700 });
+    label(10, 20, `three runs of the task, step limit ${STEP_LIMIT}`, { fill: STRONG, weight: 700 });
     const parts = [];
     COMPARE_RUNS.forEach((c, k) => {
       const on = k === compareIdx;
@@ -382,7 +385,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       label(16, y + 43, out, { fill: on ? STRONG : MUTED });
       parts.push(`${c.label}: ${out}${on ? ' (shown in the trace)' : ''}`);
     });
-    return `Three runs of the pair task, step limit ${STEP_LIMIT}. ${parts.join('. ')}`;
+    return `Three runs of the task, step limit ${STEP_LIMIT}. ${parts.join('. ')}`;
   }
 
   function draw() {

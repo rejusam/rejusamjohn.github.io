@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Memory · ML Explorer</title>
-    <meta name="description" content="A model is given only the messages that fit in its context. Old messages drop out of the window, and a notepad keeps what matters. Every trace and word count is computed in your browser.">
+    <meta name="description" content="A model is given only the newest messages that fit in a budget. Old messages drop out, and a notepad keeps what matters. Every trace and word count is computed in your browser.">
     <link rel="canonical" href="https://rejusamjohn.pages.dev/ml/agent-memory/">
     <meta property="og:title" content="Memory · ML Explorer">
-    <meta property="og:description" content="A model is given only the messages that fit in its context. Old messages drop out of the window, and a notepad keeps what matters. Every trace and word count is computed in your browser.">
+    <meta property="og:description" content="A model is given only the newest messages that fit in a budget. Old messages drop out, and a notepad keeps what matters. Every trace and word count is computed in your browser.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://rejusamjohn.pages.dev/ml/agent-memory/">
     <meta property="og:image" content="https://rejusamjohn.pages.dev/ml/og.png">
@@ -56,7 +56,7 @@
     <header class="lesson-head">
         <p class="crumbs"><a href="/ml/">ML Explorer</a> · Level 6 · Agents</p>
         <h1>Memory</h1>
-        <p class="promise">A model is given only the messages that fit in its context. See old messages drop out of the window, what that costs, and how a notepad keeps what matters.</p>
+        <p class="promise">A model is given only the newest messages that fit in a budget. See old messages drop out, what that costs, and how a notepad keeps what matters.</p>
         <p class="meta">About 10 minutes · Every trace and word count is computed in your browser; the rule is in The maths</p>
     </header>
 
@@ -67,8 +67,8 @@
         <p>This lesson gives the stand-in a budget. Each call is given the task and only the newest messages that fit. A fact found early can drop out before it is used, and then the run has to look it up again. A notepad, one more tool, keeps the facts where later calls can still use them.</p>
         <h2>You'll learn</h2>
         <ul>
-            <li>what the context is, and how a budget sets which messages are in it</li>
-            <li>how a fact that drops out of the window can send a run in circles</li>
+            <li>what a model call is given, and how a budget sets which messages are in it</li>
+            <li>how a fact that drops out can send a run in circles</li>
             <li>what a notepad changes, and what it costs</li>
         </ul>
     </section>
@@ -93,12 +93,13 @@
 
         <li class="step" id="step-2">
             <h2>Set a budget in words</h2>
-            <p class="lede">Now add a limit. Each call is given the task and only the newest messages that fit in a budget of words.</p>
+            <p class="lede">Now add a limit: a budget of words.</p>
             <div class="happening">
                 <p>Move the "budget (words)" slider by the "Run" button, or tick "no limit".</p>
-                <p>The task is always given, and its <span data-value="task-words">17</span> words are not counted. Then, from the newest message back, each message is added while the total fits the budget. The first that does not fit, and all older ones, are left out.</p>
-                <p>The messages that fit are the window. In the trace, older rows outside it are greyed and tagged "no longer seen".</p>
+                <p>The task is always given, and its <span data-value="task-words">17</span> words are not counted. Then, from the newest message back, messages are added while they fit the budget. The first that does not fit, and all older ones, are left out.</p>
+                <p>The messages kept are the window. In the trace, rows left out are greyed and tagged "no longer seen".</p>
                 <p>At <span data-value="min-done">54</span> words or more the run is done in <span data-value="full-steps">6</span> steps. From <span data-value="circle-from">8</span> to <span data-value="circle-to">52</span> it goes round until the step limit stops it.</p>
+                <p>Note: real models count tokens (see <a href="/ml/tokens/">Tokens</a>), not words.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -111,12 +112,12 @@
 
         <li class="step" id="step-3">
             <h2>Going round in circles</h2>
-            <p class="lede">Now one run at <span data-value="small">12</span> words. An early fact drops out of the window before it is used.</p>
+            <p class="lede">Now one run at <span data-value="small">12</span> words, where an early fact drops out of the window.</p>
             <div class="happening">
-                <p>Look at the trace. It opens on step <span data-value="again-step">3</span>'s plan line (a short note of its next move). Greyed rows are not given to that step's call.</p>
+                <p>Opened directly, the trace selects step <span data-value="again-step">3</span>'s plan line (a short note of its next move). Greyed rows are not given to that call.</p>
                 <p>Step 1 writes <span data-value="ana-call">lookup("ana")</span> and gets "<span data-value="ana-result">ana likes apples and lives by the sea.</span>" Step 2 writes <span data-value="apples-call">lookup("apples")</span>.</p>
-                <p>Step <span data-value="again-step">3</span>'s call is given <span data-value="again-sum">4 + 1 + 7 = 12</span> words, the whole budget. ana's result would make <span data-value="again-over">12 + 8 = 20</span>, so it is left out.</p>
-                <p>Without ana's food, the stand-in writes <span data-value="ana-call">lookup("ana")</span> again (rule 3 of the six: look up a missing fact). Then it takes turns, ana, apples, ana, until the step limit stops it.</p>
+                <p>Step <span data-value="again-step">3</span>'s call is given <span data-value="again-sum">4 + 1 + 7 = 12</span> words: the apples price (<span data-value="again-result-words">4</span>), the call (<span data-value="again-call-words">1</span>) and the plan line (<span data-value="again-plan-words">7</span>). ana's result would make <span data-value="again-over">12 + 8 = 20</span>, so it is left out.</p>
+                <p>So the stand-in looks ana up again (rule 3 of the six: look up a missing fact). Then it takes turns, ana, apples, ana, until the step limit of <span data-value="limit">10</span> stops it. The repeat check misses this: no two calls in a row match.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -127,9 +128,9 @@
 
         <li class="step" id="step-4">
             <h2>A notepad keeps the facts</h2>
-            <p class="lede">Now switch the notepad on. The stand-in writes each fact down, and later calls are given the notes.</p>
+            <p class="lede">The notepad is now on. The stand-in writes each fact down, and later calls are given the notes.</p>
             <div class="happening">
-                <p>Use the "notepad" switch by the "Run" button. The budget is still <span data-value="small">12</span> words. The notes are listed under the bar.</p>
+                <p>The budget is still <span data-value="small">12</span> words. The notes are listed under the bar. Switch the "notepad" off to compare.</p>
                 <p>After each lookup, the next step writes the result in the notes (rule 2 of the six).</p>
                 <p>The notes are given on top of the window. Step <span data-value="note-calc-step">9</span>'s call is given none of the lookup results, yet the facts are in the notes, so it writes the calculator call.</p>
                 <p>The run is done after <span data-value="note-steps">10</span> steps, with <span data-value="note-count">4</span> notes: "<span data-value="full-answer">That costs $12.90.</span>"</p>
@@ -147,8 +148,8 @@
             <h2>Notes in real agents</h2>
             <p class="lede">Last, the three runs side by side. A real model's context is limited too.</p>
             <div class="happening">
-                <p>Pick a run from the "run" menu. The picture shows all three runs of the pair task. The one in the trace has a thick outline.</p>
-                <p>At <span data-value="small">12</span> words the run with the notepad off never answers. With it on, it is done, in more steps than with no limit.</p>
+                <p>Pick a run from the "run" menu. The picture shows all three runs of the task. The one in the trace has a thick outline.</p>
+                <p>At <span data-value="small">12</span> words the run with the notepad off is stopped by the step limit with no answer. With it on, it is done, in more steps than with no limit.</p>
                 <p>A real language model can be given only so many tokens at once. So agents built around one often keep what matters as notes, or replace older messages with a short summary.</p>
                 <p>Note: notes are not free. Here each one cost a step, and a note holds only what was written in it.</p>
             </div>

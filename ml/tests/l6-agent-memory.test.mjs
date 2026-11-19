@@ -25,6 +25,8 @@ test('the lesson runs match runAgent, and the pair task costs $12.90', () => {
     for (const np of [false, true]) assert.deepEqual(S.memoryRun(b, np), runAgent('pair-shop', cfg(b, np)));
   }
   for (const c of S.COMPARE_RUNS) assert.deepEqual(c.run(), runAgent('pair-shop', cfg(c.budget, c.notepad)));
+  // The outcome lines drawn in step 5's picture fit it at phone width.
+  for (const c of S.COMPARE_RUNS) assert.ok(S.outcomeText(c.run()).length <= S.LINE_MAX, S.outcomeText(c.run()));
 });
 
 test('window story at 12 words', () => {
@@ -55,6 +57,8 @@ test('window story at 12 words', () => {
   assert.equal(w.next.i, anaResult);
   assert.equal(w.next.words, countWords(lookupText('ana')));
   assert.equal(S.sumText(w), '4 + 1 + 7 = 12');
+  // Newest first: step 2's result (the apples price), its call, its plan line.
+  assert.deepEqual(w.kept.map((k) => r.messages[k.i].role), ['result', 'call', 'plan']);
   // Counts of each lookup.
   assert.equal(texts.filter((t) => t === ana).length, 5);
   assert.equal(texts.filter((t) => t === apples).length, 5);
@@ -217,6 +221,9 @@ test('page values are computed and match the page', () => {
     'ana-words': String(countWords(lookupText('ana'))),
     'again-step': '3',
     'again-sum': '4 + 1 + 7 = 12',
+    'again-result-words': String(countWords(small.messages[6].text)),
+    'again-call-words': String(countWords(small.messages[5].text)),
+    'again-plan-words': String(countWords(small.messages[4].text)),
     'again-over': `12 + ${countWords(lookupText('ana'))} = ${12 + countWords(lookupText('ana'))}`,
     'small-steps': String(small.steps),
     'ana-lookups': '5',
