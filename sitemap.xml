@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url><loc>https://rejusamjohn.pages.dev/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/</loc><lastmod>2026-11-19</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/nz-car-theft/</loc><lastmod>2026-09-26</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/rag-pipeline/</loc><lastmod>2026-10-19</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ClinicalDataAnalysis/</loc><lastmod>2026-09-26</lastmod></url>
-    <url><loc>https://rejusamjohn.pages.dev/ml/</loc><lastmod>2026-11-11</lastmod></url>
-    <url><loc>https://rejusamjohn.pages.dev/ml/notation/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/</loc><lastmod>2026-11-19</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/notation/</loc><lastmod>2026-11-19</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ml/what-is-a-model/</loc><lastmod>2026-11-10</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ml/data-as-numbers/</loc><lastmod>2026-11-10</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ml/centre-and-spread/</loc><lastmod>2026-11-10</lastmod></url>
@@ -41,5 +41,11 @@
     <url><loc>https://rejusamjohn.pages.dev/ml/transformers/</loc><lastmod>2026-11-11</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ml/llms/</loc><lastmod>2026-11-11</lastmod></url>
     <url><loc>https://rejusamjohn.pages.dev/ml/generative-models/</loc><lastmod>2026-11-11</lastmod></url>
-    <url><loc>https://rejusamjohn.pages.dev/ml/diffusion/</loc><lastmod>2026-11-11</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/diffusion/</loc><lastmod>2026-11-19</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/agents/</loc><lastmod>2026-11-19</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/agent-tools/</loc><lastmod>2026-11-19</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/agent-loop/</loc><lastmod>2026-11-19</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/agent-memory/</loc><lastmod>2026-11-19</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/agent-mistakes/</loc><lastmod>2026-11-19</lastmod></url>
+    <url><loc>https://rejusamjohn.pages.dev/ml/build-an-agent/</loc><lastmod>2026-11-19</lastmod></url>
 </urlset>

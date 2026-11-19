@@ -222,6 +222,36 @@
           "@type": "LearningResource",
           "name": "Diffusion: from noise to data",
           "url": "https://rejusamjohn.pages.dev/ml/diffusion/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "What is an agent?",
+          "url": "https://rejusamjohn.pages.dev/ml/agents/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Tools",
+          "url": "https://rejusamjohn.pages.dev/ml/agent-tools/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "The loop and when to stop",
+          "url": "https://rejusamjohn.pages.dev/ml/agent-loop/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Memory",
+          "url": "https://rejusamjohn.pages.dev/ml/agent-memory/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Mistakes and limits",
+          "url": "https://rejusamjohn.pages.dev/ml/agent-mistakes/"
+        },
+        {
+          "@type": "LearningResource",
+          "name": "Build your own agent",
+          "url": "https://rejusamjohn.pages.dev/ml/build-an-agent/"
         }
       ]
     }
@@ -257,7 +287,7 @@
     <header class="hub-head">
         <p class="hub-cap">Machine learning, one idea at a time</p>
         <h1>ML Explorer</h1>
-        <p class="promise">How machine learning works, for students and complete beginners: from what a model is to fitting one, testing it fairly and keeping it from overfitting, and on to the classic methods: nearest neighbours, trees and forests, clustering and PCA, then neural networks.</p>
+        <p class="promise">How machine learning works, for students and complete beginners: from what a model is to fitting one, testing it fairly and keeping it from overfitting, and on to the classic methods: nearest neighbours, trees and forests, clustering and PCA, then neural networks, then AI agents.</p>
         <div class="hub-intro">
             <p>Each lesson shows one idea on a single picture, in a few short steps. Move the controls and watch what changes. Every number in the pictures is computed in your browser from the lesson&#8217;s data as you go.</p>
             <p>The main text needs no maths. The formulas, and the reasons behind them, sit one click deeper under &#8220;The maths&#8221;.</p>
@@ -280,7 +310,7 @@
 
     <section class="hub-path-sec" id="path" aria-labelledby="path-title">
         <h2 id="path-title">The path</h2>
-        <p class="hub-sub">Each lesson builds on the ones before it. L0 to L5 are ready; L6 is coming next. Your progress is kept in this browser only.</p>
+        <p class="hub-sub">Each lesson builds on the ones before it. L0 to L6 are ready; L7 is coming next. Your progress is kept in this browser only.</p>
         <!-- Safari drops list semantics when list-style is none; role="list" restores them. -->
         <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
         <ol class="hub-path" role="list">
@@ -500,8 +530,44 @@
                     </li>
                 </ol>
             </li>
-            <li class="hub-level is-soon" data-level="L6">
-                <div class="hub-level-head"><span class="hub-lv">L6</span> <h3 class="hub-lt">In practice</h3></div>
+            <li class="hub-level" data-level="L6">
+                <div class="hub-level-head"><span class="hub-lv">L6</span> <h3 class="hub-lt">Agents</h3></div>
+                <!-- [html-validate-disable-next no-redundant-role, prefer-native-element] -->
+                <ol class="hub-lessons" role="list">
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 37 · About 9 min</p>
+                        <a data-slug="agents" href="/ml/agents/"><span class="hub-title">What is an agent?</span></a>
+                        <p class="hub-promise">A model answers once. An agent runs the model in a loop: choose an action, act, get the result, repeat. Watch both on the same question, one message at a time.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 38 · About 9 min</p>
+                        <a data-slug="agent-tools" href="/ml/agent-tools/"><span class="hub-title">Tools</span></a>
+                        <p class="hub-promise">A model only writes text. A tool is an ordinary program that the loop runs when the model writes a call for it. Switch the tools on and off and see what changes.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 39 · About 10 min</p>
+                        <a data-slug="agent-loop" href="/ml/agent-loop/"><span class="hub-title">The loop and when to stop</span></a>
+                        <p class="hub-promise">A loop runs until something stops it. See three ways a run stops, what a step costs, and why a long chain of steps fails more often than a short one.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 40 · About 10 min</p>
+                        <a data-slug="agent-memory" href="/ml/agent-memory/"><span class="hub-title">Memory</span></a>
+                        <p class="hub-promise">A model is given only the messages that fit in its context. See old messages drop out of the window, what that costs, and how a notepad keeps what matters.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 41 · About 10 min</p>
+                        <a data-slug="agent-mistakes" href="/ml/agent-mistakes/"><span class="hub-title">Mistakes and limits</span></a>
+                        <p class="hub-promise">Agents go wrong in a few recognisable ways: a made-up answer, a run going in circles, a tool error. Each one has its own safeguard. A person should also say yes before a tool that changes things runs.</p>
+                    </li>
+                    <li class="hub-lesson">
+                        <p class="hub-n">Lesson 42 · About 12 min</p>
+                        <a data-slug="build-an-agent" href="/ml/build-an-agent/"><span class="hub-title">Build your own agent</span></a>
+                        <p class="hub-promise">An agent is a handful of parts you can name and choose. Choose them, run your agent on three tasks, and take it home as a small Python program.</p>
+                    </li>
+                </ol>
+            </li>
+            <li class="hub-level is-soon" data-level="L7">
+                <div class="hub-level-head"><span class="hub-lv">L7</span> <h3 class="hub-lt">In practice</h3></div>
                 <p class="hub-topics">Evaluation, calibration, interpretability, fairness</p>
                 <p class="hub-soon">Coming next</p>
             </li>

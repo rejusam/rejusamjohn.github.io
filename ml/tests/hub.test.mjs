@@ -222,9 +222,9 @@ test('notation worked examples match the computed values', () => {
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
-test('TOTAL_LIVE is 36', () => {
+test('TOTAL_LIVE is 42', () => {
   assert.equal(TOTAL_LIVE, PATH.flatMap((l) => l.lessons).length);
-  assert.equal(TOTAL_LIVE, 36);
+  assert.equal(TOTAL_LIVE, 42);
 });
 
 test('L3 is live: not marked soon, nine lessons, each with a page whose h1 is its title', () => {
@@ -268,13 +268,57 @@ test('L5 is live: not marked soon, eight lessons, each with a page whose h1 is i
     const html = read(`${l.slug}/index.html`);
     assert.equal(stripTags(/<h1>([\s\S]*?)<\/h1>/.exec(html)[1]), l.title, l.slug);
   }
-  const l6 = PATH.find((l) => l.level === 'L6');
-  assert.ok(l6.soon, 'L6 is still coming');
 });
 
-test('landing intro says L0 to L5 are ready', () => {
+test('L6 is live: not marked soon, six lessons, each with a page whose h1 is its title', () => {
+  const l6 = PATH.find((l) => l.level === 'L6');
+  assert.ok(!l6.soon);
+  assert.equal(l6.topics, undefined);
+  assert.equal(l6.name, 'Agents');
+  assert.deepEqual(l6.lessons.map((l) => l.slug), [
+    'agents', 'agent-tools', 'agent-loop', 'agent-memory', 'agent-mistakes', 'build-an-agent',
+  ]);
+  for (const l of l6.lessons) {
+    const html = read(`${l.slug}/index.html`);
+    assert.equal(stripTags(/<h1>([\s\S]*?)<\/h1>/.exec(html)[1]), l.title, l.slug);
+  }
+});
+
+test('L7 is In practice and coming', () => {
+  const l7 = PATH.find((l) => l.level === 'L7');
+  assert.equal(l7.name, 'In practice');
+  assert.ok(l7.soon);
+  assert.deepEqual(l7.lessons, []);
+  assert.equal(l7.topics, 'Evaluation, calibration, interpretability, fairness');
+  assert.equal(PATH[PATH.length - 1], l7);
+});
+
+test('landing intro says L0 to L6 are ready', () => {
   const sub = stripTags(/<p class="hub-sub">([\s\S]*?)<\/p>/.exec(landing())[1]);
-  assert.ok(sub.includes('L0 to L5 are ready; L6 is coming next.'), sub);
+  assert.ok(sub.includes('L0 to L6 are ready; L7 is coming next.'), sub);
+});
+
+test('landing promise sentence ends with AI agents', () => {
+  const p = stripTags(/<p class="promise">([\s\S]*?)<\/p>/.exec(landing())[1]);
+  assert.ok(p.endsWith('then neural networks, then AI agents.'), p);
+});
+
+test("diffusion's next link points to /ml/agents/", () => {
+  const html = read('diffusion/index.html');
+  assert.ok(html.includes('<a class="next-lesson" href="/ml/agents/">Next lesson: What is an agent? →</a>'));
+  assert.ok(html.includes('<p>That is the end of Level 5. Level 6, Agents, is next.</p>'));
+  assert.ok(!html.includes('Back to the path'));
+});
+
+test('notation page notes the Level 6 clashes for p, k and B', () => {
+  const html = notation();
+  const sec = /<section class="sym-group" id="clashes"[\s\S]*?<\/section>/.exec(html)[0];
+  const items = [...sec.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1]);
+  const tex = (item) => [...item.matchAll(/data-tex="([^"]*)"/g)].map((m) => decode(m[1]));
+  const loop = items.find((it) => tex(it).includes('p') && tex(it).includes('k') && it.includes('href="/ml/agent-loop/"'));
+  assert.ok(loop && stripTags(loop).includes('one step'), 'p and k in the agent loop');
+  const mem = items.find((it) => tex(it).includes('B') && it.includes('href="/ml/agent-memory/"'));
+  assert.ok(mem && stripTags(mem).includes('context'), 'B is the context budget');
 });
 
 test('landing numbers the lessons in order and quotes each page\'s promise and time', () => {
@@ -338,11 +382,12 @@ test('sitemap lists every lesson URL in PATH', () => {
   }
 });
 
-test('home page card names levels 0 to 5', () => {
+test('home page card names levels 0 to 6', () => {
   const html = readFileSync(`${ROOT}index.html`, 'utf8');
-  assert.ok(html.includes('<div class="project-label">Interactive guide · Levels 0–5 live</div>'));
-  assert.ok(!html.includes('Levels 0–4 live'));
-  assert.ok(html.includes('classic models such as decision trees, random forests, k-means and PCA, then neural networks, attention and transformers.'));
+  assert.ok(html.includes('<div class="project-label">Interactive guide · Levels 0–6 live</div>'));
+  assert.ok(!html.includes('Levels 0–5 live'));
+  assert.ok(html.includes('attention and transformers, and on to AI agents. Every number'));
+  assert.ok(html.includes('classic models such as decision trees, random forests, k-means and PCA, then neural networks, attention and transformers, and on to AI agents.'));
 });
 
 // Every HTML page under ml/, vendor files aside.

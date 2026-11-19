@@ -3374,3 +3374,157 @@ html:not(.js) .hub-demo {
     width: 100%;
   }
 }
+
+/* ---------- Agent traces (trace-view.js) ---------- */
+.trace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: var(--ml-s4);
+  align-items: start;
+}
+
+.trace-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ml-s2);
+}
+
+.trace-row {
+  border-left: 2px solid var(--ml-muted);
+  border-radius: var(--ml-radius-sm);
+}
+
+.trace-row.role-plan { border-left-color: var(--ml-violet); }
+.trace-row.role-call,
+.trace-row.role-result,
+.trace-row.role-answer { border-left-color: var(--ml-cyan); }
+.trace-row.role-stop,
+.trace-row.role-approval,
+.trace-row.role-reply { border-left: 2px dashed var(--ml-ink); }
+
+.trace-row button {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ml-s2);
+  width: 100%;
+  padding: var(--ml-s2) var(--ml-s3);
+  border: 1px solid transparent;
+  border-radius: var(--ml-radius-sm);
+  background: var(--ml-surface);
+  color: var(--ml-ink);
+  font: inherit;
+  font-size: var(--ml-t-small);
+  text-align: left;
+  cursor: pointer;
+}
+
+.trace-row button:hover { border-color: var(--ml-muted); }
+.trace-row button[aria-current='true'] {
+  border-color: var(--ml-cyan);
+  box-shadow: 0 0 0 2px var(--ml-cyan);
+}
+
+.trace-chip {
+  flex: none;
+  padding: 1px var(--ml-s2);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  color: var(--ml-muted);
+}
+
+.trace-row.role-plan .trace-chip { color: var(--ml-violet); }
+.trace-row.role-call .trace-chip,
+.trace-row.role-result .trace-chip { color: var(--ml-cyan); }
+.trace-row.role-answer .trace-chip {
+  background: var(--ml-cyan);
+  border-color: var(--ml-cyan);
+  color: var(--ml-bg);
+}
+.trace-row.role-stop .trace-chip,
+.trace-row.role-approval .trace-chip,
+.trace-row.role-reply .trace-chip {
+  border-style: dashed;
+  border-color: var(--ml-ink);
+  color: var(--ml-ink);
+}
+
+.trace-text { flex: 1 1 12ch; min-width: 0; overflow-wrap: anywhere; }
+
+.trace-row.is-unseen { border-left-style: dashed; }
+/* Muted, not faded: --ml-muted on --ml-surface is 5.71:1, so the row stays readable. */
+.trace-row.is-unseen button,
+.trace-row.is-unseen .trace-chip {
+  color: var(--ml-muted);
+}
+.trace-row.is-unseen .trace-chip {
+  background: none;
+  border-color: var(--ml-muted);
+}
+.trace-tag {
+  flex: none;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  color: var(--ml-ink);
+  border-bottom: 1px dashed var(--ml-ink);
+}
+
+.trace-why {
+  padding: var(--ml-s3);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  font-size: var(--ml-t-small);
+}
+.trace-why:empty { display: none; }
+.trace-why p { margin: var(--ml-s2) 0 0; }
+.trace-why-title {
+  margin: 0;
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  font-weight: 500;
+  color: var(--ml-muted);
+}
+
+.trace-buttons { display: inline-flex; gap: var(--ml-s2); }
+.trace-buttons button {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  background: transparent;
+  color: var(--ml-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.trace-buttons .trace-run { border-color: var(--ml-cyan); color: var(--ml-cyan); }
+.trace-buttons button:hover:not(:disabled) { border-color: var(--ml-muted); }
+.trace-buttons button:disabled { opacity: 0.45; cursor: default; }
+.trace-status {
+  margin-left: var(--ml-s3);
+  font-family: var(--ml-mono);
+  font-size: var(--ml-t-label);
+  color: var(--ml-muted);
+}
+
+.code-out {
+  margin: 0;
+  max-height: 420px;
+  overflow: auto;
+  padding: var(--ml-s3);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--ml-radius-sm);
+  background: var(--ml-bg);
+  color: var(--ml-ink);
+  font-family: var(--ml-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .trace { grid-template-columns: minmax(0, 1fr); }
+}

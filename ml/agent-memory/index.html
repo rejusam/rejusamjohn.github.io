@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory · ML Explorer</title>
+    <meta name="description" content="A model is given only the messages that fit in its context. Old messages drop out of the window, and a notepad keeps what matters. Every trace and word count is computed in your browser.">
+    <link rel="canonical" href="https://rejusamjohn.pages.dev/ml/agent-memory/">
+    <meta property="og:title" content="Memory · ML Explorer">
+    <meta property="og:description" content="A model is given only the messages that fit in its context. Old messages drop out of the window, and a notepad keeps what matters. Every trace and word count is computed in your browser.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rejusamjohn.pages.dev/ml/agent-memory/">
+    <meta property="og:image" content="https://rejusamjohn.pages.dev/ml/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/ml/vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="/ml/assets/ml.css">
+    <script src="/ml/assets/js-flag.js"></script>
+    <script type="module" src="/ml/assets/ml.js"></script>
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e46c62f910fe4def882feaed064efced"}'></script>
+</head>
+<body>
+<a class="ml-skip" href="#lesson">Skip to the lesson</a>
+<nav class="site-nav" aria-label="Site">
+    <div class="site-nav-in">
+        <a class="site-logo" href="/" aria-label="Reju Sam John, home">RSJ</a>
+        <button type="button" class="site-toggle" aria-label="Site menu" aria-expanded="false" aria-controls="site-links">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="site-links" id="site-links">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#projects">Projects</a></li>
+            <li><a href="/ml/" class="is-here" aria-current="true">ML Explorer</a></li>
+            <li><a href="/#publications">Publications</a></li>
+            <li><a href="/#showcase">Showcase</a></li>
+            <li><a href="/#education">Education</a></li>
+            <li><a href="/#contact" class="site-cta">Get in Touch</a></li>
+        </ul>
+    </div>
+</nav>
+<header class="ml-top">
+    <a class="ml-brand" href="/ml/">ML Explorer</a>
+</header>
+<div class="ml-shell">
+<nav class="ml-path" id="ml-path" aria-label="The path"><a href="/ml/">All lessons</a></nav>
+<main class="lesson" id="lesson" data-lesson="agent-memory">
+
+    <header class="lesson-head">
+        <p class="crumbs"><a href="/ml/">ML Explorer</a> · Level 6 · Agents</p>
+        <h1>Memory</h1>
+        <p class="promise">A model is given only the messages that fit in its context. See old messages drop out of the window, what that costs, and how a notepad keeps what matters.</p>
+        <p class="meta">About 10 minutes · Every trace and word count is computed in your browser; the rule is in The maths</p>
+    </header>
+
+    <section class="overview" aria-labelledby="overview-title">
+        <h2 id="overview-title">Overview</h2>
+        <p>In <a href="/ml/agent-loop/">The loop and when to stop</a> every model call was given every message so far. A real model cannot be given an endless list: there is a limit to how much text fits in at once.</p>
+        <p>This lesson gives the stand-in a budget. Each call is given the task and only the newest messages that fit. A fact found early can drop out before it is used, and then the run has to look it up again. A notepad, one more tool, keeps the facts where later calls can still use them.</p>
+        <h2>You'll learn</h2>
+        <ul>
+            <li>what the context is, and how a budget sets which messages are in it</li>
+            <li>how a fact that drops out of the window can send a run in circles</li>
+            <li>what a notepad changes, and what it costs</li>
+        </ul>
+    </section>
+
+    <div class="stage">
+        <svg id="stage-svg" viewBox="0 0 440 300"></svg>
+        <div class="controls"></div>
+    </div>
+
+    <ol class="steps">
+        <li class="step" id="step-1">
+            <h2>The model is given only its context</h2>
+            <p class="lede">At each step the model is given some text, its context, and writes its next line from what it is given.</p>
+            <div class="happening">
+                <p>The model on this page is a stand-in. Its choices come from fixed rules, listed in full in <a href="/ml/agents/">What is an agent?</a>, applied to what it is given and nothing else; a real agent makes them with a language model, which can write a wrong or malformed call.</p>
+                <p>A language model is given text as tokens (see <a href="/ml/tokens/">Tokens</a>), and only so many at once: the tiny model in <a href="/ml/llms/">Large language models, in miniature</a> had a fixed window of characters. Everything the model is given at a step is its context. In this lesson the context is the task and the newest messages that fit in a budget, the window, and in the step on notes also the notes. On this page the size of the context is counted in words, where a word is any piece of text between spaces. That is a simple stand-in for tokens; real models count tokens, which are not the same as words.</p>
+                <p>The task: <span data-value="task">ana and sam each buy 3 of the food they like. What do they pay in total?</span> Here there is no limit, so each call is given every message so far, and the run is done after <span data-value="full-steps">6</span> steps: "<span data-value="full-answer">That costs $12.90.</span>"</p>
+                <p>Select a row: the picture shows the window of the model call in that row's step, as a bar of word counts with the newest message on the left. This lesson uses a step limit of <span data-value="limit">10</span>, not the default of <span data-value="default-limit">8</span>; the step on notes says why.</p>
+            </div>
+        </li>
+
+        <li class="step" id="step-2">
+            <h2>The window</h2>
+            <p class="lede">With a budget, each call is given the task and only the newest messages that fit.</p>
+            <div class="happening">
+                <p>The rule: the task is always kept, and its own <span data-value="task-words">17</span> words are not counted. Then the loop goes back from the newest message, adding up words, and keeps each message while the total stays within the budget. The first message that does not fit, and everything older, is left out.</p>
+                <p>Move the budget slider, next to Run and Next message, from <span data-value="b-min">6</span> to <span data-value="b-max">60</span> words, or tick no limit. The picture gives each kept message's word count and the total. In the trace, the older rows that this call was not given are greyed and tagged "no longer seen"; the rows of the selected step itself, and everything after them, were written by that call or come later.</p>
+                <p>For this task, a budget of <span data-value="min-done">54</span> words or more gives the same <span data-value="full-steps">6</span> steps as no limit. From <span data-value="circle-from">8</span> to <span data-value="circle-to">52</span> words the run goes round until the step limit stops it. At <span data-value="b-min">6</span> words even ana's result (<span data-value="ana-words">8</span> words) does not fit, so the second model call is given only the task, writes the same lookup again, and the repeat check stops the run after <span data-value="tiny-steps">2</span> steps.</p>
+            </div>
+            <details class="maths">
+                <summary>The maths</summary>
+                <p>Number the messages after the task <span class="tex" data-tex="m_1, \dots, m_t"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mn>1</mn></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>m</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">m_1, \dots, m_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>, newest last, and let <span class="tex" data-tex="B"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span></span></span></span></span> be the budget in words (on this page <em>B</em> is a budget, not a batch). The call is given the task and</p>
+                <div class="eq"><span class="tex" data-display data-tex="m_j, \dots, m_t \quad\text{with } j \text{ the smallest index such that}\quad \sum_{i=j}^{t} \text{words}(m_i) \le B"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>m</mi><mi>j</mi></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>m</mi><mi>t</mi></msub><mspace width="1em"/><mtext>with </mtext><mi>j</mi><mtext> the smallest index such that</mtext><mspace width="1em"/><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mi>j</mi></mrow><mi>t</mi></munderover><mtext>words</mtext><mo stretchy="false">(</mo><msub><mi>m</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo>≤</mo><mi>B</mi></mrow><annotation encoding="application/x-tex">m_j, \dots, m_t \quad\text{with } j \text{ the smallest index such that}\quad \sum_{i=j}^{t} \text{words}(m_i) \le B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3.1943em;vertical-align:-1.4138em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:1em;"></span><span class="mord text"><span class="mord">with </span></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mord text"><span class="mord"> the smallest index such that</span></span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.7806em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.4138em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">words</span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span></span></span></span></span></span></div>
+                <p>Every message has at least one word, so the sum grows as <span class="tex" data-tex="j"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span></span></span></span></span> goes back. Taking the smallest such <span class="tex" data-tex="j"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span></span></span></span></span> is the same as stopping at the first message that does not fit. If even <span class="tex" data-tex="m_t"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">m_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span> does not fit, no <span class="tex" data-tex="j"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span></span></span></span></span> qualifies and the call is given only the task. With no limit, <span class="tex" data-tex="B = \infty"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">B = \infty</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord">∞</span></span></span></span></span> and every message is kept.</p>
+            </details>
+        </li>
+
+        <li class="step" id="step-3">
+            <h2>A dropped fact costs steps</h2>
+            <p class="lede">At <span data-value="small">12</span> words, a fact found early drops out of the window before it is used, so the stand-in writes the lookup again.</p>
+            <div class="happening">
+                <p>Step 1 writes <span data-value="ana-call">lookup("ana")</span> and gets "<span data-value="ana-result">ana likes apples and lives by the sea.</span>", <span data-value="ana-words">8</span> words. Step 2 is given that result and writes <span data-value="apples-call">lookup("apples")</span>.</p>
+                <p>Opened directly, the trace selects step <span data-value="again-step">3</span>'s plan line. That step's call is given only the newest messages: <span data-value="again-sum">4 + 1 + 7 = 12</span> words, the whole budget. ana's result would take <span data-value="again-over">12 + 8 = 20</span>, so it is left out, greyed with everything older. ana's food is no longer in the messages it is given, so the stand-in applies R3 again and writes <span data-value="ana-call">lookup("ana")</span>.</p>
+                <p>From then on the run takes turns: <span data-value="ana-call">lookup("ana")</span>, <span data-value="apples-call">lookup("apples")</span>, and so on until the step limit stops it after <span data-value="small-steps">10</span> steps with no answer. In all it writes <span data-value="ana-call">lookup("ana")</span> <span data-value="ana-lookups">5</span> times and <span data-value="apples-call">lookup("apples")</span> <span data-value="apples-lookups">5</span> times. sam is never looked up.</p>
+                <p>The repeat check from <a href="/ml/agent-loop/">The loop and when to stop</a> does not catch this. It compares a call only with the one just before it, and here no two calls in a row are the same.</p>
+            </div>
+        </li>
+
+        <li class="step" id="step-4">
+            <h2>Notes</h2>
+            <p class="lede">With the notepad on, the stand-in writes each fact in the notes, and the notes are given to every later call.</p>
+            <div class="happening">
+                <p>The notepad turns on R2: if the last result is a fact not yet in the notes, write it in the notes. So each lookup is followed by a step that writes its result down. The budget is still <span data-value="small">12</span> words.</p>
+                <p>Each call is given its window and all the notes, so the notes are part of its context, but they sit outside the window: their words are not counted against the budget. That is a choice made for this page; in other designs the notes take up part of the budget too.</p>
+                <p>The run is done after <span data-value="note-steps">10</span> steps with <span data-value="note-count">4</span> notes: "<span data-value="full-answer">That costs $12.90.</span>" Step <span data-value="note-calc-step">9</span>'s window holds none of the lookup results; the facts come from the notes, and it writes the calculator call. Switch the notepad off to see the circling run again.</p>
+                <p>The notes cost steps: one per note, <span data-value="note-extra">4</span> more than the <span data-value="full-steps">6</span> with no limit. That is why this lesson uses a step limit of <span data-value="limit">10</span>; at the usual <span data-value="default-limit">8</span>, the notepad run stops at the limit. With the notepad, every budget on the slider from <span data-value="note-min">8</span> words up finishes. At <span data-value="b-min">6</span> words ana's result drops out before the step that would write it down.</p>
+            </div>
+        </li>
+
+        <li class="step" id="step-5">
+            <h2>Real agents</h2>
+            <p class="lede">A real model's context is limited too, so agents built around one often keep notes or summaries.</p>
+            <div class="happening">
+                <p>A real language model can be given only so many tokens at once. Agents built around one therefore often keep what matters outside the window, as notes, or replace older messages with a short summary of them.</p>
+                <p>Pick a run from the run menu. The picture puts the three runs of this lesson side by side, and the trace shows the one you picked.</p>
+                <p>Notes are not free: here each one cost a step, and a note holds only what was written in it.</p>
+            </div>
+        </li>
+    </ol>
+
+    <section class="quiz" aria-labelledby="quiz-title">
+        <h2 id="quiz-title">Quick check</h2>
+
+        <form class="q" id="q1" data-answer="dropped">
+            <fieldset>
+                <legend>At a budget of <span data-value="small">12</span> words, why did the agent look ana up again?</legend>
+                <label><input type="radio" name="q1" value="dropped"> ana's result had dropped out of the window, so a later call was not given it</label>
+                <label><input type="radio" name="q1" value="changed"> lookup gave a different answer the first time</label>
+                <label><input type="radio" name="q1" value="limit"> The step limit was too low</label>
+                <label><input type="radio" name="q1" value="repeat"> The repeat check asked for it</label>
+            </fieldset>
+            <p class="why" data-for="dropped">Right. Step <span data-value="again-step">3</span>'s call was given <span data-value="again-sum">4 + 1 + 7 = 12</span> words of newer messages; ana's result would have made <span data-value="again-over">12 + 8 = 20</span>.</p>
+            <p class="why" data-for="changed">lookup gives the same text every time: "<span data-value="ana-result">ana likes apples and lives by the sea.</span>" ana was looked up again because the first result was no longer in the window.</p>
+            <p class="why" data-for="limit">The step limit only stops a run; it does not choose calls. ana was looked up again at step <span data-value="again-step">3</span> of <span data-value="limit">10</span>.</p>
+            <p class="why" data-for="repeat">The repeat check only stops a run; it never writes a call. It did not fire here either, since no two calls in a row were the same.</p>
+        </form>
+
+        <form class="q" id="q2" data-answer="keep">
+            <fieldset>
+                <legend>What does the notepad change?</legend>
+                <label><input type="radio" name="q2" value="keep"> Facts in the notes are given to later calls, even after their messages drop out of the window</label>
+                <label><input type="radio" name="q2" value="bigger"> It makes the window bigger</label>
+                <label><input type="radio" name="q2" value="fewer"> It makes the run take fewer steps</label>
+                <label><input type="radio" name="q2" value="any"> It lets every budget finish</label>
+            </fieldset>
+            <p class="why" data-for="keep">Right. At <span data-value="small">12</span> words the notepad run is done after <span data-value="note-steps">10</span> steps with <span data-value="note-count">4</span> notes.</p>
+            <p class="why" data-for="bigger">The budget stays at <span data-value="small">12</span> words. On this page the notes are kept outside the window, a choice made for this page.</p>
+            <p class="why" data-for="fewer">It adds steps, one per note: <span data-value="note-steps">10</span> instead of <span data-value="full-steps">6</span> with no limit.</p>
+            <p class="why" data-for="any">At <span data-value="b-min">6</span> words ana's result drops out before it can be written down, and the repeat check stops the run after <span data-value="tiny-steps">2</span> steps.</p>
+        </form>
+    </section>
+
+    <section class="complete" aria-labelledby="complete-title">
+        <h2 id="complete-title">Lesson complete</h2>
+        <ul>
+            <li>A model is given only its context: here the task and the newest messages that fit in a budget of words.</li>
+            <li>A fact that drops out of the window has to be found again; at <span data-value="small">12</span> words the run went in circles until the step limit.</li>
+            <li>A notepad keeps facts for later calls, at the cost of a step per note.</li>
+        </ul>
+
+        <h3>Common misconceptions</h3>
+        <ul class="misconceptions">
+            <li>"The model is given everything earlier in the run." Only what fits in its window: at <span data-value="small">12</span> words, step <span data-value="again-step">3</span>'s call was not given ana's result.</li>
+            <li>"Words and tokens are the same." Words here are a simple stand-in; real models count tokens.</li>
+            <li>"A notepad is free." Each note cost one step: <span data-value="note-count">4</span> notes, <span data-value="note-extra">4</span> extra steps.</li>
+        </ul>
+
+        <a class="next-lesson" href="/ml/agent-mistakes/">Next lesson: Mistakes and limits →</a>
+
+        <h3>Further reading</h3>
+        <ol class="reading">
+            <li>Russell &amp; Norvig, <cite>Artificial Intelligence: A Modern Approach</cite> (4th ed.), Chapter 2, "Intelligent Agents": agents in general, well beyond language models; Section 2.4.3 is on model-based reflex agents.</li>
+            <li>Yao et al., "ReAct: Synergizing Reasoning and Acting in Language Models", arXiv 2210.03629 (2022), in which a language model writes short free-text steps in between actions such as searches, and is given each action's result before the next.</li>
+        </ol>
+
+        <p class="data-note"><strong>About the data.</strong> Nothing here is random: the same task, budget and rules give the same trace every time. The task uses the invented world from Level 5 and the invented price list from <a href="/ml/agent-tools/">Tools</a>. A word is any piece of text between spaces, so lookup("ana") counts as one word. Every run in this lesson uses a step limit of <span data-value="limit">10</span>.</p>
+
+        <p class="coffee-line">If this helped, you can <button type="button" data-coffee>buy me a coffee</button>.</p>
+    </section>
+
+</main>
+</div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// The full learning path. L0 to L5 are live; L6 shows the road ahead
+// The full learning path. L0 to L6 are live; L7 shows the road ahead
 // without links. Lesson pages live at /ml/<slug>/.
 
 export const PATH = [
@@ -72,7 +72,19 @@ export const PATH = [
       { slug: 'diffusion', title: 'Diffusion: from noise to data' },
     ],
   },
-  { level: 'L6', name: 'In practice', lessons: [], soon: true, topics: 'Evaluation, calibration, interpretability, fairness' },
+  {
+    level: 'L6',
+    name: 'Agents',
+    lessons: [
+      { slug: 'agents', title: 'What is an agent?' },
+      { slug: 'agent-tools', title: 'Tools' },
+      { slug: 'agent-loop', title: 'The loop and when to stop' },
+      { slug: 'agent-memory', title: 'Memory' },
+      { slug: 'agent-mistakes', title: 'Mistakes and limits' },
+      { slug: 'build-an-agent', title: 'Build your own agent' },
+    ],
+  },
+  { level: 'L7', name: 'In practice', lessons: [], soon: true, topics: 'Evaluation, calibration, interpretability, fairness' },
 ];
 
 export const TOTAL_LIVE = PATH.flatMap((l) => l.lessons).length;

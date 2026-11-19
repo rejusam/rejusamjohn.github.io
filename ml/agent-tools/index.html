@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools · ML Explorer</title>
+    <meta name="description" content="A model only writes text. A tool is an ordinary program the loop runs when the model writes a call for it, and the result goes back as a new message. Switch a calculator, a lookup and a notepad on and off and see what changes. Every trace is computed in your browser.">
+    <link rel="canonical" href="https://rejusamjohn.pages.dev/ml/agent-tools/">
+    <meta property="og:title" content="Tools · ML Explorer">
+    <meta property="og:description" content="A model only writes text. A tool is an ordinary program the loop runs when the model writes a call for it, and the result goes back as a new message. Switch a calculator, a lookup and a notepad on and off and see what changes. Every trace is computed in your browser.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rejusamjohn.pages.dev/ml/agent-tools/">
+    <meta property="og:image" content="https://rejusamjohn.pages.dev/ml/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/ml/vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="/ml/assets/ml.css">
+    <script src="/ml/assets/js-flag.js"></script>
+    <script type="module" src="/ml/assets/ml.js"></script>
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e46c62f910fe4def882feaed064efced"}'></script>
+</head>
+<body>
+<a class="ml-skip" href="#lesson">Skip to the lesson</a>
+<nav class="site-nav" aria-label="Site">
+    <div class="site-nav-in">
+        <a class="site-logo" href="/" aria-label="Reju Sam John, home">RSJ</a>
+        <button type="button" class="site-toggle" aria-label="Site menu" aria-expanded="false" aria-controls="site-links">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="site-links" id="site-links">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#projects">Projects</a></li>
+            <li><a href="/ml/" class="is-here" aria-current="true">ML Explorer</a></li>
+            <li><a href="/#publications">Publications</a></li>
+            <li><a href="/#showcase">Showcase</a></li>
+            <li><a href="/#education">Education</a></li>
+            <li><a href="/#contact" class="site-cta">Get in Touch</a></li>
+        </ul>
+    </div>
+</nav>
+<header class="ml-top">
+    <a class="ml-brand" href="/ml/">ML Explorer</a>
+</header>
+<div class="ml-shell">
+<nav class="ml-path" id="ml-path" aria-label="The path"><a href="/ml/">All lessons</a></nav>
+<main class="lesson" id="lesson" data-lesson="agent-tools">
+
+    <header class="lesson-head">
+        <p class="crumbs"><a href="/ml/">ML Explorer</a> · Level 6 · Agents</p>
+        <h1>Tools</h1>
+        <p class="promise">A model only writes text. A tool is an ordinary program that the loop runs when the model writes a call for it. Switch the tools on and off and see what changes.</p>
+        <p class="meta">About 9 minutes · Every message, guess and error is computed in your browser; the formulas are in The maths</p>
+    </header>
+
+    <section class="overview" aria-labelledby="overview-title">
+        <h2 id="overview-title">Overview</h2>
+        <p>In <a href="/ml/agents/">What is an agent?</a> the agent looked facts up and worked out a cost. This lesson looks at the tools themselves: what a tool call is, who runs it, and what the stand-in writes when a tool is missing.</p>
+        <p>A tool is an ordinary program with a name and an input. The model writes a call for it as text; the loop reads that text, runs the program and adds the program's output to the messages. This page has three tools: a calculator, lookup and a notepad. A fourth tool, send, comes later, in the lesson on mistakes and limits.</p>
+        <h2>You'll learn</h2>
+        <ul>
+            <li>that a tool call is text the model writes, and the loop runs the tool</li>
+            <li>to read a call's exact input and its result in a trace</li>
+            <li>what goes wrong, and by how much, when a needed tool is off</li>
+        </ul>
+    </section>
+
+    <div class="stage">
+        <svg id="stage-svg" viewBox="0 0 440 152"></svg>
+        <div class="controls"></div>
+    </div>
+
+    <ol class="steps">
+        <li class="step" id="step-1">
+            <h2>A model writes text; the loop runs the tool</h2>
+            <p class="lede">A language model takes text in and writes text out. It cannot run a program. A tool is a program that the loop around the model runs.</p>
+            <div class="happening">
+                <p>The model on this page is a stand-in. On this page the choices come from fixed rules, listed in full in <a href="/ml/agents/">What is an agent?</a>; a real agent makes them with a language model, which can write a wrong or malformed call.</p>
+                <p>The task: <span data-value="sum-task">What is 3 × 1.25 + 2 × 0.8?</span> The stand-in writes the call <span data-value="sum-call">calculator("3*1.25+2*0.8")</span>. That call is only text. The loop reads it, finds the tool's name and its input, runs the calculator and adds what the calculator returned, <span data-value="sum-result">5.35</span>, as a new message. On its next turn the stand-in is given that result and answers "<span data-value="sum-agent">The sum is 5.35.</span>" The run takes <span data-value="sum-steps">2</span> steps.</p>
+                <p>Select a row of the trace: the picture marks who made it. Plan lines, calls and the answer are text the model wrote; a result is what a tool returned; the stop comes from the loop.</p>
+            </div>
+        </li>
+
+        <li class="step" id="step-2">
+            <h2>A tool call up close</h2>
+            <p class="lede">A call names one tool and gives it an exact input. Its result is the tool's exact output.</p>
+            <div class="happening">
+                <p>The three tools on this page, with the one-line description each one carries:</p>
+                <ul>
+                    <li><strong>calculator</strong>: <span data-value="about-calculator">Works out an arithmetic sum such as 3*0.8+2.</span></li>
+                    <li><strong>lookup</strong>: <span data-value="about-lookup">Looks up one person or one food in the invented world.</span></li>
+                    <li><strong>notepad</strong>: <span data-value="about-notepad">Writes a line to the notes, or reads all the notes back.</span></li>
+                </ul>
+                <p>The trace is the eli task from the last lesson: <span data-value="eli-calls">3</span> tool calls in <span data-value="eli-steps">4</span> steps. Its first call is <span data-value="eli-call-1">lookup("eli")</span>: the tool is lookup and the input is <span data-value="eli-input-1">key = "eli"</span>. The loop runs lookup on that input, and the result row holds its output word for word: "<span data-value="eli-result-1">eli likes plums and lives by the lake.</span>"</p>
+                <p>Select a row from a step that calls a tool (its plan line, call or result): the picture shows that call and its result. Nothing in between is changed or summarised.</p>
+            </div>
+            <details class="maths">
+                <summary>The maths</summary>
+                <p>A tool is a function of its input:</p>
+                <div class="eq"><span class="tex" data-display data-tex="\text{result} = \text{tool}(\text{input})"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>result</mtext><mo>=</mo><mtext>tool</mtext><mo stretchy="false">(</mo><mtext>input</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{result} = \text{tool}(\text{input})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord text"><span class="mord">result</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">tool</span></span><span class="mopen">(</span><span class="mord text"><span class="mord">input</span></span><span class="mclose">)</span></span></span></span></span></span></div>
+                <p>For the calculator and lookup, the same input always gives the same result; what the notepad's read returns also depends on the notes written so far in the run.</p>
+            </details>
+        </li>
+
+        <li class="step" id="step-3">
+            <h2>Calculator off</h2>
+            <p class="lede">With the calculator off, the stand-in cannot get an exact sum. Its guess rule fills the gap.</p>
+            <div class="happening">
+                <p>The guess rule for sums: round each number to one significant figure, then work the sum out exactly. For this task <span data-value="rounded-list">3 stays 3, 1.25 becomes 1, 2 stays 2 and 0.8 stays 0.8</span>, so the guess is <span data-value="guess-expr">3*1+2*0.8</span> = <span data-value="guess-value">4.6</span>.</p>
+                <p>The run takes <span data-value="guess-steps">1</span> step, with no tool call: the stand-in applies <span data-value="guess-rules">R4 and R6</span> and writes "<span data-value="guess-answer">The sum is 4.6.</span>" The calculator gives <span data-value="sum-result">5.35</span>, so the guess is wrong by <span data-value="sum-error">0.75</span>. Select the plan row: Why this step quotes both rules.</p>
+                <p>This is a simplification. A real language model has no rounding rule like this one; it writes the digits of an answer as <a href="/ml/tokens/">tokens</a>, and those digits can be wrong. A calculator gives the exact sum each time.</p>
+            </div>
+            <details class="maths">
+                <summary>The maths</summary>
+                <p>Write <span class="tex" data-tex="r(x)"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">r(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></span> for <span class="tex" data-tex="x"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span></span> rounded to one significant figure. For a sum of products <span class="tex" data-tex="a_i \times b_i"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>a</mi><mi>i</mi></msub><mo>×</mo><msub><mi>b</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">a_i \times b_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>:</p>
+                <div class="eq"><span class="tex" data-display data-tex="\text{guess} = \sum_i r(a_i)\, r(b_i), \qquad \text{error} = \text{exact} - \text{guess}"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>guess</mtext><mo>=</mo><munder><mo>∑</mo><mi>i</mi></munder><mi>r</mi><mo stretchy="false">(</mo><msub><mi>a</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mtext> </mtext><mi>r</mi><mo stretchy="false">(</mo><msub><mi>b</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="2em"/><mtext>error</mtext><mo>=</mo><mtext>exact</mtext><mo>−</mo><mtext>guess</mtext></mrow><annotation encoding="application/x-tex">\text{guess} = \sum_i r(a_i)\, r(b_i), \qquad \text{error} = \text{exact} - \text{guess}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">guess</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.3277em;vertical-align:-1.2777em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">error</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6984em;vertical-align:-0.0833em;"></span><span class="mord text"><span class="mord">exact</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">guess</span></span></span></span></span></span></span></div>
+                <p>Here the exact sum is <span data-value="sum-result">5.35</span> and the guess is <span data-value="guess-value">4.6</span>, so the error is <span data-value="sum-error">0.75</span>.</p>
+            </details>
+        </li>
+
+        <li class="step" id="step-4">
+            <h2>Lookup off</h2>
+            <p class="lede">With lookup off, the stand-in has no way to get a fact. It guesses one and goes on.</p>
+            <div class="happening">
+                <p>The task: eli buys <span data-value="eli-qty">4</span> of the food eli likes. With lookup off, the stand-in applies its guess rule: the first food in its food table, <span data-value="guess-food">apples</span>, at the first price in its price list, <span data-value="guess-price">$0.80</span>. The calculator is still on, so it writes the call <span data-value="nolookup-call">calculator("4*0.8")</span> and answers that it costs <span data-value="nolookup-answer">$3.20</span>, in <span data-value="nolookup-steps">2</span> steps. Its first plan line applies <span data-value="nolookup-rules">R3 and R4</span>.</p>
+                <p>In the invented world eli likes <span data-value="eli-food">plums</span>, at <span data-value="eli-price">$1.25</span> each, so the true cost is <span data-value="true-eli">$5.00</span>. The answer is wrong by <span data-value="nolookup-error">$1.80</span>. The sum was exact; the facts it used were not.</p>
+            </div>
+        </li>
+
+        <li class="step" id="step-5">
+            <h2>Each tool on or off</h2>
+            <p class="lede">Switch each tool on or off. The eli task runs again at once, and the line under the tools says whether its answer is right, or by how much it is wrong.</p>
+            <div class="happening">
+                <p>The checkboxes sit next to Run and Next message. Only the runs with both lookup and the calculator on are right. With lookup on and the calculator off, the stand-in rounds each number to one significant figure, giving <span data-value="nocalc-expr">4*1</span>, and answers <span data-value="nocalc-answer">$4.00</span>.</p>
+                <p>The notepad changes no answer here. With lookup on, the stand-in applies <span data-value="notepad-rule">R2</span> after each lookup and writes the fact in the notes: the run with every tool on takes <span data-value="notepad-steps">6</span> steps instead of <span data-value="eli-steps">4</span>, <span data-value="notepad-extra">2</span> more, with the same answer. With lookup off there is no fact to write, so the notepad changes nothing. The notes matter when old messages drop out of what the model is given, which is the lesson on memory.</p>
+            </div>
+            <details class="maths">
+                <summary>The maths</summary>
+                <p>Three tools, each on or off, give <span data-value="combos">2 × 2 × 2 = 8</span> runs. Each one is computed in your browser, and each is the same every time.</p>
+            </details>
+        </li>
+    </ol>
+
+    <section class="quiz" aria-labelledby="quiz-title">
+        <h2 id="quiz-title">Quick check</h2>
+
+        <form class="q" id="q1" data-answer="exact">
+            <fieldset>
+                <legend>Why give a model a calculator?</legend>
+                <label><input type="radio" name="q1" value="exact"> A model writes the digits of a sum as text and can get them wrong; the calculator works the sum out exactly</label>
+                <label><input type="radio" name="q1" value="cannot"> A model cannot write numbers at all</label>
+                <label><input type="radio" name="q1" value="faster"> It makes the model itself better at arithmetic</label>
+                <label><input type="radio" name="q1" value="facts"> So the model can find prices</label>
+            </fieldset>
+            <p class="why" data-for="exact">Right. On this page the stand-in's guess rule plays that part: with the calculator off it wrote <span data-value="guess-value">4.6</span>; the calculator gave <span data-value="sum-result">5.35</span>.</p>
+            <p class="why" data-for="cannot">A model can write numbers, as text. The trouble is that those digits can be wrong, and nothing in the text says so.</p>
+            <p class="why" data-for="faster">The model does not change. It writes a call; the loop runs the calculator and passes the exact result back.</p>
+            <p class="why" data-for="facts">Prices come from lookup. The calculator only works out sums, such as <span data-value="sum-call">calculator("3*1.25+2*0.8")</span>.</p>
+        </form>
+
+        <form class="q" id="q2" data-answer="loop">
+            <fieldset>
+                <legend>Who runs the tool: the model or the loop?</legend>
+                <label><input type="radio" name="q2" value="loop"> The loop: it reads the call the model wrote, runs the tool and adds the result as a message</label>
+                <label><input type="radio" name="q2" value="model"> The model runs it while it writes the call</label>
+                <label><input type="radio" name="q2" value="tool"> The tool runs itself as soon as its name appears in the text</label>
+                <label><input type="radio" name="q2" value="person"> A person runs it and types in the result</label>
+            </fieldset>
+            <p class="why" data-for="loop">Right. The model only writes text, such as <span data-value="eli-call-1">lookup("eli")</span>. The loop runs lookup, and the model is given the result on its next turn.</p>
+            <p class="why" data-for="model">A model only writes text. Writing <span data-value="eli-call-1">lookup("eli")</span> runs nothing until the loop reads it.</p>
+            <p class="why" data-for="tool">A tool is an ordinary program; something has to call it. Here the loop does, after reading the call.</p>
+            <p class="why" data-for="person">No person is involved here: the loop runs every call. The lesson on mistakes and limits shows a case where the loop waits for a person's yes before a tool that changes things.</p>
+        </form>
+    </section>
+
+    <section class="complete" aria-labelledby="complete-title">
+        <h2 id="complete-title">Lesson complete</h2>
+        <ul>
+            <li>A model only writes text. A tool call is text naming a tool and its exact input; the loop runs the tool and adds its exact output as a new message.</li>
+            <li>With a needed tool off, the stand-in's guess rule fills the gap, and the answer is wrong by an amount you can work out: <span data-value="sum-error">0.75</span> for the sum, <span data-value="nolookup-error">$1.80</span> for the eli task.</li>
+            <li>Here the tools give exact facts and sums. Real tools can fail; a later lesson shows what the loop does then.</li>
+        </ul>
+
+        <h3>Common misconceptions</h3>
+        <ul class="misconceptions">
+            <li>"The model runs the tool." It writes the call as text; the loop runs the tool.</li>
+            <li>"More tools always help." Here the notepad changes no answer on the eli task and costs <span data-value="notepad-extra">2</span> extra steps.</li>
+            <li>"A guessed answer looks different." "<span data-value="guess-answer">The sum is 4.6.</span>" reads as well as "<span data-value="sum-agent">The sum is 5.35.</span>"; only the trace shows which one came from the calculator.</li>
+        </ul>
+
+        <a class="next-lesson" href="/ml/agent-loop/">Next lesson: The loop and when to stop →</a>
+
+        <h3>Further reading</h3>
+        <ol class="reading">
+            <li>Schick et al., "Toolformer: Language Models Can Teach Themselves to Use Tools", arXiv 2302.04761 (2023), in which a language model is trained to write calls to tools, among them a calculator and search engines, inside its own text, and to use their results.</li>
+        </ol>
+
+        <p class="data-note"><strong>About the data.</strong> Nothing here is random: the same task, tools and rules give the same trace every time. The tasks use the invented world from Level 5, where each person likes one food: <span data-value="likes-list">ana apples, ben pears, eli plums, mia figs, noa limes, sam grapes, tom apples, zoe pears</span>. The invented price list is <span data-value="price-list">apples $0.80, pears $1.10, plums $1.25, figs $2.40, limes $0.60, grapes $3.50</span>. The calculator works out a sum exactly and shows it rounded to at most two decimal places. The stand-in's guesses are the first food in its food table, the first price in its price list, and each number of a sum rounded to one significant figure (half away from zero).</p>
+
+        <p class="coffee-line">If this helped, you can <button type="button" data-coffee>buy me a coffee</button>.</p>
+    </section>
+
+</main>
+</div>
+</body>
+</html>

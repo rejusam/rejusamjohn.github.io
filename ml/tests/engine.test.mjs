@@ -46,13 +46,13 @@ test('shouldHandleKey ignores form controls', () => {
 
 import { PATH, TOTAL_LIVE, findLesson, nextLesson, lessonHref } from '../assets/path.js';
 
-test('path lists seven levels and thirty-six live lessons', () => {
-  assert.deepEqual(PATH.map((l) => l.level), ['L0', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6']);
+test('path lists eight levels (L0 to L7) and forty-two live lessons', () => {
+  assert.deepEqual(PATH.map((l) => l.level), ['L0', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7']);
   const live = PATH.flatMap((l) => l.lessons);
   assert.equal(live.length, TOTAL_LIVE);
-  assert.equal(TOTAL_LIVE, 36);
+  assert.equal(TOTAL_LIVE, 42);
   assert.equal(new Set(live.map((l) => l.slug)).size, TOTAL_LIVE);
-  for (const l of PATH.slice(6)) {
+  for (const l of PATH.slice(7)) {
     assert.equal(l.soon, true);
     assert.deepEqual(l.lessons, []);
   }
@@ -68,7 +68,8 @@ test('findLesson and nextLesson walk the path', () => {
   assert.equal(nextLesson('overfitting').slug, 'k-nearest-neighbours');
   assert.equal(nextLesson('pca').slug, 'neurons');
   assert.equal(nextLesson('rnns').slug, 'tokens');
-  assert.equal(nextLesson('diffusion'), null);
+  assert.equal(nextLesson('diffusion').slug, 'agents');
+  assert.equal(nextLesson('build-an-agent'), null);
   assert.equal(nextLesson('nope'), null);
   assert.equal(lessonHref('slopes'), '/ml/slopes/');
 });
