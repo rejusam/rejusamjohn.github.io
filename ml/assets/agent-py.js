@@ -65,8 +65,8 @@ function pyDict(name, obj) {
 const MARKED = [
   '# ---- To use a real language model --------------------------------',
   '# Replace call_model with a function that sends `messages` to a model',
-  '# and turns its reply into one of the same actions:',
-  '#   ("call", tool_name, tool_input)  or  ("answer", text)',
+  '# and turns its reply into a plan line and one of the same actions:',
+  '#   plan, ("call", tool_name, tool_input)  or  plan, ("answer", text)',
   '# Keep any key out of this file: read it from an environment variable.',
   '# -------------------------------------------------------------------',
 ];
@@ -94,7 +94,7 @@ export function toPython(config) {
   add('');
   add('# Your settings from the page.',
     `STEP_LIMIT = ${c.stepLimit}  # most model calls in one run`);
-  if (windowed) add(`BUDGET = ${c.budget}  # words of messages the model sees; the task is always seen`);
+  if (windowed) add(`BUDGET = ${c.budget}  # words of messages each model call is given; the task is always given`);
   add(`REPEAT_CHECK = ${py(c.repeatCheck)}  # stop if the same call comes twice in a row`);
   if (t.send) add(`ASK_BEFORE_CHANGES = ${py(c.askBeforeChanges)}  # ask on the terminal before send runs`);
   add('');
@@ -199,18 +199,18 @@ export function toPython(config) {
   if (windowed) {
     add('def window(messages):',
       '    # The task, then the newest messages whose words fit in BUDGET.',
-      '    seen, words = [], 0',
+      '    kept, words = [], 0',
       '    for m in reversed(messages[1:]):',
       '        words += len(m["text"].split())',
       '        if words > BUDGET:',
       '            break',
-      '        seen.insert(0, m)',
-      '    return [messages[0]] + seen',
+      '        kept.insert(0, m)',
+      '    return [messages[0]] + kept',
       '');
   }
   if (t.lookup) {
     add('def read_facts(messages):',
-      '    # Facts from the lookup results the model can see' + (t.notepad ? ', and from the notes.' : '.'),
+      '    # Facts from the lookup results the model is given' + (t.notepad ? ', and from the notes.' : '.'),
       '    likes, price = {}, {}',
       '    texts = [m["text"] for m in messages if m["tool"] == "lookup" and m["role"] == "result"]',
       `    for text in texts${t.notepad ? ' + NOTES' : ''}:`,
@@ -229,7 +229,7 @@ export function toPython(config) {
     ...MARKED,
     'def call_model(messages):',
     '    # The stand-in: the rules from the page, first match wins. It returns a plan',
-    '    # line and an action. It reads the task\'s goal, not its words.',
+    '    # line and an action. It is given the task\'s goal, not its words.',
     '    goal, plan = messages[0]["goal"], []',
     (t.lookup ? '    likes, price = read_facts(messages)' : '    likes, price = {}, {}'),
     '    results = [m for m in messages if m["role"] == "result"]',
@@ -361,7 +361,7 @@ export function toPython(config) {
     '    messages = []');
   if (t.notepad) add('    NOTES.clear()');
   add('    say(messages, "task", task)',
-    '    messages[0]["goal"] = goal  # the stand-in reads this; a real model reads the words',
+    '    messages[0]["goal"] = goal  # the stand-in is given this; a real model is given the words',
     '    say(messages, "stop", loop(messages))',
     '',
     'TASKS = [');

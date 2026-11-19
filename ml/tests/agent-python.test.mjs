@@ -42,8 +42,8 @@ const WORDING_NEVER = /\b(thinks?|knows?|understands?|wants?|decides?|reasons?|a
 const MARKED = [
   '# ---- To use a real language model --------------------------------',
   '# Replace call_model with a function that sends `messages` to a model',
-  '# and turns its reply into one of the same actions:',
-  '#   ("call", tool_name, tool_input)  or  ("answer", text)',
+  '# and turns its reply into a plan line and one of the same actions:',
+  '#   plan, ("call", tool_name, tool_input)  or  plan, ("answer", text)',
   '# Keep any key out of this file: read it from an environment variable.',
   '# -------------------------------------------------------------------',
 ].join('\n');
@@ -100,8 +100,8 @@ test('program avoids features newer than 3.8', () => {
   }
 });
 
-// Ruling (Task 3): the brief asked for 40-140 lines; with the stand-in rules, the safe
-// calculator and only the chosen parts, the option space measures 126-245 lines.
+// Ruling R8: the brief asked for 40-140 lines; with the stand-in rules, the safe
+// calculator and only the chosen parts, the option space measures 128-246 lines.
 test('program length stays readable', () => {
   let lo = Infinity, hi = 0;
   for (const c of [DEFAULT_CONFIG, ...optionSpace()]) {
@@ -111,7 +111,7 @@ test('program length stays readable', () => {
     assert.ok(n >= 120 && n <= 250, `${n} lines for ${JSON.stringify(c)}`);
     for (const line of toPython(c).split('\n')) assert.ok(line.length <= 99, line);
   }
-  assert.ok(lo <= hi);
+  assert.deepEqual([lo, hi], [128, 246]);
 });
 
 test('trace lines use the row labels', () => {
