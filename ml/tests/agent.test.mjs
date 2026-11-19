@@ -385,3 +385,60 @@ test('plan lines start with a capital', () => {
     }
   }
 });
+
+import {scheduleRows, _makeScheduler, statusText, rulesFor, ROLE_LABELS} from '../assets/trace-view.js';
+
+test('scheduleRows reveals one row per tick', () => {
+  assert.deepEqual(scheduleRows(5, {reduced: false}), [0, 1, 2, 3, 4]);
+  assert.deepEqual(scheduleRows(0, {}), []);
+});
+
+test('reduced motion reveals all at once', () => {
+  assert.deepEqual(scheduleRows(5, {reduced: true}), [4]);
+});
+
+function fakeTimers() {
+  let id = 0;
+  const q = new Map();
+  return {
+    setTimeout: (f) => { q.set(++id, f); return id; },
+    clearTimeout: (i) => { q.delete(i); },
+    // Fire the oldest pending timer; also lets a test fire a cleared one late.
+    fireAll: () => { for (const [k, f] of [...q]) { q.delete(k); f(); } },
+    pending: () => q.size,
+  };
+}
+
+test('rerender cancels a running animation', () => {
+  const t = fakeTimers();
+  const s = _makeScheduler(t);
+  const seen = [];
+  s.start(6, {}, (i) => seen.push(['a', i]));
+  t.fireAll();                       // row 1 of run a
+  s.start(3, {}, (i) => seen.push(['b', i]));
+  for (let k = 0; k < 10; k++) t.fireAll();
+  assert.deepEqual(seen.filter((x) => x[0] === 'a'), [['a', 0], ['a', 1]]);
+  assert.deepEqual(seen.filter((x) => x[0] === 'b'), [['b', 0], ['b', 1], ['b', 2]]);
+  assert.equal(t.pending(), 0);
+});
+
+test('a late timer from a cancelled run does nothing', () => {
+  let stored;
+  const s = _makeScheduler({setTimeout: (f) => { stored = f; return 1; }, clearTimeout: () => {}});
+  const seen = [];
+  s.start(4, {}, (i) => seen.push(i));
+  const late = stored;
+  s.cancel();
+  late();
+  assert.deepEqual(seen, [0]);
+});
+
+test('trace view text helpers', () => {
+  assert.equal(statusText({stop: 'done', steps: 4}), 'Stopped: done · 4 steps');
+  assert.equal(statusText({stop: 'done', steps: 1}), 'Stopped: done · 1 step');
+  assert.equal(ROLE_LABELS.approval, 'Waiting for your yes');
+  assert.deepEqual(rulesFor({rules: ['R1', 'R6'], rule: 'R6'}).map((r) => r.id), ['R1', 'R6']);
+  assert.equal(rulesFor({rule: 'R3'})[0].id, 'R3');
+  assert.ok(rulesFor({rule: 'R3'})[0].text.length > 0);
+  assert.deepEqual(rulesFor({role: 'result'}), []);
+});
