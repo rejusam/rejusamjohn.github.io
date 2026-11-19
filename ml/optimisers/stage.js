@@ -412,7 +412,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   el('line', { ...axis([1, 0], 9), stroke: MUTED, 'stroke-width': 1, 'stroke-dasharray': '1 4' }, conG);
   el('line', { ...axis([0, 1], 1.4), stroke: MUTED, 'stroke-width': 1, 'stroke-dasharray': '1 4' }, conG);
   {
-    const [a, b] = VALLEY.toW([1.2, 0]);
+    const [a, b] = VALLEY.toW([1.6, 0]);
     el('text', { class: 'stage-text', x: P(X(a)), y: P(Y(b)) + 18, 'text-anchor': 'middle', text: 'u: along', ...HALO }, valG).style.fill = MUTED;
     const [c, d] = VALLEY.toW([0, 1.5]);
     el('text', { class: 'stage-text', x: P(X(c)) - 4, y: P(Y(d)) - 6, 'text-anchor': 'end', text: 'v: across', ...HALO }, valG).style.fill = MUTED;
