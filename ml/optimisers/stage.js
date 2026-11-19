@@ -104,6 +104,9 @@ export const GD_DEFAULT = 0.07;
 // Step 2: momentum's grid η with three values of β.
 export const MOM_ETA = 0.02;
 export const BETAS = [0, 0.5, 0.9];
+// Step 5's notes: off-grid values that beat the grid (the fastest slider value, and Adam just past the grid).
+export const GD_FINE = 0.075;
+export const ADAM_OFF = 2;
 
 export const gdInfo = (eta) => ({ eta, run: valleyRun('sgd', { eta }) });
 export const momInfo = (beta) => ({ beta, run: valleyRun('momentum', { eta: MOM_ETA, beta }), reached: valleyRun('momentum', { eta: MOM_ETA, beta }).reached });
@@ -214,6 +217,8 @@ export function num(v, d) {
   return s.startsWith('-') ? '−' + s.slice(1) : s;
 }
 const T3 = 'ℒ < 10⁻³';
+const SUP = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+const power10 = (v) => `10${[...String(Math.round(Math.log10(v)))].map((c) => SUP[c]).join('')}`;
 
 function runRows(run) {
   if (run.diverged) return ['Diverged: the steps grow', 'instead of shrinking'];
@@ -254,6 +259,22 @@ export function pageValues() {
     l0: String(VALLEY.loss(VALLEY.start)),
     'w-start': `(${num(a, 2)}, ${num(b, 2)})`,
     'eta-limit': String(ETA_LIMIT),
+    'angle': String(ANGLE),
+    'curv-along': String(CURV[0]),
+    'curv-across': String(CURV[1]),
+    'flip-eta': String(CURV[0] / CURV[1]),
+    'target': power10(TARGET),
+    'beta-a': String(BETAS[0]),
+    'beta-b': String(BETAS[1]),
+    'beta-c': String(BETAS[2]),
+    'gd-fine-eta': String(GD_FINE),
+    'adam-off-eta': String(ADAM_OFF),
+    'grid': GRID.join(', '),
+    'hidden': String(SIZES[1]),
+    'n-train': String(N_TRAIN),
+    'n-test': String(N_TEST),
+    'batch': String(BATCH),
+    'net-epochs': String(NET_EPOCHS),
     'gd-eta': String(GD_DEFAULT),
     'mom-eta': String(MOM_ETA),
     'max-steps': String(MAX_STEPS),
@@ -290,8 +311,8 @@ export function storyValues() {
   v['adam-first'] = num(firstMove(adam)[0], 2);
   const runs = raceRuns();
   for (const k of KINDS) v[`race-${k}`] = String(runs[k].reached);
-  v['gd-fine'] = String(valleyRun('sgd', { eta: 0.075 }).reached);
-  v['adam-2'] = String(valleyRun('adam', { eta: 2 }).reached);
+  v['gd-fine'] = String(valleyRun('sgd', { eta: GD_FINE }).reached);
+  v['adam-2'] = String(valleyRun('adam', { eta: ADAM_OFF }).reached);
   for (const k of KINDS) {
     const r = netRun(k);
     v[`net-${k}`] = num(r.final, 3);
