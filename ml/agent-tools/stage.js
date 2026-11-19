@@ -294,8 +294,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     const c = i >= 0 ? callOfStep(r, i) : null;
     if (!c) {
       label(10, 30, 'this row\'s step calls no tool', { fill: STRONG });
-      label(10, 54, 'select a plan, call or result row');
-      return 'The selected row\'s step calls no tool. Select a plan, call or result row to see its call up close.';
+      label(10, 54, 'select a row from a step that calls a tool');
+      return 'The selected row\'s step calls no tool. Select a row from a step that calls a tool to see its call up close.';
     }
     label(10, 20, 'the call, as the model wrote it', { size: 12 });
     label(10, 42, c.call.text, { fill: STRONG, weight: 700 });
@@ -330,7 +330,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     return drawCompare([
       { title: 'calculator off: a guess', on: false, line1: `${v['guess-expr']} = ${v['guess-value']}`, line2: `✗ wrong by ${v['sum-error']}` },
       { title: 'calculator on', on: true, line1: `${on.messages.find((m) => m.role === 'call').text} = ${v['sum-result']}`, line2: `✓ ${verdict(TASK_SUM, on.answer)}` },
-    ]) + ` ${off.answer}`;
+    ]) + ` Answer with the calculator off: ${off.answer}`;
   }
 
   function drawShop() {

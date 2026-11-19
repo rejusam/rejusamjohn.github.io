@@ -99,13 +99,13 @@
                     <li><strong>notepad</strong>: <span data-value="about-notepad">Writes a line to the notes, or reads all the notes back.</span></li>
                 </ul>
                 <p>The trace is the eli task from the last lesson: <span data-value="eli-calls">3</span> tool calls in <span data-value="eli-steps">4</span> steps. Its first call is <span data-value="eli-call-1">lookup("eli")</span>: the tool is lookup and the input is <span data-value="eli-input-1">key = "eli"</span>. The loop runs lookup on that input, and the result row holds its output word for word: "<span data-value="eli-result-1">eli likes plums and lives by the lake.</span>"</p>
-                <p>Select any plan, call or result row: the picture shows that step's call and its result. Nothing in between is changed or summarised.</p>
+                <p>Select a row from a step that calls a tool (its plan line, call or result): the picture shows that call and its result. Nothing in between is changed or summarised.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
                 <p>A tool is a function of its input:</p>
                 <div class="eq"><span class="tex" data-display data-tex="\text{result} = \text{tool}(\text{input})"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>result</mtext><mo>=</mo><mtext>tool</mtext><mo stretchy="false">(</mo><mtext>input</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{result} = \text{tool}(\text{input})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord text"><span class="mord">result</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">tool</span></span><span class="mopen">(</span><span class="mord text"><span class="mord">input</span></span><span class="mclose">)</span></span></span></span></span></span></div>
-                <p>Here the same input always gives the same result. The notepad also depends on the notes written so far in the run.</p>
+                <p>For the calculator and lookup, the same input always gives the same result; what the notepad's read returns also depends on the notes written so far in the run.</p>
             </details>
         </li>
 
@@ -115,7 +115,7 @@
             <div class="happening">
                 <p>The guess rule for sums: round each number to one significant figure, then work the sum out exactly. For this task <span data-value="rounded-list">3 stays 3, 1.25 becomes 1, 2 stays 2 and 0.8 stays 0.8</span>, so the guess is <span data-value="guess-expr">3*1+2*0.8</span> = <span data-value="guess-value">4.6</span>.</p>
                 <p>The run takes <span data-value="guess-steps">1</span> step, with no tool call: the stand-in applies <span data-value="guess-rules">R4 and R6</span> and writes "<span data-value="guess-answer">The sum is 4.6.</span>" The calculator gives <span data-value="sum-result">5.35</span>, so the guess is wrong by <span data-value="sum-error">0.75</span>. Select the plan row: Why this step quotes both rules.</p>
-                <p>This is a simplification. A real language model has no rounding rule like this one; it writes the digits of an answer as tokens, and those digits can be wrong. A calculator gives the exact sum each time.</p>
+                <p>This is a simplification. A real language model has no rounding rule like this one; it writes the digits of an answer as <a href="/ml/tokens/">tokens</a>, and those digits can be wrong. A calculator gives the exact sum each time.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -129,7 +129,7 @@
             <h2>Lookup off</h2>
             <p class="lede">With lookup off, the stand-in has no way to get a fact. It guesses one and goes on.</p>
             <div class="happening">
-                <p>The task: eli buys <span data-value="eli-qty">4</span> of the food eli likes. With lookup off, the stand-in applies its guess rule: the first food in its food table, <span data-value="guess-food">apples</span>, at the first price in its price list, <span data-value="guess-price">$0.80</span>. The calculator is still on, so it calls <span data-value="nolookup-call">calculator("4*0.8")</span> and answers that it costs <span data-value="nolookup-answer">$3.20</span>, in <span data-value="nolookup-steps">2</span> steps. Its first plan row applies <span data-value="nolookup-rules">R3 and R4</span>.</p>
+                <p>The task: eli buys <span data-value="eli-qty">4</span> of the food eli likes. With lookup off, the stand-in applies its guess rule: the first food in its food table, <span data-value="guess-food">apples</span>, at the first price in its price list, <span data-value="guess-price">$0.80</span>. The calculator is still on, so it writes the call <span data-value="nolookup-call">calculator("4*0.8")</span> and answers that it costs <span data-value="nolookup-answer">$3.20</span>, in <span data-value="nolookup-steps">2</span> steps. Its first plan line applies <span data-value="nolookup-rules">R3 and R4</span>.</p>
                 <p>In the invented world eli likes <span data-value="eli-food">plums</span>, at <span data-value="eli-price">$1.25</span> each, so the true cost is <span data-value="true-eli">$5.00</span>. The answer is wrong by <span data-value="nolookup-error">$1.80</span>. The sum was exact; the facts it used were not.</p>
             </div>
         </li>
@@ -138,7 +138,7 @@
             <h2>Each tool on or off</h2>
             <p class="lede">Switch each tool on or off. The eli task runs again at once, and the line under the tools says whether its answer is right, or by how much it is wrong.</p>
             <div class="happening">
-                <p>The checkboxes sit next to Run and Next message. Only the runs with both lookup and the calculator on are right. With lookup on and the calculator off, the stand-in rounds the sum to <span data-value="nocalc-expr">4*1</span> and answers <span data-value="nocalc-answer">$4.00</span>.</p>
+                <p>The checkboxes sit next to Run and Next message. Only the runs with both lookup and the calculator on are right. With lookup on and the calculator off, the stand-in rounds each number to one significant figure, giving <span data-value="nocalc-expr">4*1</span>, and answers <span data-value="nocalc-answer">$4.00</span>.</p>
                 <p>The notepad changes no answer here. With lookup on, the stand-in applies <span data-value="notepad-rule">R2</span> after each lookup and writes the fact in the notes: the run with every tool on takes <span data-value="notepad-steps">6</span> steps instead of <span data-value="eli-steps">4</span>, <span data-value="notepad-extra">2</span> more, with the same answer. With lookup off there is no fact to write, so the notepad changes nothing. The notes matter when old messages drop out of what the model is given, which is the lesson on memory.</p>
             </div>
             <details class="maths">
@@ -159,7 +159,7 @@
                 <label><input type="radio" name="q1" value="faster"> It makes the model itself better at arithmetic</label>
                 <label><input type="radio" name="q1" value="facts"> So the model can find prices</label>
             </fieldset>
-            <p class="why" data-for="exact">Right. With the calculator off, the stand-in's guess was <span data-value="guess-value">4.6</span>; the calculator gave <span data-value="sum-result">5.35</span>.</p>
+            <p class="why" data-for="exact">Right. On this page the stand-in's guess rule plays that part: with the calculator off it wrote <span data-value="guess-value">4.6</span>; the calculator gave <span data-value="sum-result">5.35</span>.</p>
             <p class="why" data-for="cannot">A model can write numbers, as text. The trouble is that those digits can be wrong, and nothing in the text says so.</p>
             <p class="why" data-for="faster">The model does not change. It writes a call; the loop runs the calculator and passes the exact result back.</p>
             <p class="why" data-for="facts">Prices come from lookup. The calculator only works out sums, such as <span data-value="sum-call">calculator("3*1.25+2*0.8")</span>.</p>
