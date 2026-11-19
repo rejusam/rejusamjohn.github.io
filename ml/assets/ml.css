@@ -3456,7 +3456,16 @@ html:not(.js) .hub-demo {
 
 .trace-text { flex: 1 1 12ch; min-width: 0; overflow-wrap: anywhere; }
 
-.trace-row.is-unseen { opacity: 0.45; border-left-style: dashed; }
+.trace-row.is-unseen { border-left-style: dashed; }
+/* Muted, not faded: --ml-muted on --ml-surface is 5.71:1, so the row stays readable. */
+.trace-row.is-unseen button,
+.trace-row.is-unseen .trace-chip {
+  color: var(--ml-muted);
+}
+.trace-row.is-unseen .trace-chip {
+  background: none;
+  border-color: var(--ml-muted);
+}
 .trace-tag {
   flex: none;
   font-family: var(--ml-mono);

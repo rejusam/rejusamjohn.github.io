@@ -108,7 +108,7 @@ test('every fail reason says why, from the run', () => {
           assert.match(v.reason, /^wrong (answer|price)/);
           assert.match(v.reason, /it guessed/);
           for (const [word, re] of [['the food', /^Guess \(first food/], ['the price', /^Guess \(first price/], ['the sum', /Guess \(each number/]]) {
-            const used = r.messages.some((x) => x.role === 'plan' && x.text.split(/(?<=\.) /).some((p) => re.test(p)));
+            const used = r.messages.some((x) => x.role === 'plan' && S.sentences(x.text).some((p) => re.test(p)));
             assert.equal(v.reason.includes(word), used, `${word} ${v.reason}`);
           }
         }
@@ -122,6 +122,18 @@ test('every fail reason says why, from the run', () => {
       }
     }
   }
+});
+
+test('plan lines split into sentences as a lookbehind split would', () => {
+  assert.doesNotMatch(src, /\(\?<[=!]/); // no lookbehind anywhere in the stage
+  const lookbehind = (t) => t.split(new RegExp('(?<=\\.) '));
+  const texts = ['Guess (first food in the table): plums. Need the price of plums; use lookup.',
+    'All facts are in; answer.', 'a. ', 'no stop here', 'one. two. three.', ''];
+  for (const t of texts) assert.deepEqual(S.sentences(t), lookbehind(t), t);
+  for (const id of BUILD_TASKS) for (const c of S.optionSpace()) {
+    for (const m of runAgent(id, c).messages) if (m.role === 'plan') assert.deepEqual(S.sentences(m.text), lookbehind(m.text));
+  }
+  assert.deepEqual(S.sentences('A. B.'), ['A.', 'B.']);
 });
 
 test('stories told in step 2', () => {
@@ -329,6 +341,7 @@ test('page values are computed and match the page', () => {
 test('the page has the lesson parts and no free-text input', () => {
   // The row labels listed in step 4 are the trace view's, the person's answer included.
   assert.match(html, /Task, Plan, Tool call, Result, Waiting for your yes, Your answer, Answer, and Stopped/);
+  assert.match(html, /the program stops at the question/);
   assert.match(html, /<title>Build your own agent · ML Explorer<\/title>/);
   assert.match(html, /Level 6 · Agents/);
   assert.match(html, /href="\/ml\/agent-mistakes\/"/);

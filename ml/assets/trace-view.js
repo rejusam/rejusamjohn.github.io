@@ -145,7 +145,7 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
     });
   }
 
-  function select(i, {notify = true} = {}) {
+  function select(i) {
     if (!result || i < 0 || i >= shown) return;
     selected = i;
     [...list.children].forEach((li, k) => {
@@ -154,7 +154,7 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
       li.classList.toggle('is-selected', k === i);
     });
     renderWhy();
-    if (notify && onSelect) onSelect(i);
+    if (onSelect) onSelect(i);
   }
 
   // The chip, the text and, for a row outside the window, the "no longer seen" tag.

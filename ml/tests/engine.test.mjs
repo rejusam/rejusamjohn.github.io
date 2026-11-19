@@ -46,7 +46,7 @@ test('shouldHandleKey ignores form controls', () => {
 
 import { PATH, TOTAL_LIVE, findLesson, nextLesson, lessonHref } from '../assets/path.js';
 
-test('path lists seven levels and forty-two live lessons', () => {
+test('path lists eight levels (L0 to L7) and forty-two live lessons', () => {
   assert.deepEqual(PATH.map((l) => l.level), ['L0', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7']);
   const live = PATH.flatMap((l) => l.lessons);
   assert.equal(live.length, TOTAL_LIVE);

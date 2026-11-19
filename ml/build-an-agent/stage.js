@@ -60,10 +60,14 @@ const listText = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(
 const ASK_HEAD = 'Waiting for a yes before ';
 const sendCall = (r) => r.messages.find((m) => m.role === 'call' && m.tool === 'send');
 
+// A plan line split into its sentences, each keeping its full stop: "A. B." -> ["A.", "B."].
+// (No lookbehind in the pattern: older Safari rejects it when the module loads.)
+export const sentences = (text) => text.split('. ').map((p, i, a) => (i < a.length - 1 ? p + '.' : p));
+
 // What the stand-in guessed in a run, from its plan lines.
 const GUESSES = [['the food', /^Guess \(first food/], ['the price', /^Guess \(first price/], ['the sum', /^Guess \(each number/]];
 function guessed(r) {
-  const parts = r.messages.filter((m) => m.role === 'plan').flatMap((m) => m.text.split(/(?<=\.) /));
+  const parts = r.messages.filter((m) => m.role === 'plan').flatMap((m) => sentences(m.text));
   return GUESSES.filter(([, re]) => parts.some((p) => re.test(p))).map(([w]) => w);
 }
 
