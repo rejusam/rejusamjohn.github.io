@@ -240,7 +240,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">â€
             <p class="lede">Now move the "steps back, k" slider through 1, 2, 4 and 8.</p>
             <div class="happening">
                 <p>Look at the bars: one model per k, same start and settings, 10 epochs. k = 1, 2, 4 and 8 all end at <span data-story="acc-k8">100%</span>. On the map, in the rows with a target, the dots sit k cells left of the diagonal.</p>
-                <p>Position embeddings find the one k back: every 0 starts from the same vector, and so does every 1. With them set to zero, the trained k = 8 model falls to <span data-story="nopos-acc">53.6%</span>.</p>
+                <p>Learned position embeddings tell positions apart: every 0 starts from the same vector, and so does every 1. With them set to zero, the trained k = 8 model falls to <span data-story="nopos-acc">53.6%</span>.</p>
                 <p>Note: this model has <span data-value="n-params">1,265</span> weights and biases, the recurrent network <span data-value="rnn-params">89</span>, so this is not a like-for-like contest. Each position scores every earlier one, so work grows with the square of the sequence length. Next, transformers build on this.</p>
             </div>
             <details class="maths">
