@@ -82,11 +82,11 @@
             <h2>One question, one answer</h2>
             <p class="lede">Ask a model a question and it writes one answer. Here: what food does mia like?</p>
             <div class="happening">
-                <p>Look at the rows under the picture. They are the trace: one row for each message in or out. Here: the task and the answer.</p>
+                <p>Look at the rows under the picture. This is the trace: one row per message, here the task and the answer.</p>
                 <p>The answer, "<span data-value="one-mia">mia likes apples.</span>", is wrong: in the invented world, mia likes <span data-value="true-mia">figs</span>.</p>
-                <p>The model here is a stand-in that follows a few rules. It has no tools to look things up, so a guess rule picks the first food in its list, <span data-value="guess-food">apples</span>.</p>
-                <p>Select the answer row: Why this step shows the rules used, <span data-value="one-mia-rules">R3 and R6</span>. Run replays the trace; Next message adds a row.</p>
-                <p>Note: here fixed rules make every choice; a real agent makes them with a language model, which can write a wrong or malformed call.</p>
+                <p>The model here is a stand-in that follows fixed rules. With no tools, its guess rule picks the first food in its list, <span data-value="guess-food">apples</span>.</p>
+                <p>Select the answer row: the "Why this step" box shows the rules used, <span data-value="one-mia-rules">R3 and R6</span> (two of six, all shown in step 5). "Run" replays the trace; "Next message" adds a row.</p>
+                <p>Note: a real system uses a language model instead, and it can write wrong text.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -99,13 +99,12 @@
 
         <li class="step" id="step-2">
             <h2>Add a tool and a loop</h2>
-            <p class="lede">Now give the stand-in one tool, lookup, which finds a person or a food in the invented world, and run it in a loop.</p>
+            <p class="lede">Now add a tool, lookup, which finds a person or food in the invented world.</p>
             <div class="happening">
-                <p>Look at the boxes: read, choose, act, see result, and round again. Select a row and its box gets a thick outline.</p>
-                <p>On its first turn the stand-in writes a plan line, a short note of what it does next, then the call <span data-value="mia-call">lookup("mia")</span>.</p>
-                <p>That call is only text. The loop, an ordinary program, runs the lookup tool and adds the result as a new message.</p>
-                <p>On its second turn the stand-in is given that result and answers "<span data-value="mia-agent">mia likes figs.</span>" Right this time.</p>
-                <p>Each turn is one model call, and this level calls a turn a step. This run took <span data-value="mia-steps">2</span> steps.</p>
+                <p>Look at the boxes. The loop goes round them: read (the model is given the task and every message so far), choose, act, see result, until an answer goes to stop.</p>
+                <p>On its first turn (one model call) it writes a plan line, a short note of its next move, then the call <span data-value="mia-call">lookup("mia")</span>.</p>
+                <p>A call is only text. The loop, a plain program, runs the tool and adds its result as a new message.</p>
+                <p>On its second turn it is given that result and answers "<span data-value="mia-agent">mia likes figs.</span>" This level calls a turn a step: <span data-value="mia-steps">2</span> steps here.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -119,9 +118,8 @@
             <h2>A longer task takes more steps</h2>
             <p class="lede">Now a task that needs two facts and a sum: eli buys <span data-value="eli-qty">4</span> of the food eli likes. What does that cost?</p>
             <div class="happening">
-                <p>Look at the line under the loop. Select a row and it says which step the row belongs to. A plan line, its call and the call's result share one step.</p>
-                <p>The agent now has a second tool, a calculator. The first lookup gives the food eli likes, <span data-value="eli-food">plums</span>. The second gives its price, <span data-value="eli-price">$1.25</span> each. Then comes <span data-value="eli-calc">calculator("4*1.25")</span>.</p>
-                <p>Each turn the stand-in is given every message so far, so the second lookup can use the first result.</p>
+                <p>Look at the line under the loop: it says which step the selected row belongs to. A plan line, its call and the call's result share one step.</p>
+                <p>The agent now has a second tool, a calculator. The first lookup gives the food eli likes, <span data-value="eli-food">plums</span>. That result is now a message, so the second lookup can ask for its price: <span data-value="eli-price">$1.25</span> each. Then comes <span data-value="eli-calc">calculator("4*1.25")</span>.</p>
                 <p>The run makes <span data-value="eli-calls">3</span> tool calls, stops after <span data-value="eli-steps">4</span> steps and answers <span data-value="agent-eli">$5.00</span>.</p>
             </div>
             <details class="maths">
@@ -131,14 +129,14 @@
         </li>
 
         <li class="step" id="step-4">
-            <h2>The guess and the agent side by side</h2>
-            <p class="lede">Back to one answer with no tools, this time on the eli task, next to the agent's answer.</p>
+            <h2>The guess against the agent</h2>
+            <p class="lede">The eli task again: one answer with no tools, next to the agent's.</p>
             <div class="happening">
                 <p>Look at the two boxes: one answer on the left, the agent on the right.</p>
-                <p>With no tools, the stand-in guesses both facts: eli likes <span data-value="guess-food">apples</span>, at <span data-value="guess-price">$0.80</span> each, the first price in its list. It applies <span data-value="one-eli-rules">R3, R4 and R6</span> and writes <span data-value="one-eli">$3.20</span>.</p>
-                <p>The true cost is <span data-value="eli-qty">4</span> × <span data-value="eli-price">$1.25</span> = <span data-value="true-eli">$5.00</span>, from the calculator. The agent answers <span data-value="agent-eli">$5.00</span>. The guess is wrong by <span data-value="eli-error">$1.80</span>.</p>
-                <p>Both read equally well; only the agent's rests on looked-up facts.</p>
-                <p>Note: a real model asked once might write another wrong answer, or a right one; nothing in the answer says which.</p>
+                <p>The stand-in guesses both facts: eli likes <span data-value="guess-food">apples</span>, at <span data-value="guess-price">$0.80</span> each, the first price in its list. Its rules <span data-value="one-eli-rules">R3, R4 and R6</span> (guess a fact, guess a sum, answer) give <span data-value="one-eli">$3.20</span>.</p>
+                <p>The true cost, <span data-value="eli-qty">4</span> × <span data-value="eli-price">$1.25</span> = <span data-value="true-eli">$5.00</span>, is the agent's answer. The guess is wrong by <span data-value="eli-error">$1.80</span>.</p>
+                <p>Both read equally well; only the agent's rests on looked-up facts and the calculator's sum.</p>
+                <p>Note: a real model asked once might be wrong or right, and the answer gives no sign of which.</p>
             </div>
         </li>
 
@@ -146,8 +144,8 @@
             <h2>The six rules behind the stand-in</h2>
             <p class="lede">Last, the stand-in itself: six fixed rules, R1 to R6.</p>
             <div class="happening">
-                <p>Look at the six boxes. Select a row: the rules it used get a thick outline, and Why this step quotes them.</p>
-                <p>On each turn the stand-in tries the rules in order and applies the first that fits. The first plan line needs a fact that is not in the messages, so R3 applies: call lookup.</p>
+                <p>Look at the six boxes. Select a row: the rules it used get a thick outline, and the "Why this step" box quotes them.</p>
+                <p>On each turn the stand-in tries the rules in order and applies the first that fits. On the first turn the task needs a fact that is not yet in the messages, so R3 applies: call lookup.</p>
                 <p>This run uses <span data-value="rules-used">R3, R4 and R6</span>. <span data-value="rules-unused">R1, R2 and R5</span> come up in later lessons.</p>
                 <p>Note: a real agent has no rules like these; a language model writes the plan line and the call as text.</p>
             </div>

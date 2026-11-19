@@ -154,7 +154,7 @@ test('lesson page follows the contract', () => {
   // honesty sentence in step 1
   const step1 = html.slice(html.indexOf('id="step-1"'), html.indexOf('id="step-2"'));
   assert.match(step1, /fixed rules/);
-  assert.match(step1, /a real agent makes them with a language model, which can write a wrong or malformed call/);
+  assert.match(step1, /a real system uses a language model instead, and it can write wrong text/);
   assert.match(step1, /Run/);
   assert.match(step1, /Next message/);
   // earlier levels by name
