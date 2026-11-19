@@ -352,7 +352,7 @@ test('the page has the lesson parts and no free-text input', () => {
   const step1 = html.split('id="step-1"')[1].split('id="step-2"')[0];
   assert.match(step1, /stand-in/);
   assert.match(step1, /fixed rules/);
-  assert.match(step1, /language model, which can write a wrong or malformed call/);
+  assert.match(step1, /language model, which can write a wrong call/);
   const step3 = html.split('id="step-3"')[1].split('id="step-4"')[0];
   assert.match(step3, /standard library/);
   assert.match(step3, /no network/);

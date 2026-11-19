@@ -79,20 +79,22 @@
 
     <ol class="steps">
         <li class="step" id="step-1">
-            <h2>The parts</h2>
-            <p class="lede">An agent is a handful of parts you can name and choose.</p>
+            <h2>The parts of your agent</h2>
+            <p class="lede">The last five lessons each taught one part. Choose them here.</p>
             <div class="happening">
-                <p>The model in your agent is a stand-in: its choices come from the <span data-value="rule-count">6</span> fixed rules listed below, and your Python program carries the same rules. A real agent makes these choices with a language model, which can write a wrong or malformed call.</p>
-                <p>Choose each part with the controls under the picture:</p>
+                <p>Look at the picture: one box per part.</p>
                 <ul>
-                    <li><strong>Instructions:</strong> what to do when lookup finds nothing (say so, try again, or guess), and whether sums are worked out with the calculator or guessed. They set how rules R1 and R4 behave.</li>
-                    <li><strong>Tools:</strong> any of the <span data-value="tool-count">4</span> tools, calculator, lookup, notepad and send. Only send changes things outside the run.</li>
-                    <li><strong>Step limit:</strong> the most model calls in one run.</li>
-                    <li><strong>Window:</strong> how much of the messages each model call is given: the newest 12 words, always with the task, or no limit.</li>
-                    <li><strong>Ask before changes:</strong> the loop waits for a person's yes before send runs.</li>
+                    <li><strong><a href="/ml/agent-tools/">Tools</a>:</strong> any of the <span data-value="tool-count">4</span>. Only send changes things outside the run.</li>
+                    <li><strong><a href="/ml/agent-loop/">Step limit</a>:</strong> the most model calls in one run. The loop also stops at an answer, a repeated call, or to wait for a yes.</li>
+                    <li><strong><a href="/ml/agent-memory/">Window</a>:</strong> the newest words each model call is given, or no limit.</li>
+                    <li><strong><a href="/ml/agent-mistakes/">Ask before changes</a>:</strong> a person's yes before send runs.</li>
+                    <li><strong>Instructions:</strong> what to do if lookup finds nothing, and how to do sums.</li>
                 </ul>
-                <p>The repeat check stays on throughout. The controls start at the settings used across this level: every tool but the notepad, a step limit of <span data-value="default-limit">8</span>, no window limit, ask before changes on, "say so", and sums with the calculator.</p>
-                <p>The stand-in tries the rules in order and applies the first that fits; a rule that guesses then goes on to the next rule.</p>
+                <p>Note: the model here is a <a href="/ml/agents/">stand-in</a> with <span data-value="rule-count">6</span> fixed rules. A real agent uses a language model, which can write a wrong call.</p>
+            </div>
+            <details class="maths">
+                <summary>The stand-in's rules in full</summary>
+                <p>On each step the stand-in tries these in order and applies the first that fits. A rule that guesses then goes on to the next rule. The "Why this step" box in the trace names them R1 to R6.</p>
                 <ul class="rules-list">
                     <li><strong>R1</strong> If the last result says &quot;not found&quot;: answer that it was not found, or call the same lookup again, or guess (the first food in the food table or the first price in the price list) and go on to the next rule, as set.</li>
                     <li><strong>R2</strong> If the notepad is on and the last result is a fact not yet in the notes: write it in the notes.</li>
@@ -101,64 +103,82 @@
                     <li><strong>R5</strong> If the task asks to send a message and none has been sent: with send off, answer that it cannot send; with ask before changes on, ask a person first; otherwise call send.</li>
                     <li><strong>R6</strong> Otherwise: answer from the facts, and the sum if there is one.</li>
                 </ul>
-            </div>
+                <p>The "when lookup finds nothing" menu sets R1, and the sums menu sets R4. The repeat check (the same call twice in a row stops the run) is always on. The controls start at the settings used across this level: every tool but the notepad, a step limit of <span data-value="default-limit">8</span>, no window limit, ask before changes on, "say so", and sums with the calculator.</p>
+            </details>
         </li>
 
         <li class="step" id="step-2">
-            <h2>Run it</h2>
-            <p class="lede">Your agent runs on three fixed tasks, and each one passes or fails, with the reason.</p>
+            <h2>Run three tasks</h2>
+            <p class="lede">Now run your agent on three tasks.</p>
             <div class="happening">
-                <p>The tasks: eli-shop, "<span data-value="eli-task">eli buys 4 of the food eli likes. What does that cost?</span>"; pair-shop, "<span data-value="pair-task">ana and sam each buy 3 of the food they like. What do they pay in total?</span>"; and tell-zoe, "<span data-value="zoe-task">Tell zoe what pears cost.</span>" Pick a task to see its trace.</p>
-                <p>A shopping task passes when the run is done and its answer is the right one: the answer the same rules give with every tool on and no limits. tell-zoe passes when it sends the right message and answers, or, with ask before changes on, when it waits for a yes before the right message and, after a yes, sends it and answers.</p>
-                <p>With the starting settings all three pass. eli-shop is done after <span data-value="eli-steps">4</span> steps: "<span data-value="eli-answer">That costs $5.00.</span>" pair-shop is done after <span data-value="pair-steps">6</span> steps: "<span data-value="pair-answer">That costs $12.90.</span>" tell-zoe stops after <span data-value="zoe-steps">2</span> steps, waiting for a yes before <span data-value="zoe-call">send("zoe", "pears cost $1.10 each.")</span>; after a yes it is done in <span data-value="zoe-yes-steps">3</span>.</p>
-                <p>Now change one part at a time:</p>
+                <p>Look at the three task buttons: each says pass or fail, and why. Pick one to see its trace.</p>
+                <p>With the starting settings all three pass. pair-shop, two people's shopping, answers "<span data-value="pair-answer">That costs $12.90.</span>" after <span data-value="pair-steps">6</span> steps. Now change one part at a time:</p>
                 <ul>
-                    <li><strong>Step limit 5:</strong> pair-shop fails. It needs <span data-value="l5-needs">6</span> steps.</li>
-                    <li><strong>Calculator off:</strong> the stand-in guesses the sums, and the answers "<span data-value="co-eli">That costs $4.00.</span>" and "<span data-value="co-pair">That costs $14.40.</span>" are wrong.</li>
-                    <li><strong>A 12-word window:</strong> all three fail. The window drops results the run found, so the stand-in writes the same calls again until the step limit; tell-zoe, after a yes, asks to send a second time. Switch the notepad on as well: the facts stay in the notes, eli-shop and tell-zoe pass again, and pair-shop now needs <span data-value="bn-needs">10</span> steps, more than the limit of <span data-value="default-limit">8</span>.</li>
+                    <li><strong>Step limit 5:</strong> the loop stops pair-shop with no answer. It needs <span data-value="l5-needs">6</span> steps.</li>
+                    <li><strong>Calculator off:</strong> the sums are guessed, so both shopping answers are wrong.</li>
+                    <li><strong>Window 12 words:</strong> all fail: found facts leave the window, so calls repeat.</li>
+                    <li><strong>Then notepad on too:</strong> the facts stay in the notes, but pair-shop needs <span data-value="bn-needs">10</span> steps, more than the limit of <span data-value="default-limit">8</span>.</li>
                 </ul>
-                <p>Each reason under a task is worked out from its own run, for whatever settings you choose.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
+                <p>The tasks: eli-shop, "<span data-value="eli-task">eli buys 4 of the food eli likes. What does that cost?</span>"; pair-shop, "<span data-value="pair-task">ana and sam each buy 3 of the food they like. What do they pay in total?</span>"; and tell-zoe, "<span data-value="zoe-task">Tell zoe what pears cost.</span>"</p>
+                <p>A shopping task passes when the run is done with the right answer: the one the same rules give with every tool on and no limits. tell-zoe passes when it sends the right message and answers, or, with ask before changes on, when it waits for a yes before the right message and, after a yes, sends it and answers.</p>
+                <p>With the starting settings, eli-shop is done after <span data-value="eli-steps">4</span> steps: "<span data-value="eli-answer">That costs $5.00.</span>" tell-zoe stops after <span data-value="zoe-steps">2</span> steps, waiting for a yes before <span data-value="zoe-call">send("zoe", "pears cost $1.10 each.")</span>; after a yes it is done in <span data-value="zoe-yes-steps">3</span>.</p>
+                <p>With the calculator off, the stand-in rounds each number to one significant figure: "<span data-value="co-eli">That costs $4.00.</span>" and "<span data-value="co-pair">That costs $14.40.</span>" With a 12-word window, tell-zoe asks to send a second time after a yes; with the notepad on as well, eli-shop and tell-zoe pass again. The "when lookup finds nothing" menu changes nothing on these three tasks: every lookup in them finds its fact.</p>
                 <p>A shopping task with every tool but the notepad, no window limit and no step limit takes two lookups per person (the food, then its price; here each person likes a different food), one calculator call and one answer, each a step:</p>
                 <div class="eq"><span class="tex" data-display data-tex="\text{steps} = 2 \times \text{people} + 2"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>steps</mtext><mo>=</mo><mn>2</mn><mo>×</mo><mtext>people</mtext><mo>+</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">\text{steps} = 2 \times \text{people} + 2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8095em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">steps</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">people</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span></span></span></div>
                 <p>So eli-shop takes <span data-value="eli-steps">4</span> and pair-shop <span data-value="pair-steps">6</span>. With the notepad on, each lookup is followed by a step that writes its fact in the notes:</p>
                 <div class="eq"><span class="tex" data-display data-tex="\text{steps} = 4 \times \text{people} + 2"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>steps</mtext><mo>=</mo><mn>4</mn><mo>×</mo><mtext>people</mtext><mo>+</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">\text{steps} = 4 \times \text{people} + 2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8095em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">steps</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">4</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">people</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span></span></span></div>
-                <p>That is why pair-shop with the notepad needs <span data-value="bn-needs">10</span> steps.</p>
+                <p>That is why pair-shop with the notepad needs <span data-value="bn-needs">10</span> steps, more than the limit of <span data-value="default-limit">8</span>.</p>
             </details>
         </li>
 
         <li class="step" id="step-3">
-            <h2>Your agent as code</h2>
-            <p class="lede">The same agent, written as a Python program you can copy and run.</p>
+            <h2>Your agent as a program</h2>
+            <p class="lede">Next, the same agent as a Python program.</p>
             <div class="happening">
-                <p>The program below the controls is built from your settings: change one and the program changes. It holds the tools you chose and the invented tables they need, the stand-in as a function named <code>call_model</code> with the same rules, and the loop with your step limit, window, repeat check and ask before changes. With the starting settings it is <span data-value="default-lines">206</span> lines long; switch a tool off and its code goes, so the program gets shorter.</p>
-                <p>To run it: press Copy, save the text in a file named <code><span data-value="file-name">my_agent.py</span></code>, and in a terminal, in the same folder, type <code><span data-value="run-line">python3 my_agent.py</span></code>. It needs Python 3.8 or later. If Copy cannot reach the clipboard, it selects the program instead; then press Ctrl+C, or ⌘C on a Mac.</p>
-                <p>What it can and cannot do: the program uses only Python's standard library. It has no network access and reads or writes no files. Its calculator reads a sum as a tree of numbers and operations and never runs the text as code. Its send tool only records the message in a list inside the program: nothing leaves your computer. The only thing it reads from you is a y or n at the question, when it asks.</p>
-                <p>Read it once before you run it. That is a good habit for any program you copy.</p>
+                <p>Look at the program under the controls. It is built from your settings: switch a tool off and its code goes. With the starting settings it is <span data-value="default-lines">206</span> lines.</p>
+                <p>The stand-in's rules sit in a function named <code>call_model</code>. The loop around it has your step limit, window, repeat check and ask before changes.</p>
+                <p>To run it, press "Copy" and save the text as <code><span data-value="file-name">my_agent.py</span></code>. In a terminal in that folder, type <code><span data-value="run-line">python3 my_agent.py</span></code>. It needs Python 3.8 or later.</p>
+                <p>It runs with the stand-in: no model and no network. Read it once before you run it.</p>
             </div>
+            <details class="maths">
+                <summary>What the program can and cannot do</summary>
+                <p>The program uses only Python's standard library. It has no network access and reads or writes no files. Its calculator reads a sum as a tree of numbers and operations and never runs the text as code. Its send tool only records the message in a list inside the program: nothing leaves your computer. The only thing it reads from you is a y or n at the question, when it asks.</p>
+                <p>If "Copy" cannot reach the clipboard, it selects the program instead; then press Ctrl+C, or ⌘C on a Mac. Reading a program before you run it is a good habit for any program you copy.</p>
+            </details>
         </li>
 
         <li class="step" id="step-4">
-            <h2>Expected output</h2>
-            <p class="lede">What the program prints for the three tasks, worked out on this page.</p>
+            <h2>What the program prints</h2>
+            <p class="lede">Then run it. Here is what it should print.</p>
             <div class="happening">
-                <p>For each task the program prints every message on its own line, labelled as in the trace: Task, Plan, Tool call, Result, Waiting for your yes, Your answer, Answer, and Stopped with the reason. A blank line separates the tasks.</p>
-                <p>With send on and ask before changes on, the program stops at the question <code><span data-value="ask-prompt">Send this? y/n</span></code> and waits for you to type y or n and press Enter. So the panel below the controls shows both outputs, labelled. After a yes it sends; after a no the run stops as declined. A yes covers the first question only: if a run asks again, it stops, waiting for approval. With either switch off there is no question, and one output.</p>
-                <p>Your terminal should show the same lines. On this site, tests run the program with Python for a sample of settings and check that it prints exactly what the page shows.</p>
+                <p>Look at the panel under the controls. Each message is one line, labelled as in the trace: Task, Plan, Tool call, Result, Waiting for your yes, Your answer, Answer, and Stopped with the reason.</p>
+                <p>With send and ask before changes both on, the program stops at the question <code><span data-value="ask-prompt">Send this? y/n</span></code>. Type y or n and press Enter. So the panel shows two outputs: after a yes it sends; after a no the run stops as declined.</p>
+                <p>With either switch off there is no question, and one output.</p>
+                <p>Note: a yes covers the first question only. A run that asks again stops there.</p>
             </div>
+            <details class="maths">
+                <summary>How this is checked</summary>
+                <p>The panel is worked out on this page from the same runs as the traces. On this site, tests run the program with Python for a sample of settings and check that it prints exactly what the page shows. Your terminal should show the same lines. A blank line separates the tasks.</p>
+            </details>
         </li>
 
         <li class="step" id="step-5">
-            <h2>Using a real model</h2>
-            <p class="lede">To use a real language model, you replace one function, <code>call_model</code>. The rest stays.</p>
+            <h2>Swapping in a real model</h2>
+            <p class="lede">Last, the one part a real model would replace: <code>call_model</code>.</p>
             <div class="happening">
-                <p>The panel below the controls shows the marked block in your program. In plain words: <code>call_model</code> is given the messages in its window, and returns a plan line and one action, either a tool call (a tool's name and its input) or an answer (some text). To use a real model, you write a new <code>call_model</code> that sends the messages to a language model, and turns the text it writes back into one of those same two actions.</p>
-                <p>Keep any key out of the file: read it from an environment variable.</p>
-                <p><strong>What changes:</strong> the model writes the plan line and chooses the tool call or the answer, in place of the rules. The stand-in is given each task's goal in a fixed form; a real model is given the words of the task. What it writes is text, so your new <code>call_model</code> has to check it: a model can write a malformed call, a call to a tool that does not exist, or a plausible but wrong answer, as in <a href="/ml/agent-mistakes/">Mistakes and limits</a>.</p>
-                <p><strong>What stays:</strong> the tools, the loop, the step limit, the window, the repeat check and asking before changes. The loop's limits and the ask are the parts that stop a run that goes wrong, and let a person say no before a change. Each call to a real language model takes time and computing, which is one more reason to keep the step limit.</p>
+                <p>Look at the marked block in the panel. <code>call_model</code> is given the messages in its window and returns a plan line and one action: a tool call or an answer.</p>
+                <p>To use a real model, write a new <code>call_model</code> that sends the messages to a language model and turns its text into one of those actions. Keep any key out of the file: read it from an environment variable.</p>
+                <p>Everything else stays: tools, loop, limits, window and ask. The limits and the ask still stop a run that goes wrong.</p>
+                <p>Note: a real model can call a tool that does not exist, or write a wrong answer.</p>
             </div>
+            <details class="maths">
+                <summary>What changes with a real model</summary>
+                <p>The model writes the plan line and chooses the tool call or the answer, in place of the rules. The stand-in is given each task's goal in a fixed form; a real model is given the words of the task. What it writes is text, so your new <code>call_model</code> has to check it: a call can be cut short, name a tool that does not exist, or be fine while the answer is wrong, as in <a href="/ml/agent-mistakes/">Mistakes and limits</a>.</p>
+                <p>Each call to a real language model takes time and computing, which is one more reason to keep the step limit.</p>
+            </details>
         </li>
     </ol>
 

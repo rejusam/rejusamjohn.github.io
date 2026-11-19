@@ -207,7 +207,7 @@ export function partLines(config) {
   const on = OPTIONS.tools.filter((t) => c.tools[t]);
   const ask = !c.askBeforeChanges ? 'off' : c.tools.send ? 'on: a yes before send runs' : 'on, but send is off';
   return [
-    ['instructions', `not found: ${c.onNotFound} · sums: ${c.sums}`],
+    ['instructions', `if not found: ${c.onNotFound} · sums: ${c.sums}`],
     ['tools', on.length ? listText(on) : 'none'],
     ['step limit', `at most ${c.stepLimit} model calls`],
     ['window', c.budget === Infinity ? 'no limit: every message is given' : `the newest ${c.budget} words, and the task`],
@@ -382,7 +382,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       label(16, y + 22, title, { fill: STRONG, weight: 700 });
       label(16, y + 42, text);
     };
-    boxAt(34, 'model: the stand-in', `the ${RULES.length} rules R1 to R${RULES.length}, in order`, true);
+    boxAt(34, 'model: the stand-in', `${RULES.length} fixed rules, tried in order`, true);
     parts.forEach(([t, s], k) => boxAt(34 + 64 * (k + 1), t, s));
     return `Your agent: the model is the stand-in, the ${RULES.length} rules in order. ${parts.map(([t, s]) => `${t}: ${s}`).join('. ')}.`;
   }
