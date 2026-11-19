@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mistakes and limits · ML Explorer</title>
+    <meta name="description" content="Agents go wrong in a few recognisable ways: a made-up answer, going in circles, a tool error. See what each safeguard stops, and why a person should say yes before a tool that changes things. Every trace is computed in your browser.">
+    <link rel="canonical" href="https://rejusamjohn.pages.dev/ml/agent-mistakes/">
+    <meta property="og:title" content="Mistakes and limits · ML Explorer">
+    <meta property="og:description" content="Agents go wrong in a few recognisable ways: a made-up answer, going in circles, a tool error. See what each safeguard stops, and why a person should say yes before a tool that changes things. Every trace is computed in your browser.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rejusamjohn.pages.dev/ml/agent-mistakes/">
+    <meta property="og:image" content="https://rejusamjohn.pages.dev/ml/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/ml/vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="/ml/assets/ml.css">
+    <script src="/ml/assets/js-flag.js"></script>
+    <script type="module" src="/ml/assets/ml.js"></script>
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e46c62f910fe4def882feaed064efced"}'></script>
+</head>
+<body>
+<a class="ml-skip" href="#lesson">Skip to the lesson</a>
+<nav class="site-nav" aria-label="Site">
+    <div class="site-nav-in">
+        <a class="site-logo" href="/" aria-label="Reju Sam John, home">RSJ</a>
+        <button type="button" class="site-toggle" aria-label="Site menu" aria-expanded="false" aria-controls="site-links">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="site-links" id="site-links">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#projects">Projects</a></li>
+            <li><a href="/ml/" class="is-here" aria-current="true">ML Explorer</a></li>
+            <li><a href="/#publications">Publications</a></li>
+            <li><a href="/#showcase">Showcase</a></li>
+            <li><a href="/#education">Education</a></li>
+            <li><a href="/#contact" class="site-cta">Get in Touch</a></li>
+        </ul>
+    </div>
+</nav>
+<header class="ml-top">
+    <a class="ml-brand" href="/ml/">ML Explorer</a>
+</header>
+<div class="ml-shell">
+<nav class="ml-path" id="ml-path" aria-label="The path"><a href="/ml/">All lessons</a></nav>
+<main class="lesson" id="lesson" data-lesson="agent-mistakes">
+
+    <header class="lesson-head">
+        <p class="crumbs"><a href="/ml/">ML Explorer</a> · Level 6 · Agents</p>
+        <h1>Mistakes and limits</h1>
+        <p class="promise">Agents go wrong in a few recognisable ways. See a made-up answer, a run going in circles and a tool error, what stops each one, and why a person should say yes before a tool that changes things.</p>
+        <p class="meta">About 10 minutes · Every trace is computed in your browser, apart from one tool-error case that is written in and labelled</p>
+    </header>
+
+    <section class="overview" aria-labelledby="overview-title">
+        <h2 id="overview-title">Overview</h2>
+        <p>In <a href="/ml/agent-memory/">Memory</a> a fact that dropped out of the window sent a run in circles. This lesson collects the ways a run can go wrong, and the safeguards that stop them.</p>
+        <p>Some failures end with no answer. Worse ones end with an answer that reads well and is not true. And some tools do more than read: they change things, and a change can be hard or impossible to undo.</p>
+        <h2>You'll learn</h2>
+        <ul>
+            <li>four recognisable ways a run can go wrong</li>
+            <li>what an agent should do when a tool finds nothing, and what a tool error does</li>
+            <li>why to give a task only the tools it needs, and to ask a person before a tool that changes things</li>
+        </ul>
+    </section>
+
+    <div class="stage">
+        <svg id="stage-svg" viewBox="0 0 440 300"></svg>
+        <div class="controls"></div>
+    </div>
+
+    <ol class="steps">
+        <li class="step" id="step-1">
+            <h2>Four ways to fail</h2>
+            <p class="lede">A run can go wrong in a few recognisable ways, and each one needs its own safeguard.</p>
+            <div class="happening">
+                <p>The model on this page is a stand-in. Its choices come from fixed rules, listed in full in <a href="/ml/agents/">What is an agent?</a>, and those rules never write a malformed call or a call to a tool that does not exist; a real agent makes its choices with a language model, which can write a wrong or malformed call.</p>
+                <p>Four ways a run can go wrong:</p>
+                <ul>
+                    <li><strong>A made-up answer:</strong> an answer that reads well but is backed by no fact the run found.</li>
+                    <li><strong>Going in circles:</strong> the same calls again and again, with no answer.</li>
+                    <li><strong>A tool error:</strong> a call the tool cannot carry out, for example because it cannot read the input.</li>
+                    <li><strong>The wrong tool, or one that does not exist:</strong> a real model can write either. The stand-in never does, so this page names the case but does not run it.</li>
+                </ul>
+                <p>The task: <span data-value="kai-task">What food does kai like?</span> Step 1 writes <span data-value="kai-call">lookup("kai")</span> and the result is "<span data-value="kai-result">not found: kai</span>". With the default instruction, "say so", the run is done after <span data-value="sayso-steps">2</span> steps: "<span data-value="sayso-answer">I could not find kai.</span>" The next step shows what the other instructions do.</p>
+            </div>
+        </li>
+
+        <li class="step" id="step-2">
+            <h2>Nothing found</h2>
+            <p class="lede">When lookup finds nothing, the instruction for that case sets what comes next.</p>
+            <div class="happening">
+                <p>kai is not one of the <span data-value="people-count">8</span> people in the invented world, so lookup returns "<span data-value="kai-result">not found: kai</span>". Rule R1 covers this case and has three settings. Pick one from the menu next to Run and Next message.</p>
+                <p><strong>say so:</strong> the answer is "<span data-value="sayso-answer">I could not find kai.</span>", after <span data-value="sayso-steps">2</span> steps. It is true, and plain.</p>
+                <p><strong>try again:</strong> step 2 writes <span data-value="kai-call">lookup("kai")</span> again. That cannot help: lookup gives the same text for the same input every time. The repeat check from <a href="/ml/agent-loop/">The loop and when to stop</a> stops the run after <span data-value="again-steps">2</span> steps, before the second call runs, so the loop ran lookup <span data-value="again-runs">1</span> time. With the check off, only the step limit of <span data-value="default-limit">8</span> would stop it.</p>
+                <p><strong>guess:</strong> this is what a careless loop does. The stand-in fills the gap with the first food in the food table, <span data-value="first-food">apples</span>, and answers "<span data-value="guess-answer">kai likes apples.</span>" That answer is made up: kai is not in the world at all, so no food would be right. It reads just as well as a true answer; only the trace shows where it came from.</p>
+                <p>A language model needs no guess rule to do this. It can write a plausible answer that nothing it was given supports, sometimes called a "hallucination". As in <a href="/ml/llms/">Large language models, in miniature</a>: fluent is not the same as true.</p>
+            </div>
+        </li>
+
+        <li class="step" id="step-3">
+            <h2>A tool error</h2>
+            <p class="lede">When a tool cannot carry out a call, the loop on this page stops.</p>
+            <div class="happening">
+                <p>For the task "<span data-value="sum-task">What is 3 × 1.25 + 2 × 0.8?</span>" the stand-in writes <span data-value="good-call">calculator("3*1.25+2*0.8")</span>, and the calculator returns <span data-value="good-result">5.35</span>. Its rules always write input the calculator can read.</p>
+                <p>A language model writes a call as text, and text can come out malformed. So the trace in this step is a <strong>written-in example</strong>, not a run of the stand-in: the call <span data-value="bad-call">calculator("2+")</span>, cut short, as a real model could write it. No rule of the stand-in wrote it, so "Why this step" names no rule. The result row is what the calculator on this page really returns for that input: <code><span data-value="bad-result">cannot read "2+"</span></code>.</p>
+                <p>The loop on this page stops with "tool error" whenever a tool fails, apart from lookup's "not found", which is an ordinary result. Stopping means nothing is built on a broken result.</p>
+                <p>Other loops give the error back to the model as a new message, so that it can write a corrected call. That can help, and it can also go in circles, which is one reason a step limit and a repeat check are still needed.</p>
+            </div>
+        </li>
+
+        <li class="step" id="step-4">
+            <h2>Only the tools a task needs</h2>
+            <p class="lede">Give each task only the tools it needs, so a wrong call can reach less.</p>
+            <div class="happening">
+                <p>The picture lists, for each of the <span data-value="task-count">6</span> tasks in this level, the tools it needs. Here "needs" means the tools its run with the default settings writes calls for, or asks to use. No task's default run calls <span data-value="unused-tools">notepad</span>.</p>
+                <p>Of the <span data-value="tool-count">4</span> tools, calculator, lookup and notepad only read. send is different: it <span data-value="send-kind">changes things</span>, because it sends a message to someone.</p>
+                <p>Run each task again with only its needed tools switched on, and the trace is the same, message for message: the other tools were never used. Pick a task from the menu to see its trace.</p>
+                <p>Why it matters: a real model can write a call it should not, to a tool the task never needed. If the loop runs only the tools it was given, a call to any other tool cannot run. Fewer tools means fewer ways for a wrong call to do harm.</p>
+            </div>
+            <details class="maths">
+                <summary>The maths</summary>
+                <p>For each task, take the set of tools its default run writes calls for or asks to use:</p>
+                <div class="eq"><span class="tex" data-display data-tex="\text{needs}(\text{task}) = \{\text{tools in the call and ask rows of its default run}\}"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>needs</mtext><mo stretchy="false">(</mo><mtext>task</mtext><mo stretchy="false">)</mo><mo>=</mo><mo stretchy="false">{</mo><mtext>tools in the call and ask rows of its default run</mtext><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">\text{needs}(\text{task}) = \{\text{tools in the call and ask rows of its default run}\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">needs</span></span><span class="mopen">(</span><span class="mord text"><span class="mord">task</span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">{</span><span class="mord text"><span class="mord">tools in the call and ask rows of its default run</span></span><span class="mclose">}</span></span></span></span></span></span></div>
+                <p>The union over the six tasks is calculator, lookup and send; notepad is in none of them. Giving a task exactly its set leaves every trace unchanged.</p>
+            </details>
+        </li>
+
+        <li class="step" id="step-5">
+            <h2>Ask before changes</h2>
+            <p class="lede">Before a tool that changes things, the loop asks a person and waits for a yes.</p>
+            <div class="happening">
+                <p>The task: <span data-value="zoe-task">Tell zoe what pears cost.</span> Step 1 looks up pears. Step 2's plan line says the message is ready. With "ask before changes" on, R5 asks a person first, so the loop does not run send: it stops, waiting for a yes before <span data-value="zoe-ask">send("zoe", "pears cost $1.10 each.")</span>. That is <span data-value="wait-steps">2</span> steps. The model call that writes the ask counts as a step; waiting does not.</p>
+                <p>Use the buttons next to Run and Next message.</p>
+                <ul>
+                    <li><strong>Approve:</strong> the loop runs send, then step 3 answers "<span data-value="yes-answer">Told zoe: pears cost $1.10 each.</span>" The sent list holds <span data-value="yes-sent">1</span> message, with the price <span data-value="pears-price">$1.10</span>. <span data-value="yes-steps">3</span> steps.</li>
+                    <li><strong>Decline:</strong> nothing is sent, and the run stops as declined after <span data-value="no-steps">2</span> steps.</li>
+                    <li><strong>Switch off ask before changes:</strong> it sends without asking, done after <span data-value="off-steps">3</span> steps.</li>
+                </ul>
+                <p>On this page send only records the message in the list under the picture; nothing leaves the page.</p>
+                <p>Why ask: a reading tool can run again with no harm, but a message, once sent, cannot be unsent. The same holds for tools that pay, delete or book. A person's yes before such a tool is the last check before a wrong call becomes a real change.</p>
+            </div>
+        </li>
+
+        <li class="step" id="step-6">
+            <h2>What the safeguards stopped</h2>
+            <p class="lede">Each safeguard on this page stopped one kind of failure. None of them makes a run correct.</p>
+            <div class="happening">
+                <p>Across the runs on this page there were <span data-value="stop-count">5</span> different ways to stop: done, repeated call, tool error, waiting for approval and declined. The picture lists what each safeguard did. Pick any run of this lesson from the menu to see its trace and which safeguard, if any, stopped it.</p>
+                <ul>
+                    <li><strong>The instruction "say so":</strong> a plain "<span data-value="sayso-answer">I could not find kai.</span>" instead of a made-up answer.</li>
+                    <li><strong>The repeat check:</strong> stopped the second, identical lookup.</li>
+                    <li><strong>Stopping on a tool error:</strong> nothing was built on the reply <code><span data-value="bad-result">cannot read "2+"</span></code>.</li>
+                    <li><strong>Asking before changes:</strong> nothing was sent without a yes.</li>
+                    <li><strong>Only the needed tools:</strong> no stop of its own; it limits what a wrong call can reach.</li>
+                </ul>
+                <p>No safeguard caught the guess: "<span data-value="guess-answer">kai likes apples.</span>" ended as done, like a true answer. Only the instruction prevents it. Real agents add many more safeguards, and still go wrong in these ways.</p>
+            </div>
+        </li>
+    </ol>
+
+    <section class="quiz" aria-labelledby="quiz-title">
+        <h2 id="quiz-title">Quick check</h2>
+
+        <form class="q" id="q1" data-answer="say">
+            <fieldset>
+                <legend>The lookup finds nothing. Which instruction is safest?</legend>
+                <label><input type="radio" name="q1" value="say"> Say that it was not found</label>
+                <label><input type="radio" name="q1" value="again"> Try the same lookup again</label>
+                <label><input type="radio" name="q1" value="guess"> Guess, and answer with the guess</label>
+            </fieldset>
+            <p class="why" data-for="say">Right. The run is done after <span data-value="sayso-steps">2</span> steps with "<span data-value="sayso-answer">I could not find kai.</span>": true, and plain.</p>
+            <p class="why" data-for="again">lookup gives the same text for the same input every time, so looking again cannot help. The repeat check stopped the run after <span data-value="again-steps">2</span> steps with no answer.</p>
+            <p class="why" data-for="guess">"<span data-value="guess-answer">kai likes apples.</span>" is made up: kai is not in the invented world. It reads like a true answer, and no safeguard stopped it.</p>
+        </form>
+
+        <form class="q" id="q2" data-answer="undo">
+            <fieldset>
+                <legend>Why ask a person before "send"?</legend>
+                <label><input type="radio" name="q2" value="undo"> send changes things, and a sent message cannot be taken back</label>
+                <label><input type="radio" name="q2" value="slow"> send is slow</label>
+                <label><input type="radio" name="q2" value="wrong"> The message the stand-in wrote was wrong</label>
+                <label><input type="radio" name="q2" value="steps"> Asking saves steps</label>
+            </fieldset>
+            <p class="why" data-for="undo">Right. A reading tool such as lookup can run again with no harm. After a no, the run stopped as declined and nothing was sent.</p>
+            <p class="why" data-for="slow">Speed has nothing to do with it; on this page send only records the message. The ask is there because a change may not be undoable.</p>
+            <p class="why" data-for="wrong">The message was right: pears cost <span data-value="pears-price">$1.10</span>. The ask is there for the times a message is wrong, since once sent it could not be taken back.</p>
+            <p class="why" data-for="steps">Asking saves no steps. Approved, the run takes <span data-value="yes-steps">3</span> steps, the same as with ask before changes off (<span data-value="off-steps">3</span>).</p>
+        </form>
+    </section>
+
+    <section class="complete" aria-labelledby="complete-title">
+        <h2 id="complete-title">Lesson complete</h2>
+        <ul>
+            <li>Runs go wrong in recognisable ways: a made-up answer, going in circles, a tool error, the wrong tool.</li>
+            <li>When a tool finds nothing, "say so" gives a true answer; a guess gives a made-up one that reads just as well.</li>
+            <li>Give a task only the tools it needs, and ask a person before a tool that changes things.</li>
+        </ul>
+
+        <h3>Common misconceptions</h3>
+        <ul class="misconceptions">
+            <li>"An answer that reads well was found." "<span data-value="guess-answer">kai likes apples.</span>" was made up, and ended as done.</li>
+            <li>"Trying again fixes a lookup that found nothing." The same input gives the same result; the repeat check stopped it.</li>
+            <li>"Asking a person costs extra model calls." Approved, the run took <span data-value="yes-steps">3</span> steps, the same as without asking.</li>
+        </ul>
+
+        <a class="next-lesson" href="/ml/build-an-agent/">Next lesson: Build your own agent →</a>
+
+        <h3>Further reading</h3>
+        <ol class="reading">
+            <li>Russell &amp; Norvig, <cite>Artificial Intelligence: A Modern Approach</cite> (4th ed.), Chapter 2, "Intelligent Agents": agents in general, well beyond language models.</li>
+            <li>Yao et al., "ReAct: Synergizing Reasoning and Acting in Language Models", arXiv 2210.03629 (2022), in which a language model writes short free-text steps in between actions such as searches, and is given each action's result before the next.</li>
+            <li>Schick et al., "Toolformer: Language Models Can Teach Themselves to Use Tools", arXiv 2302.04761 (2023), in which a language model is trained to write calls to tools, among them a calculator and search engines, inside its own text, and to use their results.</li>
+        </ol>
+
+        <p class="data-note"><strong>About the data.</strong> Nothing here is random: the same task, settings and rules give the same trace every time. The tasks use the invented world from Level 5 and the invented price list from <a href="/ml/agent-tools/">Tools</a>. The tool-error case in step 3 is written into the page, not produced by the stand-in; its result is the calculator's real output. The send tool only records the message on this page.</p>
+
+        <p class="coffee-line">If this helped, you can <button type="button" data-coffee>buy me a coffee</button>.</p>
+    </section>
+
+</main>
+</div>
+</body>
+</html>
