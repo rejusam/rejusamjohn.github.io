@@ -28,7 +28,48 @@ export function shouldHandleKey(target, key) {
   return true;
 }
 
-const PLAY_MS = 2500;
+// Play stays on each step long enough to read it: a base pause plus a
+// time per word of the step's text, kept between a floor and a ceiling,
+// then scaled by the reader's chosen speed (2 is twice as fast).
+export const PLAY_BASE_MS = 3000;
+export const PLAY_WORD_MS = 270;
+export const PLAY_MIN_MS = 6000;
+export const PLAY_MAX_MS = 30000;
+export const PLAY_SPEEDS = [1, 1.5, 0.5];
+
+export function playDelay(words, speed = 1) {
+  const n = Number.isFinite(words) && words > 0 ? words : 0;
+  const s = PLAY_SPEEDS.includes(speed) ? speed : 1;
+  const ms = Math.min(PLAY_MAX_MS, Math.max(PLAY_MIN_MS, PLAY_BASE_MS + n * PLAY_WORD_MS));
+  return Math.round(ms / s);
+}
+
+export function nextSpeed(speed) {
+  const i = PLAY_SPEEDS.indexOf(speed);
+  return PLAY_SPEEDS[(i + 1) % PLAY_SPEEDS.length];
+}
+
+export const speedLabel = (speed) => `${speed}\u00d7`;
+
+const wordCount = (text) => (text.match(/\S+/g) || []).length;
+const SPEED_KEY = 'ml-play-speed';
+
+function readSpeed() {
+  try {
+    const v = Number(localStorage.getItem(SPEED_KEY));
+    return PLAY_SPEEDS.includes(v) ? v : 1;
+  } catch {
+    return 1;
+  }
+}
+
+function saveSpeed(v) {
+  try {
+    localStorage.setItem(SPEED_KEY, String(v));
+  } catch {
+    // Private windows may refuse; the speed still applies to this page.
+  }
+}
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 function icon(d) {
@@ -166,7 +207,10 @@ export async function startLesson(main, { progress, reduced = false, stageModule
   const back = button('ml-back', 'Previous step', 'back');
   const play = button('ml-play', '', 'play', 'Play');
   const next = button('ml-next', 'Next step', 'next');
-  nav.append(back, play, next);
+  const speedBtn = document.createElement('button');
+  speedBtn.type = 'button';
+  speedBtn.className = 'ml-speed';
+  nav.append(back, play, next, speedBtn);
 
   const tools = document.createElement('div');
   tools.className = 'ml-tools';
@@ -265,6 +309,8 @@ export async function startLesson(main, { progress, reduced = false, stageModule
   const saved = progress.get(slug);
   let current = -1;
   let timer = null;
+  let playing = false;
+  let speed = readSpeed();
   let reachedLast = saved.step >= count - 1;
   let done = saved.done;
   let answered = new Set();
@@ -287,9 +333,62 @@ export async function startLesson(main, { progress, reduced = false, stageModule
   }
   if (done) main.classList.add('is-done');
 
+  const showSpeed = () => {
+    speedBtn.textContent = speedLabel(speed);
+    speedBtn.setAttribute('aria-label', `Play speed ${speedLabel(speed)}. Change speed`);
+    speedBtn.title = 'Play speed';
+  };
+  showSpeed();
+
+  // While Play runs, the line from this step to the next fills over the
+  // time Play waits (the CSS reads --play-ms; reduced motion shows no fill).
+  const clearFill = () => {
+    lineButtons.forEach((b) => b.parentElement.classList.remove('is-filling'));
+  };
+  const showFill = (ms) => {
+    clearFill();
+    const item = lineButtons[current + 1] && lineButtons[current + 1].parentElement;
+    if (!item) return;
+    item.style.setProperty('--play-ms', `${ms}ms`);
+    void item.offsetWidth;
+    item.classList.add('is-filling');
+  };
+
+  const delayFor = (i) => playDelay(wordCount(textOf(steps[i].querySelector('.step-main'))), speed);
+
+  function schedule() {
+    const ms = delayFor(current);
+    if (!reduced) showFill(ms);
+    timer = setTimeout(() => {
+      timer = null;
+      clearFill();
+      if (current >= count - 1) {
+        stopPlay();
+        return;
+      }
+      go(current + 1);
+      if (current >= count - 1) stopPlay();
+      else schedule();
+    }, ms);
+  }
+
+  speedBtn.addEventListener('click', () => {
+    speed = nextSpeed(speed);
+    saveSpeed(speed);
+    showSpeed();
+    // A running Play restarts its wait on this step at the new speed.
+    if (playing) {
+      clearTimeout(timer);
+      timer = null;
+      schedule();
+    }
+  });
+
   function stopPlay() {
-    if (timer === null) return;
-    clearInterval(timer);
+    clearFill();
+    if (!playing) return;
+    playing = false;
+    if (timer !== null) clearTimeout(timer);
     timer = null;
     play.replaceChildren(icon(ICONS.play), Object.assign(document.createElement('span'), { textContent: 'Play' }));
     play.setAttribute('aria-pressed', 'false');
@@ -390,21 +489,15 @@ export async function startLesson(main, { progress, reduced = false, stageModule
 
   play.setAttribute('aria-pressed', 'false');
   play.addEventListener('click', () => {
-    if (timer !== null) {
+    if (playing) {
       stopPlay();
       return;
     }
     if (current >= count - 1) go(0);
+    playing = true;
     play.replaceChildren(icon(ICONS.pause), Object.assign(document.createElement('span'), { textContent: 'Pause' }));
     play.setAttribute('aria-pressed', 'true');
-    timer = setInterval(() => {
-      if (current >= count - 1) {
-        stopPlay();
-        return;
-      }
-      go(current + 1);
-      if (current >= count - 1) stopPlay();
-    }, PLAY_MS);
+    schedule();
   });
 
   // Space advances only while the stage is on screen, so it still scrolls

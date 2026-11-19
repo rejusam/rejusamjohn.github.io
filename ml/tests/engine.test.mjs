@@ -73,3 +73,34 @@ test('findLesson and nextLesson walk the path', () => {
   assert.equal(nextLesson('nope'), null);
   assert.equal(lessonHref('slopes'), '/ml/slopes/');
 });
+
+import { playDelay, nextSpeed, speedLabel, PLAY_MIN_MS, PLAY_MAX_MS, PLAY_SPEEDS } from '../assets/engine.js';
+
+test('playDelay gives short steps the floor and long steps the ceiling', () => {
+  assert.equal(playDelay(0), PLAY_MIN_MS);
+  assert.equal(playDelay(5), PLAY_MIN_MS);
+  assert.equal(playDelay(1000), PLAY_MAX_MS);
+  assert.equal(playDelay(Number.NaN), PLAY_MIN_MS);
+});
+
+test('playDelay grows with the words on the step', () => {
+  // 3000 ms base plus 270 ms a word.
+  assert.equal(playDelay(40), 3000 + 40 * 270);
+  assert.ok(playDelay(60) > playDelay(40));
+});
+
+test('playDelay scales by speed and ignores unknown speeds', () => {
+  assert.equal(playDelay(40, 0.5), 2 * playDelay(40));
+  assert.equal(playDelay(40, 1.5), Math.round(playDelay(40) / 1.5));
+  assert.equal(playDelay(40, 7), playDelay(40));
+});
+
+test('nextSpeed cycles through every speed and back', () => {
+  let s = 1;
+  const seen = [];
+  for (let i = 0; i < PLAY_SPEEDS.length; i++) { seen.push(s); s = nextSpeed(s); }
+  assert.equal(s, 1);
+  assert.deepEqual(seen, PLAY_SPEEDS);
+  assert.equal(nextSpeed(42), PLAY_SPEEDS[0]);
+  assert.equal(speedLabel(1.5), '1.5×');
+});

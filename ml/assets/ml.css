@@ -428,8 +428,8 @@ button {
   border-radius: 8px;
 }
 
-.ml-level.is-here {
-  background: color-mix(in srgb, var(--ml-cyan) 12%, transparent);
+.ml-level.is-here .ml-lt {
+  color: var(--ml-cyan);
 }
 
 .ml-lv {
@@ -448,44 +448,83 @@ button {
 }
 
 .ml-lessons {
+  --rail-x: 4px;
+  --dot-y: 12.75px; /* the middle of a row's first line */
   list-style: none;
   padding: 0;
-  margin-top: 3px;
-  font-size: 0.75rem;
-  line-height: 1.45;
+  margin: 6px 0 2px -2px;
+  font-size: 0.8125rem;
+  line-height: 1.35;
 }
 
+/* Each lesson is a stop on a thin rail: a hollow ring until it is done,
+   a filled dot once it is, and a bright ring on the lesson open now. */
 .ml-lessons li {
-  display: inline;
+  position: relative;
 }
 
-.ml-lessons li + li::before {
-  content: ' · ';
-  color: var(--ml-muted);
+.ml-lessons li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--rail-x) + 6px);
+  top: calc(var(--dot-y) + 5px);
+  height: calc(100% - 10px);
+  width: 1px;
+  background: var(--ml-line);
+  pointer-events: none;
 }
 
 .ml-lessons a {
+  position: relative;
+  display: block;
+  padding: 4px 6px 4px 24px;
+  border-radius: var(--ml-radius-sm);
   color: var(--ml-muted);
   text-decoration: none;
+  transition: color var(--ml-fast) var(--ml-ease), background-color var(--ml-fast) var(--ml-ease);
+}
+
+.ml-lessons a::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--rail-x) + 2px);
+  top: var(--dot-y);
+  width: 9px;
+  height: 9px;
+  margin-top: -4.5px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--ml-line);
+  border-radius: 50%;
+  background: var(--ml-surface);
 }
 
 .ml-lessons a:hover {
   color: var(--ml-ink);
-  text-decoration: underline;
+  background: color-mix(in srgb, var(--ml-ink) 5%, transparent);
+}
+
+.ml-lessons a:hover::before {
+  border-color: var(--ml-muted);
 }
 
 .ml-lessons a.is-done {
   color: var(--ml-ink);
 }
 
-.ml-lessons a.is-done::after {
-  content: '\2009\2713';
-  color: var(--ml-cyan);
+.ml-lessons a.is-done::before {
+  border-color: var(--ml-cyan);
+  background: var(--ml-cyan);
 }
 
 .ml-lessons a[aria-current='page'] {
-  color: var(--ml-cyan);
+  color: var(--ml-strong);
   font-weight: 600;
+  background: color-mix(in srgb, var(--ml-cyan) 12%, transparent);
+}
+
+.ml-lessons a[aria-current='page']::before {
+  border: 2px solid var(--ml-cyan);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ml-cyan) 22%, transparent);
 }
 
 .ml-level.is-soon .ml-lt,
@@ -895,6 +934,14 @@ html:not(.js) .steps {
 .ml-nav .ml-play:hover:not(:disabled) {
   background: var(--ml-cyan-2);
   border-color: var(--ml-cyan-2);
+}
+
+.ml-nav .ml-speed {
+  min-width: 46px;
+  font-family: var(--ml-mono);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ml-muted);
 }
 
 .ml-tools {
@@ -1337,6 +1384,20 @@ html:not(.js) .steps {
 .ml-timeline li.is-seen::before,
 .ml-timeline li.is-current::before {
   background: var(--ml-cyan);
+}
+
+/* While Play waits, the line to the next step fills in its own time. */
+.ml-timeline li.is-filling::before {
+  background:
+    linear-gradient(var(--ml-cyan), var(--ml-cyan)) left / 0% 100% no-repeat,
+    var(--ml-line);
+  animation: ml-fill var(--play-ms, 8s) linear forwards;
+}
+
+@keyframes ml-fill {
+  to {
+    background-size: 100% 100%, auto;
+  }
 }
 
 .ml-timeline button {

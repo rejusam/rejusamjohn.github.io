@@ -4,7 +4,8 @@
 // only touched inside createTraceView. All text goes in with textContent.
 import {RULES} from './agent.js';
 
-export const RUN_MS = 450;
+// One row a second: slow enough to read each row as it appears.
+export const RUN_MS = 1000;
 
 export const ROLE_LABELS = {
   task: 'Task', plan: 'Plan', call: 'Tool call', result: 'Result', answer: 'Answer',
