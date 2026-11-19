@@ -328,9 +328,9 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     const textLines = [lines.kept, lines.sum, lines.next, lines.left].filter(Boolean);
     const h = 132 + textLines.length * 22 + (notes ? 30 + Math.max(1, notes.length) * 20 : 0) + 30;
     frame(h);
-    label(10, 20, `window of the model call in step ${v.step}`, { fill: STRONG, weight: 700 });
+    label(10, 20, `step ${v.step}: what the model call is given`, { fill: STRONG, weight: 700 });
     label(10, 42, finite ? `budget: ${b} words` : 'budget: no limit');
-    label(10, 62, `task: always kept, ${taskWords()} words, not counted`);
+    label(10, 62, `task: always given, ${taskWords()} words, not counted`);
     // The bar: kept messages solid, the first that did not fit dashed, the budget a dashed line.
     const y0 = 86;
     const bh = 28;
@@ -365,7 +365,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     }
     label(10, h - 10, runLine(), { fill: STRONG });
     const noteText = notes ? ` Notes so far, kept outside the window: ${notes.length ? notes.join(' ') : 'none'}.` : '';
-    return `The window of the model call in step ${v.step}. ${finite ? `Budget ${b} words.` : 'No budget limit.'} The task is always kept (${taskWords()} words, not counted). ${textLines.join('. ')}.${noteText} This run: ${runLine()}.`;
+    return `What the model call in step ${v.step} is given. ${finite ? `Budget ${b} words.` : 'No budget limit.'} The task is always given (${taskWords()} words, not counted). ${textLines.join('. ')}.${noteText} This run: ${runLine()}.`;
   }
 
   // Step 5: the three runs, the one in the trace drawn with a thick outline and bold text.
