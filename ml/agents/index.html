@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What is an agent? · ML Explorer</title>
+    <meta name="description" content="A model answers once. An agent runs the model in a loop with tools: choose an action, act, see the result, repeat. Watch the same question answered both ways, one message at a time. Every trace is computed in your browser.">
+    <link rel="canonical" href="https://rejusamjohn.pages.dev/ml/agents/">
+    <meta property="og:title" content="What is an agent? · ML Explorer">
+    <meta property="og:description" content="A model answers once. An agent runs the model in a loop with tools: choose an action, act, see the result, repeat. Watch the same question answered both ways, one message at a time. Every trace is computed in your browser.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rejusamjohn.pages.dev/ml/agents/">
+    <meta property="og:image" content="https://rejusamjohn.pages.dev/ml/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/ml/vendor/katex/katex.min.css">
+    <link rel="stylesheet" href="/ml/assets/ml.css">
+    <script src="/ml/assets/js-flag.js"></script>
+    <script type="module" src="/ml/assets/ml.js"></script>
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e46c62f910fe4def882feaed064efced"}'></script>
+</head>
+<body>
+<a class="ml-skip" href="#lesson">Skip to the lesson</a>
+<nav class="site-nav" aria-label="Site">
+    <div class="site-nav-in">
+        <a class="site-logo" href="/" aria-label="Reju Sam John, home">RSJ</a>
+        <button type="button" class="site-toggle" aria-label="Site menu" aria-expanded="false" aria-controls="site-links">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="site-links" id="site-links">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#projects">Projects</a></li>
+            <li><a href="/ml/" class="is-here" aria-current="true">ML Explorer</a></li>
+            <li><a href="/#publications">Publications</a></li>
+            <li><a href="/#showcase">Showcase</a></li>
+            <li><a href="/#education">Education</a></li>
+            <li><a href="/#contact" class="site-cta">Get in Touch</a></li>
+        </ul>
+    </div>
+</nav>
+<header class="ml-top">
+    <a class="ml-brand" href="/ml/">ML Explorer</a>
+</header>
+<div class="ml-shell">
+<nav class="ml-path" id="ml-path" aria-label="The path"><a href="/ml/">All lessons</a></nav>
+<main class="lesson" id="lesson" data-lesson="agents">
+
+    <header class="lesson-head">
+        <p class="crumbs"><a href="/ml/">ML Explorer</a> · Level 6 · Agents</p>
+        <h1>What is an agent?</h1>
+        <p class="promise">A model answers once. An agent runs the model in a loop: choose an action, act, see the result, repeat. Watch both on the same question, one message at a time.</p>
+        <p class="meta">About 9 minutes · Every message, step and sum is computed in your browser; the formulas are in The maths</p>
+    </header>
+
+    <section class="overview" aria-labelledby="overview-title">
+        <h2 id="overview-title">Overview</h2>
+        <p>In Level 5 a language model wrote text one token at a time. An agent puts a model like that in a loop: the model writes what to do next, an ordinary program does it, and the result goes back to the model as a new message.</p>
+        <p>In this level, an agent is a program that runs a model in a loop, with tools the model can call, until the model writes an answer or a stopping rule ends the run. The tasks use the invented world from Level 5: made-up people, the food each one likes, and a made-up price list. Its facts are rules of this page, not claims about anyone.</p>
+        <h2>You'll learn</h2>
+        <ul>
+            <li>that an agent runs a model in a loop: read, choose an action, act, see the result, repeat</li>
+            <li>how to read a trace: the task, plan lines, tool calls, results, the answer and why the run stopped</li>
+            <li>why the agent's answer here is right where a single answer was a guess</li>
+        </ul>
+    </section>
+
+    <div class="stage">
+        <svg id="stage-svg" viewBox="0 0 440 150"></svg>
+        <div class="controls"></div>
+    </div>
+
+    <ol class="steps">
+        <li class="step" id="step-1">
+            <h2>A model answers once</h2>
+            <p class="lede">Give a model a question and it writes one answer. The question here: what food does mia like?</p>
+            <div class="happening">
+                <p>The model on this page is a stand-in. On this page the choices come from a few fixed rules, listed in full in step 5; a real agent makes them with a language model, which can write a wrong or malformed call.</p>
+                <p>Asked once, with no tools, the stand-in cannot look anything up. Its guess rule fills the gap with the first food in its food table, <span data-value="guess-food">apples</span>, so it writes <span data-value="one-mia">mia likes apples.</span> In the invented world, mia likes <span data-value="true-mia">figs</span>: the answer is wrong. Select the answer row to see the rules the stand-in applied, <span data-value="one-mia-rules">R3 and R6</span>.</p>
+                <p>A real language model would not write this particular answer. It writes text by <a href="/ml/language-models/">predicting the next token</a>, from the question and the patterns in its training text, and as <a href="/ml/llms/">a tiny language model</a> showed, fluent is not the same as true.</p>
+                <p>The rows under the picture are a trace: every message in and out, one row each. Back, Play and Next move between the steps of this lesson, as on every page. Run and Next message move through the trace: Run shows its rows one at a time (all at once with reduced motion), and Next message adds one row. Select any row to see why it is there.</p>
+            </div>
+            <details class="maths">
+                <summary>The maths</summary>
+                <p>One answer is one model call:</p>
+                <div class="eq"><span class="tex" data-display data-tex="\text{answer} = \text{model}(\text{task})"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>answer</mtext><mo>=</mo><mtext>model</mtext><mo stretchy="false">(</mo><mtext>task</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{answer} = \text{model}(\text{task})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord text"><span class="mord">answer</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">model</span></span><span class="mopen">(</span><span class="mord text"><span class="mord">task</span></span><span class="mclose">)</span></span></span></span></span></span></div>
+                <p>Nothing the model writes is checked or acted on before it becomes the answer.</p>
+            </details>
+        </li>
+
+        <li class="step" id="step-2">
+            <h2>The loop</h2>
+            <p class="lede">An agent runs the model in a loop: read the task and everything so far, choose an action, act, see the result, and repeat until the action is an answer.</p>
+            <div class="happening">
+                <p>The same question, now asked of an agent with one tool, lookup, which looks up one person or one food in the invented world. A tool is an ordinary program. The model only writes the call as text; the loop runs it.</p>
+                <p>On its first turn the stand-in writes a plan line, the short line it writes before acting, and then the call <span data-value="mia-call">lookup("mia")</span>. The loop runs lookup and adds the result as a new message. On its second turn the stand-in reads that result and answers <span data-value="mia-agent">mia likes figs.</span> That is right. Each turn is one model call, and this level calls a turn a step: this run took <span data-value="mia-steps">2</span> steps.</p>
+                <p>The boxes in the picture: read (the model is given the task and every message so far), choose (it writes a plan line and an action), act (the loop runs the tool), see result (the result joins the messages). An answer ends the loop. The box for the selected row is drawn with a thick outline.</p>
+            </div>
+            <details class="maths">
+                <summary>The maths</summary>
+                <p>Write <span class="tex" data-tex="\text{history}_t"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext>history</mtext><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">\text{history}_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9386em;vertical-align:-0.2441em;"></span><span class="mord"><span class="mord text"><span class="mord">history</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1864em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span></span></span></span></span> for the task and every message before step <span class="tex" data-tex="t"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6151em;"></span><span class="mord mathnormal">t</span></span></span></span></span>. Each step applies the same function to it:</p>
+                <div class="eq"><span class="tex" data-display data-tex="\text{action}_t = \text{policy}(\text{history}_t)"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mtext>action</mtext><mi>t</mi></msub><mo>=</mo><mtext>policy</mtext><mo stretchy="false">(</mo><msub><mtext>history</mtext><mi>t</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{action}_t = \text{policy}(\text{history}_t)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8179em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord text"><span class="mord">action</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">policy</span></span><span class="mopen">(</span><span class="mord"><span class="mord text"><span class="mord">history</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1864em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></span></div>
+                <p>Here the policy is the stand-in's rules; in a real agent it is a language model. If the action is a tool call, the loop runs the tool, and <span class="tex" data-tex="\text{history}_{t+1}"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext>history</mtext><mrow><mi>t</mi><mo>+</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\text{history}_{t+1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9969em;vertical-align:-0.3025em;"></span><span class="mord"><span class="mord text"><span class="mord">history</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3025em;"><span></span></span></span></span></span></span></span></span></span></span> is <span class="tex" data-tex="\text{history}_t"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mtext>history</mtext><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">\text{history}_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9386em;vertical-align:-0.2441em;"></span><span class="mord"><span class="mord text"><span class="mord">history</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1864em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span></span></span></span></span> followed by the plan line, the call and its result. If the action is an answer, the run stops. A step is one model call.</p>
+            </details>
+        </li>
+
+        <li class="step" id="step-3">
+            <h2>Several turns</h2>
+            <p class="lede">A harder task needs more turns: eli buys <span data-value="eli-qty">4</span> of the food eli likes. What does that cost?</p>
+            <div class="happening">
+                <p>The agent now has two tools, lookup and a calculator. It needs two facts and a sum. It looks up the food eli likes (<span data-value="eli-food">plums</span>), then that food's price (<span data-value="eli-price">$1.25</span> each), then calls the calculator: <span data-value="eli-calc">calculator("4*1.25")</span>. Each turn reads everything so far, so the second lookup can use the first result.</p>
+                <p>The run makes <span data-value="eli-calls">3</span> tool calls and stops after <span data-value="eli-steps">4</span> steps, with the answer that it costs <span data-value="agent-eli">$5.00</span>. The counter under the loop says which step the selected row belongs to: a plan line, its tool call and the call's result share one step.</p>
+            </div>
+            <details class="maths">
+                <summary>The maths</summary>
+                <p>Every step is one model call, so a run of <span data-value="eli-steps">4</span> steps makes that many model calls. In this run every step but the last calls one tool, so it makes <span data-value="eli-steps-minus">4 − 1 = 3</span> tool calls. Each model call takes time and computing, which is why the next lessons count them.</p>
+            </details>
+        </li>
+
+        <li class="step" id="step-4">
+            <h2>One answer against the agent</h2>
+            <p class="lede">The same eli task, answered once and by the agent, side by side.</p>
+            <div class="happening">
+                <p>Asked once with no tools, the stand-in fills both gaps with its guess rules: eli likes <span data-value="guess-food">apples</span>, at <span data-value="guess-price">$0.80</span> each, the first price in its list. It applies <span data-value="one-eli-rules">R3, R4 and R6</span> and writes that it costs <span data-value="one-eli">$3.20</span>. The agent looked both facts up and answers <span data-value="agent-eli">$5.00</span>.</p>
+                <p>The true cost is <span data-value="eli-qty">4</span> × <span data-value="eli-price">$1.25</span> = <span data-value="true-eli">$5.00</span>, worked out by the calculator. The one answer is wrong by <span data-value="eli-error">$1.80</span>. Both answers read equally well; only the agent's rests on looked-up facts and a calculated sum.</p>
+                <p>This is a simplification: the one answer here comes from the stand-in's guess rule. A real model asked once might write a different wrong answer, or a right one, and nothing in the answer itself says which.</p>
+            </div>
+        </li>
+
+        <li class="step" id="step-5">
+            <h2>The rules</h2>
+            <p class="lede">The stand-in is six fixed rules. On each turn it applies the first rule that fits.</p>
+            <div class="happening">
+                <ul class="rules-list">
+                    <li><strong>R1</strong> If the last result says "not found": answer that it was not found, or call the same lookup again, or guess (the first food in the food table or the first price in the price list) and go on to the next rule, as set.</li>
+                    <li><strong>R2</strong> If the notepad is on and the last result is a fact not yet in the notes: write it in the notes.</li>
+                    <li><strong>R3</strong> If the task needs a fact that is not in the messages or the notes: call lookup for it. With lookup off, guess the first food in the food table or the first price in the price list, then go on to the next rule.</li>
+                    <li><strong>R4</strong> If the task needs a sum and no calculator result for it is in the messages: call the calculator. With the calculator off, or sums set to guess, round each number to one significant figure, work out the sum exactly, then go on.</li>
+                    <li><strong>R5</strong> If the task asks to send a message and none has been sent: with send off, answer that it cannot send; with ask before changes on, ask a person first; otherwise call send.</li>
+                    <li><strong>R6</strong> Otherwise: answer from the facts, and the sum if there is one.</li>
+                </ul>
+                <p>Select a row of the trace: the picture marks the rules that row applied, and Why this step quotes them. This run applies <span data-value="rules-used">R3, R4 and R6</span>; <span data-value="rules-unused">R1, R2 and R5</span> come up in later lessons.</p>
+                <p>A real agent has no list like this. A language model writes the plan line and the call as text, and the loop reads that text. The rules here make every choice visible and the same every time.</p>
+            </div>
+        </li>
+    </ol>
+
+    <section class="quiz" aria-labelledby="quiz-title">
+        <h2 id="quiz-title">Quick check</h2>
+
+        <form class="q" id="q1" data-answer="loop">
+            <fieldset>
+                <legend>What makes an agent different from a single model answer?</legend>
+                <label><input type="radio" name="q1" value="loop"> It runs the model in a loop and acts on what the model writes; each tool's result goes back in as a new message</label>
+                <label><input type="radio" name="q1" value="bigger"> It uses a bigger model</label>
+                <label><input type="radio" name="q1" value="never"> It is never wrong</label>
+                <label><input type="radio" name="q1" value="memory"> It remembers earlier conversations</label>
+            </fieldset>
+            <p class="why" data-for="loop">Right. One answer is one model call. An agent calls the model again and again, runs the tools it calls, and adds each result to the messages, until the model writes an answer.</p>
+            <p class="why" data-for="bigger">On this page both use the same stand-in rules. The difference is the loop and the tools: with them the eli cost comes out at <span data-value="agent-eli">$5.00</span>, without them at <span data-value="one-eli">$3.20</span>.</p>
+            <p class="why" data-for="never">An agent can still be wrong: a tool can fail, and a language model can write a wrong call. Later lessons show such cases.</p>
+            <p class="why" data-for="memory">Each run here starts from the task alone. Within a run the model is given the messages so far; the lesson on memory shows what happens when they no longer fit.</p>
+        </form>
+
+        <form class="q" id="q2" data-answer="calc">
+            <fieldset>
+                <legend>Where did the <span data-value="agent-eli">$5.00</span> come from?</legend>
+                <label><input type="radio" name="q2" value="calc"> From the calculator tool, which the loop ran on the call the stand-in wrote</label>
+                <label><input type="radio" name="q2" value="model"> The stand-in wrote the number straight from the task text</label>
+                <label><input type="radio" name="q2" value="lookup"> The lookup tool returned it</label>
+                <label><input type="radio" name="q2" value="guess"> From the guess rule</label>
+            </fieldset>
+            <p class="why" data-for="calc">Right. The stand-in only wrote the call <span data-value="eli-calc">calculator("4*1.25")</span>. The loop ran the calculator, its result went back as a message, and the answer uses it.</p>
+            <p class="why" data-for="model">The task text has no prices in it. The stand-in wrote a call to the calculator, and the number came back as the calculator's result.</p>
+            <p class="why" data-for="lookup">lookup gave the facts: eli likes <span data-value="eli-food">plums</span>, at <span data-value="eli-price">$1.25</span> each. It does not work out the total.</p>
+            <p class="why" data-for="guess">The guess rule is what the one answer used, and it gave <span data-value="one-eli">$3.20</span>.</p>
+        </form>
+    </section>
+
+    <section class="complete" aria-labelledby="complete-title">
+        <h2 id="complete-title">Lesson complete</h2>
+        <ul>
+            <li>One answer is one model call. An agent runs the model in a loop: read everything so far, choose an action, act, see the result, repeat until it answers.</li>
+            <li>A trace shows every message: the task, plan lines, tool calls, results, the answer and why the run stopped. Each step is one model call.</li>
+            <li>Tools give exact facts and sums. The model only writes the calls as text; the loop runs them.</li>
+        </ul>
+
+        <h3>Common misconceptions</h3>
+        <ul class="misconceptions">
+            <li>"An agent is a new kind of model." It is an ordinary model run in a loop with tools; on this page the model is a stand-in made of six rules.</li>
+            <li>"An answer that reads well is right." "<span data-value="one-mia">mia likes apples.</span>" reads as well as "<span data-value="mia-agent">mia likes figs.</span>", and only one is true.</li>
+            <li>"The model runs the tools." It only writes the call as text; the loop runs the tool and passes the result back.</li>
+        </ul>
+
+        <a class="next-lesson" href="/ml/agent-tools/">Next lesson: Tools →</a>
+
+        <h3>Further reading</h3>
+        <ol class="reading">
+            <li>Russell &amp; Norvig, <cite>Artificial Intelligence: A Modern Approach</cite> (4th ed.), Chapter 2, "Intelligent Agents": agents in general, well beyond language models.</li>
+            <li>Yao et al., "ReAct: Synergizing Reasoning and Acting in Language Models", arXiv 2210.03629 (2022), in which a language model writes short steps in between actions such as searches, and sees each action's result before the next.</li>
+        </ol>
+
+        <p class="data-note"><strong>About the data.</strong> Nothing here is random: the same task and the same rules give the same trace every time. The invented world from Level 5 gives each person one food: <span data-value="likes-list">ana apples, ben pears, eli plums, mia figs, noa limes, sam grapes, tom apples, zoe pears</span>. The food table lists the foods in this order: <span data-value="food-table">apples, pears, plums, figs, limes and grapes</span>. The price list, also invented, is <span data-value="price-list">apples $0.80, pears $1.10, plums $1.25, figs $2.40, limes $0.60, grapes $3.50</span>. lookup answers from these. The calculator works out a sum exactly and shows it rounded to at most two decimal places. The stand-in's guesses are the first food in the food table, the first price in the price list, and each number rounded to one significant figure.</p>
+
+        <p class="coffee-line">If this helped, you can <button type="button" data-coffee>buy me a coffee</button>.</p>
+    </section>
+
+</main>
+</div>
+</body>
+</html>
