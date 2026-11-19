@@ -119,9 +119,9 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
             <h2>Learn from neighbours</h2>
             <p class="lede">So where could better numbers come from? Describe each word by the words around it.</p>
             <div class="happening">
-                <p>Look at "<span data-value="example">tom lives by the lake.</span>", sentence 2 of the text. Move the "centre word" slider: the words up to 2 places either side, in the same sentence, are its neighbours (dashed).</p>
+                <p>Look at "<span data-value="example">tom lives by the lake.</span>", sentence 2. Move the "centre word" slider: words up to 2 places either side, in the same sentence, are its neighbours (dashed).</p>
                 <p>Each centre and one neighbour make a pair, such as (lives, tom). The <span data-value="n-sentences">1,500</span> sentences give <span data-value="n-pairs">22,344</span> pairs.</p>
-                <p>The model gives every word 2 numbers, its embedding. Training adjusts them so that, given a centre word, the neighbours that really occur get higher probability. This is the skip-gram model.</p>
+                <p>The model gives every word 2 numbers, its embedding. Training adjusts them (and a second pair per word, see The maths) so that, given a centre word, the neighbours that really occur get higher probability. This is the skip-gram model.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -164,11 +164,11 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
 
         <li class="step" id="step-4">
             <h2>Used alike means close</h2>
-            <p class="lede">Next, measure direction. Cosine similarity is 1 for the same way, 0 at right angles, −1 for opposite.</p>
+            <p class="lede">Next, measure direction. Cosine similarity is the cosine of the angle between two vectors, so length does not count: 1 for the same way, 0 at right angles, −1 for opposite.</p>
             <div class="happening">
-                <p>Look at the rays: the picked word ("sea" at first) is ringed, with dashed rays to its five nearest words, listed in the table. Judge by the angle, not the gap between points.</p>
-                <p>After the run, every name's nearest word is a name (<span data-story="end-name">8</span> of 8), every food's a food (<span data-story="end-food">6</span> of 6), every place's a place (<span data-story="end-place">4</span> of 4).</p>
-                <p>Close does not mean "seen together". No sentence holds two different foods (the page counts <span data-value="two-foods">0</span>), yet "apples" and "pears" end with cosine <span data-story="apples-pears">1.000</span> to three places. They share neighbours: a name two words before, "likes" just before, the full stop after.</p>
+                <p>Look at the rays: the ringed word (set in the "word" menu) has dashed rays to its five nearest. Judge by angle, not distance.</p>
+                <p>After the run, the nearest word to every name is a name (<span data-story="end-name">8</span> of 8), food a food (<span data-story="end-food">6</span> of 6), place a place (<span data-story="end-place">4</span> of 4). If the read-out says "random start", press "Train".</p>
+                <p>Close is not "seen together". No sentence holds two foods (the page counts <span data-value="two-foods">0</span>), yet "apples" and "pears" share neighbours and reach cosine <span data-story="apples-pears">1.000</span> to three places.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -176,16 +176,17 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <div class="eq"><span class="tex" data-display data-tex="\cos\theta = \frac{\mathbf{a} \cdot \mathbf{b}}{\lVert \mathbf{a} \rVert\, \lVert \mathbf{b} \rVert}"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>cos</mi><mo>⁡</mo><mi>θ</mi><mo>=</mo><mfrac><mrow><mi mathvariant="bold">a</mi><mo>⋅</mo><mi mathvariant="bold">b</mi></mrow><mrow><mo stretchy="false">∥</mo><mi mathvariant="bold">a</mi><mo stretchy="false">∥</mo><mtext> </mtext><mo stretchy="false">∥</mo><mi mathvariant="bold">b</mi><mo stretchy="false">∥</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">\cos\theta = \frac{\mathbf{a} \cdot \mathbf{b}}{\lVert \mathbf{a} \rVert\, \lVert \mathbf{b} \rVert}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mop">cos</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.3074em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mopen">∥</span><span class="mord mathbf">a</span><span class="mclose">∥</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mopen">∥</span><span class="mord mathbf">b</span><span class="mclose">∥</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathbf">a</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathbf">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></span></div>
                 <p>Cosine ignores length: doubling a vector does not change it. The table shows the angle too, in degrees, because many cosines here round to 1.000 while their angles still differ.</p>
                 <p>At the random start, the nearest word was in the same group for <span data-story="start-name">2</span> of 8 names, <span data-story="start-food">0</span> of 6 foods and <span data-story="start-place">0</span> of 4 places.</p>
+                <p>"apples" and "pears" have the same kinds of neighbours: a name two words before, "likes" just before and the full stop after.</p>
             </details>
         </li>
 
         <li class="step" id="step-5">
             <h2>Search by meaning</h2>
-            <p class="lede">At its simplest, search by meaning works the same way: rank by cosine with the query.</p>
+            <p class="lede">At its simplest, search by meaning does the same: rank by cosine with the query.</p>
             <div class="happening">
-                <p>Look at the list: every word ranked by cosine with the picked one. Pick "figs" in the "word" menu. After the run, the <span data-story="food-first">5</span> other foods come first, then "are", "and" and "friends", each at cosine <span data-story="crowd-food-min">1.000</span> with every food (to three places).</p>
-                <p>They share only some of the foods' neighbours, but with only two numbers per word they still point the same way.</p>
-                <p>Note: "meaning" here is only "used in similar places", and only roughly. Even the least alike foods have cosine <span data-story="food-min">1.000</span>, so searching for "figs" cannot tell them apart.</p>
+                <p>Look at the list, then pick "figs" in the "word" menu (if the read-out says "random start", press "Train" first). The <span data-story="food-first">5</span> other foods come first, then "are", "and" and "friends", each at cosine <span data-story="crowd-food-min">1.000</span> with every food (to three places).</p>
+                <p>They share only some of the foods' neighbours, but with only two numbers per word there is little room, so they end up pointing the same way too.</p>
+                <p>Note: "meaning" here is only "used in similar places", and only roughly. Even the least alike foods have cosine <span data-story="food-min">1.000</span>, so a "figs" search cannot tell them apart.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -201,8 +202,8 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
             <h2>Real embeddings</h2>
             <p class="lede">Real systems use the same idea at far larger scale: hundreds or thousands of numbers per word or token, learned from huge amounts of text.</p>
             <div class="happening">
-                <p>Ours has 2 numbers per word, <span data-value="n-words">27</span> × 2 in all. Then a direction is just one angle around a circle, so room is short: the foods, "are", "and" and "friends" all share one direction. More numbers per word leave room for far more kinds of use.</p>
-                <p>The axes mean nothing on their own: turning all the vectors round together changes nothing the model computes.</p>
+                <p>Ours has <span data-value="n-words">27</span> × 2 numbers in all. With two numbers, a direction is just one angle around a circle, so there is little room. After the run, the foods, "are", "and" and "friends" all share one direction. More numbers leave room for more kinds of use.</p>
+                <p>The axes mean nothing on their own: turning all vectors round together changes nothing the model computes.</p>
                 <p>Note: like ours, real embeddings reflect how words are used in their training text, including patterns nobody intended.</p>
             </div>
             <details class="maths">
