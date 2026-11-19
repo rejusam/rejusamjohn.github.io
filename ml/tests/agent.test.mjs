@@ -504,3 +504,29 @@ test('onSelect hears every selection, including the view\'s own', () => {
   assert.equal(heard.at(-1), tv.selected);
   assert.equal(tv.selected, 1);
 });
+
+test('markUnseen greys the rows a lesson names, and show() goes back to msg.unseen', () => {
+  const doc = fakeDocument();
+  const host = doc.createElement('div');
+  const tools = doc.createElement('div');
+  const tv = createTraceView(host, {tools});
+  const r = runAgent('pair-shop', {stepLimit: 10, budget: 12});
+  const list = host.children[0].children[0];
+  const greyed = () => list.children.map((li) => li.classList.set.has('is-unseen'));
+  const tagged = () => list.children.map((li) => li.firstChild.children.some((c) => c.className === 'trace-tag'));
+  tv.show(r, {animate: false});
+  const fromRun = r.messages.map((m) => !!m.unseen);
+  assert.deepEqual(greyed(), fromRun);
+  assert.deepEqual(tagged(), fromRun);
+  const flags = r.messages.map((_, i) => i === 1 || i === 2);
+  tv.markUnseen(flags);
+  assert.deepEqual(greyed(), flags);
+  assert.deepEqual(tagged(), flags);
+  // The text and chip stay; only the tag comes and goes.
+  assert.equal(list.children[1].firstChild.children[1].textContent, r.messages[1].text);
+  tv.markUnseen(null);
+  assert.deepEqual(greyed(), fromRun);
+  tv.markUnseen(flags);
+  tv.show(r, {animate: false});
+  assert.deepEqual(greyed(), fromRun);
+});

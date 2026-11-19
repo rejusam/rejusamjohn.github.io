@@ -91,7 +91,8 @@ export function whyParagraphs(msg, unseen = false) {
 // Options: reduced (prefers-reduced-motion); announce(text) (the lesson's live region).
 // Announcements: if announce is given, status text goes there and the view's own status
 // span is plain text; if not, the span is a polite live region (role=status).
-// Rows marked "no longer seen" come from msg.unseen.
+// Rows marked "no longer seen" come from msg.unseen, or from markUnseen(flags) until the
+// next show(): flags[i] true greys row i (a lesson can show one model call's window).
 export function createTraceView(host, {tools, label = 'Agent trace', onSelect, reduced = false, announce} = {}) {
   const doc = host.ownerDocument;
   const mk = (tag, cls, text) => {
@@ -104,6 +105,7 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
   let result = null;
   let shown = 0;
   let selected = -1;
+  let unseenFlags = null;
 
   const root = mk('div', 'trace');
   const list = mk('ol', 'trace-list');
@@ -124,7 +126,7 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
 
   const say = (t) => { status.textContent = t; if (announce) announce(t); };
   const total = () => (result ? result.messages.length : 0);
-  const isUnseen = (i) => !!result.messages[i].unseen;
+  const isUnseen = (i) => (unseenFlags ? !!unseenFlags[i] : !!result.messages[i].unseen);
 
   function renderWhy() {
     why.replaceChildren();
@@ -152,16 +154,25 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
     if (notify && onSelect) onSelect(i);
   }
 
-  function addRow(i) {
+  // The chip, the text and, for a row outside the window, the "no longer seen" tag.
+  function paintRow(li, i) {
     const m = result.messages[i];
-    const li = mk('li', 'trace-row role-' + m.role);
     const unseen = isUnseen(i);
-    if (unseen) li.classList.add('is-unseen');
-    const b = mk('button');
-    b.type = 'button';
+    li.classList.toggle('is-unseen', unseen);
+    const b = li.firstChild;
+    b.replaceChildren();
     b.append(mk('span', 'trace-chip', ROLE_LABELS[m.role] || m.role));
     b.append(mk('span', 'trace-text', m.text));
     if (unseen) b.append(mk('span', 'trace-tag', 'no longer seen'));
+  }
+
+  function addRow(i) {
+    const m = result.messages[i];
+    const li = mk('li', 'trace-row role-' + m.role);
+    const b = mk('button');
+    b.type = 'button';
+    li.append(b);
+    paintRow(li, i);
     b.addEventListener('click', () => select(i));
     b.addEventListener('keydown', (e) => {
       const d = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
@@ -169,7 +180,6 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
       const k = i + d;
       if (k >= 0 && k < shown) { e.preventDefault(); select(k); list.children[k].firstChild.focus(); }
     });
-    li.append(b);
     list.append(li);
   }
 
@@ -215,6 +225,7 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
   return {
     show(r, {animate = false} = {}) {
       result = r;
+      unseenFlags = null;
       play(animate);
     },
     stop() {
@@ -224,6 +235,14 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
       sync();
     },
     select(i) { select(i); },
+    // Grey the rows whose flag is true (null: back to msg.unseen). Never selects, so it is
+    // safe to call from onSelect.
+    markUnseen(flags) {
+      unseenFlags = flags;
+      if (!result) return;
+      [...list.children].forEach((li, k) => paintRow(li, k));
+      renderWhy();
+    },
     get selected() { return selected; },
   };
 }
