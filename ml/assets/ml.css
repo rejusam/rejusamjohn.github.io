@@ -3490,7 +3490,7 @@ html:not(.js) .hub-demo {
   font: inherit;
   cursor: pointer;
 }
-.trace-buttons button:first-child { border-color: var(--ml-cyan); color: var(--ml-cyan); }
+.trace-buttons .trace-run { border-color: var(--ml-cyan); color: var(--ml-cyan); }
 .trace-buttons button:hover:not(:disabled) { border-color: var(--ml-muted); }
 .trace-buttons button:disabled { opacity: 0.45; cursor: default; }
 .trace-status {
@@ -3516,8 +3516,4 @@ html:not(.js) .hub-demo {
 
 @media (max-width: 760px) {
   .trace { grid-template-columns: minmax(0, 1fr); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .trace-row button { transition: none; }
 }

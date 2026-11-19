@@ -71,13 +71,24 @@ export function rulesFor(msg) {
   return ids.map((id) => ({id, text: (RULES.find((r) => r.id === id) || {}).text || ''}));
 }
 
+// The paragraphs of the "Why this step" box for one message, as plain strings.
+export function whyParagraphs(msg, unseen = false) {
+  const rs = rulesFor(msg);
+  const out = rs.length
+    ? rs.map((r) => `${r.id} ${r.text}`)
+    : [NO_RULE_TEXT[msg.role] || 'No rule applies.'];
+  if (unseen) out.push('This message is outside the window the model is given, so it no longer sees it.');
+  return out;
+}
+
 // Usage:
 //   const tv = createTraceView(host, {tools, label: 'Trace of mia-food', onSelect, reduced, announce});
 //   tv.show(runAgent(...), {animate: true});   // animate false (or reduced) shows it all
 //   tv.stop();                                  // cancel any running timer; keeps rows
-// Options: reduced (prefers-reduced-motion), announce(text) (the lesson's live region;
-// if absent the view uses its own polite status line). show(result, {animate, unseenAt})
-// where unseenAt is an optional array of message indices to mark "no longer seen".
+// Options: reduced (prefers-reduced-motion); announce(text) (the lesson's live region).
+// Announcements: if announce is given, status text goes there and the view's own status
+// span is plain text; if not, the span is a polite live region (role=status).
+// Rows marked "no longer seen" come from msg.unseen.
 export function createTraceView(host, {tools, label = 'Agent trace', onSelect, reduced = false, announce} = {}) {
   const doc = host.ownerDocument;
   const mk = (tag, cls, text) => {
@@ -88,7 +99,6 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
   };
   const sched = _makeScheduler();
   let result = null;
-  let unseenAt = null;
   let shown = 0;
   let selected = -1;
 
@@ -96,23 +106,22 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
   const list = mk('ol', 'trace-list');
   list.setAttribute('aria-label', label);
   const why = mk('div', 'trace-why');
-  why.setAttribute('aria-live', 'polite');
   root.append(list, why);
   host.append(root);
 
   const bar = mk('div', 'trace-buttons');
-  const run = mk('button', null, 'Run');
+  const run = mk('button', 'trace-run', 'Run');
   const next = mk('button', null, 'Next message');
   run.type = 'button';
   next.type = 'button';
   const status = mk('span', 'trace-status');
-  status.setAttribute('role', 'status');
+  if (!announce) status.setAttribute('role', 'status');
   bar.append(run, next);
   if (tools) tools.append(bar, status);
 
   const say = (t) => { status.textContent = t; if (announce) announce(t); };
   const total = () => (result ? result.messages.length : 0);
-  const isUnseen = (i) => (unseenAt ? unseenAt.includes(i) : !!result.messages[i].unseen);
+  const isUnseen = (i) => !!result.messages[i].unseen;
 
   function renderWhy() {
     why.replaceChildren();
@@ -120,13 +129,12 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
     const m = result.messages[selected];
     why.append(mk('h4', 'trace-why-title', 'Why this step'));
     const rs = rulesFor(m);
-    if (rs.length === 0) { why.append(mk('p', null, NO_RULE_TEXT[m.role] || 'No rule applies.')); return; }
-    for (const r of rs) {
-      const p = mk('p', 'trace-rule');
-      p.append(mk('strong', null, r.id + ' '), doc.createTextNode(r.text));
+    whyParagraphs(m, isUnseen(selected)).forEach((t, k) => {
+      const p = mk('p', k < rs.length ? 'trace-rule' : null);
+      if (k < rs.length) p.append(mk('strong', null, rs[k].id + ' '), doc.createTextNode(rs[k].text));
+      else p.textContent = t;
       why.append(p);
-    }
-    if (isUnseen(selected)) why.append(mk('p', null, 'This message is outside the window the model is given, so it no longer sees it.'));
+    });
   }
 
   function select(i, {notify = true} = {}) {
@@ -163,8 +171,9 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
   }
 
   function reveal(upTo, {follow = true} = {}) {
+    const wasLast = selected < 0 || selected === shown - 1;
     while (shown <= upTo && shown < total()) { addRow(shown); shown++; }
-    if (follow) select(shown - 1, {notify: false});
+    if (follow && wasLast) select(shown - 1, {notify: false});
     sync();
   }
 
@@ -201,12 +210,16 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
   sync();
 
   return {
-    show(r, {animate = false, unseenAt: u = null} = {}) {
+    show(r, {animate = false} = {}) {
       result = r;
-      unseenAt = u;
       play(animate);
     },
-    stop() { sched.cancel(); sync(); },
+    stop() {
+      const running = sched.active;
+      sched.cancel();
+      if (running && result && shown < total()) say(`Paused at message ${shown} of ${total()}`);
+      sync();
+    },
     select(i) { select(i); },
     get selected() { return selected; },
   };

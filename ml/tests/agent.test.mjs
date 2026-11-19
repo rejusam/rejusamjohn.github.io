@@ -442,3 +442,16 @@ test('trace view text helpers', () => {
   assert.ok(rulesFor({rule: 'R3'})[0].text.length > 0);
   assert.deepEqual(rulesFor({role: 'result'}), []);
 });
+
+import {whyParagraphs} from '../assets/trace-view.js';
+
+test('why box: unseen note shows with and without rules', () => {
+  const note = /no longer sees it/;
+  const noRule = whyParagraphs({role: 'result', text: 'x'}, true);
+  assert.equal(noRule.length, 2);
+  assert.match(noRule[1], note);
+  const withRules = whyParagraphs({role: 'call', rules: ['R1', 'R6']}, true);
+  assert.equal(withRules.length, 3);
+  assert.match(withRules[2], note);
+  assert.equal(whyParagraphs({role: 'result'}, false).length, 1);
+});
