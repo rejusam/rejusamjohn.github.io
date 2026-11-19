@@ -128,7 +128,7 @@
             <h2>Stop a run going in circles</h2>
             <p class="lede">A run can also repeat itself and never answer. The third way out, a repeat check, catches that.</p>
             <div class="happening">
-                <p>Use the "repeat check" switch by the "Run" button. The task: <span data-value="kai-task">What food does kai like?</span> kai is not in the invented world, so lookup gives "<span data-value="kai-result">not found: kai</span>". The stand-in is set to try again.</p>
+                <p>Use the "repeat check" switch by the "Run" button. The task: <span data-value="kai-task">What food does kai like?</span> kai is not in the invented world, so lookup gives "<span data-value="kai-result">not found: kai</span>". The stand-in is set to try the same lookup again.</p>
                 <p>Step 1 writes <span data-value="kai-call">lookup("kai")</span>. Step 2 writes the same call. With the check on, the loop sees it matches the call just before it and stops without running it: <span data-value="kai-on-steps">2</span> steps, <span data-value="kai-on-runs">1</span> tool run.</p>
                 <p>With the check off, only the step limit stops it: <span data-value="kai-off-steps">8</span> steps, <span data-value="kai-off-runs">8</span> tool runs, no answer.</p>
                 <p>Note: a run that alternates between two calls (A, B, A, B) passes this check (see the lesson on memory).</p>
