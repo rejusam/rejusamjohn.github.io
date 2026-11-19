@@ -42,6 +42,8 @@ test('eli-shop takes 4 steps', () => {
   assert.equal(r.stop, 'done');
   const calls = r.messages.filter((m) => m.role === 'call');
   assert.equal(calls.length, 3);
+  // every step but the last calls one tool
+  assert.deepEqual(calls.map((m) => m.step), [1, 2, 3]);
   assert.deepEqual(calls.map((m) => m.text),
     ['lookup("eli")', `lookup("${WORLD.likes.eli}")`, `calculator("${eliGoal.qty}*${PRICES[WORLD.likes.eli]}")`]);
   // every model call is one step: one plan row per step

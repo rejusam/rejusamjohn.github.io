@@ -99,7 +99,7 @@ export function pageValues() {
     'agent-eli': fmtMoney(agentCost),
     'true-eli': fmtMoney(money(trueAnswer(TASK_MANY))),
     'one-eli': fmtMoney(oneCost),
-    'eli-error': fmtMoney(agentCost - oneCost),
+    'eli-error': fmtMoney(money(trueAnswer(TASK_MANY)) - oneCost),
     'guess-price': fmtMoney(PRICES[Object.keys(PRICES)[0]]),
     'one-eli-rules': listText(ruleHighlight(oneEli.messages[2])),
     'rules-used': listText(used),
@@ -148,6 +148,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   host.style.marginTop = '12px';
   svg.after(host);
   const tv = createTraceView(host, { tools: controls, label: 'Trace: every message in and out', reduced, announce, onSelect: () => draw() });
+  // onSelect fires for every selection, the view's own included; draw() never selects, so there is no loop.
 
   // Sizes are in viewBox units. At phone width ml.css sets class stage-text to 15 units,
   // so every line here is laid out to fit at 15 units too.
@@ -204,17 +205,19 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     frame(176);
     const r = results[step];
     const on = msg ? loopBox(msg) : null;
-    const xs = { read: 6, choose: 115, act: 224, see: 333 };
+    // Widths leave room for each label in bold at 15 units (phone width).
+    const xs = { read: 8, choose: 106, act: 220, see: 318 };
+    const ws = { read: 80, choose: 96, act: 80, see: 112 };
     const names = { read: 'read', choose: 'choose', act: 'act', see: 'see result' };
-    for (const k of Object.keys(xs)) box(xs[k], 36, 96, 36, names[k], on === k);
-    arrow('M102,54 L113,54');
-    arrow('M211,54 L222,54');
-    arrow('M320,54 L331,54');
-    arrow('M381,36 L381,16 L54,16 L54,34');
-    label(219, 12, 'repeat', { anchor: 'middle', size: 12 });
-    arrow('M163,72 L163,106');
-    label(171, 94, 'an answer', { size: 12 });
-    box(115, 108, 96, 32, 'stop', on === 'stop');
+    for (const k of Object.keys(xs)) box(xs[k], 36, ws[k], 36, names[k], on === k);
+    arrow('M88,54 L104,54');
+    arrow('M202,54 L218,54');
+    arrow('M300,54 L316,54');
+    arrow('M374,36 L374,16 L48,16 L48,34');
+    label(211, 12, 'repeat', { anchor: 'middle', size: 12 });
+    arrow('M154,72 L154,106');
+    label(162, 94, 'an answer', { size: 12 });
+    box(106, 108, 96, 32, 'stop', on === 'stop');
     const counter = msg ? counterText(msg, r) : '';
     label(8, 168, counter, { fill: STRONG });
     const where = on ? (on === 'see' ? 'see result' : on) : 'nothing selected';
@@ -260,11 +263,6 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     else if (step === 4) aria = drawRules(msg);
     else aria = drawLoop(msg);
     svg.setAttribute('aria-label', aria);
-  }
-
-  // Follow the selection while Run reveals rows (the trace view moves it without a callback).
-  if (typeof MutationObserver !== 'undefined') {
-    new MutationObserver(() => draw()).observe(host, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-current'] });
   }
 
   return {
