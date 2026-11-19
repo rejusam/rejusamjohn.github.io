@@ -170,12 +170,12 @@ export const TASKS = {
 };
 
 export const RULES = [
-  {id: 'R1', text: 'If the last result says "not found": answer that it was not found, or call the same lookup again, or guess, as set.'},
+  {id: 'R1', text: 'If the last result says "not found": answer that it was not found, or call the same lookup again, or guess (the first food in the food table or the first price in the price list) and go on to the next rule, as set.'},
   {id: 'R2', text: 'If the notepad is on and the last result is a fact not yet in the notes: write it in the notes.'},
   {id: 'R3', text: 'If the task needs a fact that is not in the messages or the notes: call lookup for it. With lookup off, guess the first food in the food table or the first price in the price list, then go on to the next rule.'},
   {id: 'R4', text: 'If the task needs a sum and no calculator result for it is in the messages: call the calculator. With the calculator off, or sums set to guess, round each number to one significant figure, work out the sum exactly, then go on.'},
   {id: 'R5', text: 'If the task asks to send a message and none has been sent: with send off, answer that it cannot send; with ask before changes on, ask a person first; otherwise call send.'},
-  {id: 'R6', text: 'Otherwise: answer with the facts and the sum.'},
+  {id: 'R6', text: 'Otherwise: answer from the facts, and the sum if there is one.'},
 ];
 
 export const DEFAULT_CONFIG = {
@@ -256,11 +256,11 @@ export function standIn(view, config) {
   if (last && last.tool === 'lookup' && last.text.startsWith('not found: ')) {
     const key = last.input.key;
     if (cfg.onNotFound === 'say so') {
-      plan.push(`lookup found nothing for ${key}; say so.`);
+      plan.push(`Lookup found nothing for ${key}; say so.`);
       return finish({type: 'answer', text: `I could not find ${key}.`}, 'R1');
     }
     if (cfg.onNotFound === 'try again') {
-      plan.push(`lookup found nothing for ${key}; try the same lookup again.`);
+      plan.push(`Lookup found nothing for ${key}; try the same lookup again.`);
       return finish({type: 'call', tool: 'lookup', input: {key}}, 'R1');
     }
     // guess: fill the gap the same way R3 does with lookup off, then go on.
@@ -333,7 +333,7 @@ export function standIn(view, config) {
     const text = `${goal.food} cost ${fmtMoney(facts.price[goal.food])} each.`;
     if (!sent) {
       if (!tools.send) {
-        plan.push('send is off; say so.');
+        plan.push('Send is off; say so.');
         return finish({type: 'answer', text: `I cannot send messages, so ${goal.to} was not told.`}, 'R5');
       }
       const input = {to: goal.to, text};
@@ -375,8 +375,13 @@ export function contextWindow(messages, budget) {
 const sameCall = (a, b) => a !== null && a.tool === b.tool && callText(a.tool, a.input) === callText(b.tool, b.input);
 
 // Each model call is one step. Tools, approval and waiting are not steps.
-// After the run, messages outside the final context window (worked out before the stop row)
-// carry unseen: true.
+// Plan and action rows carry rule (the rule that chose the action) and rules (every rule
+// applied in that model call, in order, guesses first). Each plan row carries seen: the
+// indices of the messages that model call could see (its context window).
+// After the run, messages outside the context window of the whole trace before the stop row
+// carry unseen: true (the key is only present when true).
+// opts.approve answers the first ask only; a later ask in the same run stops the run with
+// 'waiting for approval'.
 export function runAgent(taskId, config, opts) {
   const cfg = withDefaults(config);
   const o = opts || {};
@@ -388,16 +393,19 @@ export function runAgent(taskId, config, opts) {
   let prevCall = null;
   let answer = null;
   let stop = null;
+  let asked = false;
   while (stop === null) {
     if (steps >= cfg.stepLimit) { stop = 'step limit'; break; }
     steps += 1;
     const seen = contextWindow(messages, cfg.budget);
     const visible = messages.filter((m, i) => seen[i]);
+    const seenIdx = [];
+    for (let i = 0; i < seen.length; i++) if (seen[i]) seenIdx.push(i);
     const out = standIn({task, visible, notes: state.notes.slice()}, cfg);
-    messages.push({role: 'plan', text: out.plan, step: steps, rule: out.rule});
+    messages.push({role: 'plan', text: out.plan, step: steps, rule: out.rule, rules: out.rules.slice(), seen: seenIdx});
     const a = out.action;
     if (a.type === 'answer') {
-      messages.push({role: 'answer', text: a.text, step: steps, rule: out.rule});
+      messages.push({role: 'answer', text: a.text, step: steps, rule: out.rule, rules: out.rules.slice()});
       answer = a.text;
       stop = 'done';
       break;
@@ -405,8 +413,10 @@ export function runAgent(taskId, config, opts) {
     let run = a;
     if (a.type === 'ask') {
       messages.push({role: 'approval', text: `Waiting for a yes before ${callText(a.tool, a.input)}`,
-        step: steps, rule: out.rule, tool: a.tool, input: a.input});
-      if (o.approve === undefined) { stop = 'waiting for approval'; break; }
+        step: steps, rule: out.rule, rules: out.rules.slice(), tool: a.tool, input: a.input});
+      const firstAsk = !asked;
+      asked = true;
+      if (o.approve === undefined || !firstAsk) { stop = 'waiting for approval'; break; }
       if (o.approve === false) {
         messages.push({role: 'approval', text: 'No.', step: steps});
         stop = 'declined';
@@ -415,7 +425,7 @@ export function runAgent(taskId, config, opts) {
       messages.push({role: 'approval', text: 'Yes.', step: steps});
     }
     const call = {role: 'call', text: callText(run.tool, run.input), step: steps, rule: out.rule,
-      tool: run.tool, input: run.input};
+      rules: out.rules.slice(), tool: run.tool, input: run.input};
     messages.push(call);
     if (cfg.repeatCheck && sameCall(prevCall, call)) { stop = 'repeated call'; break; }
     prevCall = call;
@@ -437,8 +447,8 @@ export function oneAnswer(taskId) {
     sums: 'guess', onNotFound: 'guess'});
   const messages = [{role: 'task', text: task.text, step: 0}];
   const out = standIn({task, visible: messages.slice(), notes: []}, cfg);
-  messages.push({role: 'plan', text: out.plan, step: 1, rule: out.rule});
-  messages.push({role: 'answer', text: out.action.text, step: 1, rule: out.rule});
+  messages.push({role: 'plan', text: out.plan, step: 1, rule: out.rule, rules: out.rules.slice(), seen: [0]});
+  messages.push({role: 'answer', text: out.action.text, step: 1, rule: out.rule, rules: out.rules.slice()});
   return {messages, answer: out.action.text};
 }
 

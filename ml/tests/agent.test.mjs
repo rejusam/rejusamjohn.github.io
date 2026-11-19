@@ -243,6 +243,8 @@ test('context window fits the budget and keeps the task', () => {
     if (first !== -1) for (let i = first; i < seen.length; i++) assert.equal(seen[i], true, `suffix ${budget}`);
     // the next older message would not fit
     if (first > 1) assert.ok(words + countWords(trace[first - 1].text) > budget);
+    // nothing kept: the newest message alone is over the budget
+    if (first === -1) assert.ok(countWords(trace[trace.length - 1].text) > budget);
   }
   assert.ok(contextWindow(trace, Infinity).every(Boolean));
 });
@@ -250,7 +252,10 @@ test('context window fits the budget and keeps the task', () => {
 test('approval does not use a step', () => {
   const w = runAgent('tell-zoe', cfg());
   assert.equal(w.stop, 'waiting for approval');
-  assert.equal(w.steps, 2); // lookup pears, then the call that writes the ask
+  const askAt = w.messages.findIndex(m => m.role === 'approval');
+  const plansBefore = w.messages.slice(0, askAt).filter(m => m.role === 'plan').length;
+  assert.equal(w.steps, plansBefore); // every model call so far, including the one that wrote the ask
+  assert.equal(w.steps, 2);
   assert.equal(w.messages.filter(m => m.role === 'plan').length, w.steps);
   assert.deepEqual(w.state.sent, []);
   const y = runAgent('tell-zoe', cfg(), {approve: true});
@@ -314,5 +319,69 @@ test('chainSuccess and stepsForTarget', () => {
   for (const p of [0.5, 0.8, 0.9, 0.99]) for (const t of [0.1, 0.5, 0.9]) {
     const k = stepsForTarget(p, t);
     assert.ok(p ** k >= t && p ** (k + 1) < t, `${p} ${t}`);
+  }
+});
+
+test('every rule a step applies is recorded', () => {
+  const g = runAgent('kai-food', cfg({onNotFound: 'guess'}));
+  const plan = g.messages.filter(m => m.role === 'plan').pop();
+  assert.deepEqual(plan.rules, ['R1', 'R6']);
+  assert.equal(plan.rule, 'R6');
+  assert.deepEqual(g.messages.find(m => m.role === 'answer').rules, ['R1', 'R6']);
+  const e = runAgent('eli-shop', cfg({tools: {lookup: false}}));
+  assert.equal(e.stop, 'done');
+  assert.equal(e.steps, 2);
+  assert.equal(e.answer, 'That costs $3.20.');
+  const p1 = e.messages.find(m => m.role === 'plan');
+  assert.deepEqual(p1.rules, ['R3', 'R4']);
+  assert.deepEqual(e.messages.find(m => m.role === 'call').rules, ['R3', 'R4']);
+  for (const id of Object.keys(TASKS)) {
+    const r = runAgent(id, cfg(), {approve: true});
+    for (const m of r.messages) if (['plan', 'call', 'answer'].includes(m.role) && m.rule) {
+      assert.ok(Array.isArray(m.rules) && m.rules[m.rules.length - 1] === m.rule, `${id} ${m.role}`);
+    }
+  }
+  assert.equal(oneAnswer('pair-shop').answer, 'That costs $4.80.');
+});
+
+test('approve answers the first ask only', () => {
+  const y = runAgent('tell-zoe', cfg({budget: 5}), {approve: true});
+  assert.equal(y.stop, 'waiting for approval');
+  assert.equal(y.state.sent.length, 1);
+  assert.equal(y.messages.filter(m => m.role === 'approval' && m.text === 'Yes.').length, 1);
+  const n = runAgent('tell-zoe', cfg({budget: 5}), {approve: false});
+  assert.equal(n.stop, 'declined');
+  assert.deepEqual(n.state.sent, []);
+});
+
+test('seen and unseen match the context window', () => {
+  const runs = [['pair-shop', cfg({budget: 12, stepLimit: 10})],
+    ['pair-shop', cfg({budget: 12, stepLimit: 10, tools: {notepad: true}})],
+    ['tell-zoe', cfg({budget: 5})], ['eli-shop', cfg()], ['kai-food', cfg({budget: 3, onNotFound: 'try again'})]];
+  for (const [id, c] of runs) {
+    const r = runAgent(id, c, {approve: true});
+    const pre = r.messages.slice(0, -1);
+    const win = contextWindow(pre, c.budget);
+    pre.forEach((m, i) => assert.equal(Boolean(m.unseen), !win[i], `${id} unseen ${i}`));
+    assert.ok(!('unseen' in r.messages[r.messages.length - 1]));
+    r.messages.forEach((m, i) => {
+      if (m.role !== 'plan') return;
+      const before = r.messages.slice(0, i);
+      const w = contextWindow(before, c.budget);
+      const idx = [];
+      w.forEach((v, j) => { if (v) idx.push(j); });
+      assert.deepEqual(m.seen, idx, `${id} seen at ${i}`);
+    });
+  }
+});
+
+test('plan lines start with a capital', () => {
+  for (const id of Object.keys(TASKS)) for (const nf of ['say so', 'try again', 'guess']) {
+    for (let mask = 0; mask < 16; mask++) {
+      const tools = {calculator: !!(mask & 1), lookup: !!(mask & 2), notepad: !!(mask & 4), send: !!(mask & 8)};
+      for (const m of runAgent(id, cfg({tools, onNotFound: nf}), {approve: true}).messages) {
+        if (m.role === 'plan') assert.ok(/^[A-Z]/.test(m.text), m.text);
+      }
+    }
   }
 });
