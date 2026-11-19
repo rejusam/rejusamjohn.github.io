@@ -27,7 +27,6 @@ export const stepsNeeded = () => runAgent(TASK_SHOP).steps;
 export const stepRun = () => runAgent(TASK_SHOP);
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
-const listText = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs.at(-1)}`);
 
 export function limitLine(r, L) {
   if (r.stop === 'done') return `step limit ${L}: done after ${plural(r.steps, 'step')}: ${r.answer}`;
@@ -109,7 +108,6 @@ export function pageValues() {
     'kai-result': kaiResult.text,
     'kai-on-steps': String(on.steps),
     'kai-on-runs': String(costOf(on).toolRuns),
-    'kai-on-rules': listText(on.messages.filter((m) => m.role === 'plan').map((m) => m.rule)),
     'kai-off-steps': String(off.steps),
     'kai-off-runs': String(costOf(off).toolRuns),
     'extra-calls': String(off.steps - on.steps),
@@ -314,7 +312,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     const RW = 166;
     const H = 34;
     const ys = [10, 60, 110, 160];
-    box(LX, ys[0], LW, H, 'steps < limit?', false);
+    box(LX, ys[0], LW, H, 'steps below limit?', false);
     box(LX, ys[1], LW, H, 'model call: a step', part === 'model');
     box(LX, ys[2], LW, H, check ? 'same call again?' : 'repeat check off', false, { dashed: !check });
     box(LX, ys[3], LW, H, 'loop runs the tool', part === 'tool');

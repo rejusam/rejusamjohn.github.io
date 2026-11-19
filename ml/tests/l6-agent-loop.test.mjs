@@ -235,7 +235,6 @@ test('page values are computed and match the page', () => {
   assert.equal(v['kai-on-runs'], String(results(on).length));
   assert.equal(v['kai-off-steps'], String(off.steps));
   assert.equal(v['kai-off-runs'], String(results(off).length));
-  assert.equal(v['kai-on-rules'], 'R3 and R1');
   assert.equal(v['target'], '0.5');
   assert.equal(v['target-steps'], String(stepsForTarget(0.95, 0.5)));
   assert.equal(v['target-steps'], '13');
@@ -284,7 +283,7 @@ test('lesson page follows the contract', () => {
   assert.match(html, /What does a step limit protect against\?/);
   const step1 = html.slice(html.indexOf('id="step-1"'), html.indexOf('id="step-2"'));
   assert.match(step1, /fixed rules/);
-  assert.match(step1, /a real agent makes them with a language model, which can write a wrong or malformed call/);
+  assert.match(step1, /A real model writes its own calls and can get them wrong/);
   // The independence assumption is stated in the chart's step.
   const step5 = html.slice(html.indexOf('id="step-5"'), html.indexOf('id="step-6"'));
   assert.match(step5, /independent/);
