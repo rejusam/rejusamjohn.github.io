@@ -324,8 +324,8 @@ test('page', () => {
   assert.match(html, /<link rel="canonical" href="https:\/\/rejusamjohn\.pages\.dev\/ml\/diffusion\/">/);
   for (const s of [300, 304, 305, 307, 310, 311, 312, 313]) assert.match(html, new RegExp(`seed ${s}\\b`));
   for (const href of ['/ml/generative-models/', '/ml/measuring-error/', '/ml/optimisers/']) assert.match(html, new RegExp(`href="${href}"`));
-  assert.match(html, /<a class="next-lesson" href="\/ml\/">Back to the path →<\/a>/);
-  assert.match(text, /Level 6 is coming next/);
+  assert.match(html, /<a class="next-lesson" href="\/ml\/agents\/">Next lesson: What is an agent\? →<\/a>/);
+  assert.match(text, /Level 6, Agents, is next/);
   assert.match(html, /far larger scale/);
   assert.match(html, /2006\.11239/);
   assert.match(html, /1503\.03585/);
