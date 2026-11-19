@@ -72,12 +72,14 @@ export function rulesFor(msg) {
 }
 
 // The paragraphs of the "Why this step" box for one message, as plain strings.
+// A message with no rules may carry its own `why` text (a row a lesson writes in itself);
+// it replaces the generic line for its role.
 export function whyParagraphs(msg, unseen = false) {
   const rs = rulesFor(msg);
   const out = rs.length
     ? rs.map((r) => `${r.id} ${r.text}`)
-    : [NO_RULE_TEXT[msg.role] || 'No rule applies.'];
-  if (unseen) out.push('This message is outside the window the model is given, so it no longer sees it.');
+    : [typeof msg.why === 'string' && msg.why ? msg.why : NO_RULE_TEXT[msg.role] || 'No rule applies.'];
+  if (unseen) out.push('This message is outside the window the model is given, so it is no longer given it.');
   return out;
 }
 

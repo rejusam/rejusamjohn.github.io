@@ -443,10 +443,10 @@ test('trace view text helpers', () => {
   assert.deepEqual(rulesFor({role: 'result'}), []);
 });
 
-import {whyParagraphs} from '../assets/trace-view.js';
+import {whyParagraphs, NO_RULE_TEXT} from '../assets/trace-view.js';
 
 test('why box: unseen note shows with and without rules', () => {
-  const note = /no longer sees it/;
+  const note = /so it is no longer given it\./;
   const noRule = whyParagraphs({role: 'result', text: 'x'}, true);
   assert.equal(noRule.length, 2);
   assert.match(noRule[1], note);
@@ -454,6 +454,21 @@ test('why box: unseen note shows with and without rules', () => {
   assert.equal(withRules.length, 3);
   assert.match(withRules[2], note);
   assert.equal(whyParagraphs({role: 'result'}, false).length, 1);
+  assert.ok(!whyParagraphs({role: 'result'}, true).some((t) => /\bsees\b/.test(t)));
+});
+
+test('why box: a row with no rules can explain itself with its own why text', () => {
+  const own = 'No rule wrote this call: it is written into the page.';
+  assert.deepEqual(whyParagraphs({role: 'call', text: 'x', why: own}, false), [own]);
+  // The unseen note is still appended.
+  const unseen = whyParagraphs({role: 'call', text: 'x', why: own}, true);
+  assert.equal(unseen.length, 2);
+  assert.equal(unseen[0], own);
+  assert.match(unseen[1], /so it is no longer given it\./);
+  // Rules win over why; an empty why falls back to the role's line.
+  assert.deepEqual(whyParagraphs({role: 'call', rules: ['R3'], why: own}).map((t) => t.slice(0, 3)), ['R3 ']);
+  assert.equal(whyParagraphs({role: 'call', why: ''})[0], NO_RULE_TEXT.call);
+  assert.equal(whyParagraphs({role: 'call'})[0], NO_RULE_TEXT.call);
 });
 
 // A minimal stand-in for the few DOM calls createTraceView makes, so selection can be tested in Node.
