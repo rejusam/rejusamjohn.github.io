@@ -426,7 +426,7 @@ export function promptInfo(model, raw, tau, iter) {
 }
 
 export function readout(step, s) {
-  if (step === 0) return ['each position predicts the character after it', `n = 5 counting, after ␣ikes␣: p(a) = ${s.p5}`, 'this model sees up to 32 characters back'];
+  if (step === 0) return ['each position predicts the character after it', `n = 5 counting, after ikes␣: p(a) = ${s.p5}`, 'this model sees up to 32 characters back'];
   if (step === 1) {
     const pt = s.last ? `held-out: ${s.last.bits.toFixed(2)} bits/char (step ${count(s.last.iter)})` : 'held-out: not measured yet';
     return [`step ${count(s.iter)} of ${count(RUN)} · ${trainStatus(s)}`, pt, `counting models: n = 1, 3, 5 dashed`];
