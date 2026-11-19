@@ -80,17 +80,17 @@
     <ol class="steps">
         <li class="step" id="step-1">
             <h2>The parts of your agent</h2>
-            <p class="lede">The last five lessons each taught one part. Choose them here.</p>
+            <p class="lede">The last five lessons taught these parts. Choose them here.</p>
             <div class="happening">
                 <p>Look at the picture: one box per part.</p>
                 <ul>
+                    <li><strong><a href="/ml/agents/">Model</a>:</strong> a stand-in with <span data-value="rule-count">6</span> fixed rules. A real agent uses a language model, which can write a wrong call.</li>
+                    <li><strong>Instructions:</strong> what to do if lookup finds nothing; how to do sums.</li>
                     <li><strong><a href="/ml/agent-tools/">Tools</a>:</strong> any of the <span data-value="tool-count">4</span>. Only send changes things outside the run.</li>
-                    <li><strong><a href="/ml/agent-loop/">Step limit</a>:</strong> the most model calls in one run. The loop also stops at an answer, a repeated call, or to wait for a yes.</li>
-                    <li><strong><a href="/ml/agent-memory/">Window</a>:</strong> the newest words each model call is given, or no limit.</li>
-                    <li><strong><a href="/ml/agent-mistakes/">Ask before changes</a>:</strong> a person's yes before send runs.</li>
-                    <li><strong>Instructions:</strong> what to do if lookup finds nothing, and how to do sums.</li>
+                    <li><strong><a href="/ml/agent-loop/">Step limit</a>:</strong> the most model calls in a run. The loop also stops at an answer, a repeat call, a wait for a yes or a no.</li>
+                    <li><strong><a href="/ml/agent-memory/">Window</a>:</strong> how many recent words each call is given, plus the task.</li>
+                    <li><strong><a href="/ml/agent-mistakes/">Ask before changes</a>:</strong> a yes before send runs.</li>
                 </ul>
-                <p>Note: the model here is a <a href="/ml/agents/">stand-in</a> with <span data-value="rule-count">6</span> fixed rules. A real agent uses a language model, which can write a wrong call.</p>
             </div>
             <details class="maths">
                 <summary>The stand-in's rules in full</summary>
@@ -111,21 +111,21 @@
             <h2>Run three tasks</h2>
             <p class="lede">Now run your agent on three tasks.</p>
             <div class="happening">
-                <p>Look at the three task buttons: each says pass or fail, and why. Pick one to see its trace.</p>
-                <p>With the starting settings all three pass. pair-shop, two people's shopping, answers "<span data-value="pair-answer">That costs $12.90.</span>" after <span data-value="pair-steps">6</span> steps. Now change one part at a time:</p>
+                <p>Tasks: eli-shop (one person's shopping), pair-shop (two people's) and tell-zoe (tell zoe a price). Pick one. All pass at the start. Now change one part at a time:</p>
                 <ul>
-                    <li><strong>Step limit 5:</strong> the loop stops pair-shop with no answer. It needs <span data-value="l5-needs">6</span> steps.</li>
+                    <li><strong>Step limit 5:</strong> pair-shop stops with no answer; it needs <span data-value="l5-needs">6</span> steps.</li>
                     <li><strong>Calculator off:</strong> the sums are guessed, so both shopping answers are wrong.</li>
-                    <li><strong>Window 12 words:</strong> all fail: found facts leave the window, so calls repeat.</li>
-                    <li><strong>Then notepad on too:</strong> the facts stay in the notes, but pair-shop needs <span data-value="bn-needs">10</span> steps, more than the limit of <span data-value="default-limit">8</span>.</li>
+                    <li><strong>12-word window:</strong> facts drop out and calls repeat: shopping runs hit the step limit, tell-zoe asks twice.</li>
+                    <li><strong>Notepad too:</strong> facts are kept, but pair-shop needs <span data-value="bn-needs">10</span> steps, more than <span data-value="default-limit">8</span>.</li>
                 </ul>
+                <p>Note: every lookup here finds its fact, so the "when lookup finds nothing" menu changes only the program.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
                 <p>The tasks: eli-shop, "<span data-value="eli-task">eli buys 4 of the food eli likes. What does that cost?</span>"; pair-shop, "<span data-value="pair-task">ana and sam each buy 3 of the food they like. What do they pay in total?</span>"; and tell-zoe, "<span data-value="zoe-task">Tell zoe what pears cost.</span>"</p>
                 <p>A shopping task passes when the run is done with the right answer: the one the same rules give with every tool on and no limits. tell-zoe passes when it sends the right message and answers, or, with ask before changes on, when it waits for a yes before the right message and, after a yes, sends it and answers.</p>
-                <p>With the starting settings, eli-shop is done after <span data-value="eli-steps">4</span> steps: "<span data-value="eli-answer">That costs $5.00.</span>" tell-zoe stops after <span data-value="zoe-steps">2</span> steps, waiting for a yes before <span data-value="zoe-call">send("zoe", "pears cost $1.10 each.")</span>; after a yes it is done in <span data-value="zoe-yes-steps">3</span>.</p>
-                <p>With the calculator off, the stand-in rounds each number to one significant figure: "<span data-value="co-eli">That costs $4.00.</span>" and "<span data-value="co-pair">That costs $14.40.</span>" With a 12-word window, tell-zoe asks to send a second time after a yes; with the notepad on as well, eli-shop and tell-zoe pass again. The "when lookup finds nothing" menu changes nothing on these three tasks: every lookup in them finds its fact.</p>
+                <p>With the starting settings, pair-shop answers "<span data-value="pair-answer">That costs $12.90.</span>" and eli-shop is done after <span data-value="eli-steps">4</span> steps: "<span data-value="eli-answer">That costs $5.00.</span>" tell-zoe stops after <span data-value="zoe-steps">2</span> steps, waiting for a yes before <span data-value="zoe-call">send("zoe", "pears cost $1.10 each.")</span>; after a yes it is done in <span data-value="zoe-yes-steps">3</span>.</p>
+                <p>With the calculator off, the stand-in rounds each number to one significant figure: "<span data-value="co-eli">That costs $4.00.</span>" and "<span data-value="co-pair">That costs $14.40.</span>" With a 12-word window, tell-zoe asks to send a second time after a yes; with the notepad on as well, eli-shop and tell-zoe pass again.</p>
                 <p>A shopping task with every tool but the notepad, no window limit and no step limit takes two lookups per person (the food, then its price; here each person likes a different food), one calculator call and one answer, each a step:</p>
                 <div class="eq"><span class="tex" data-display data-tex="\text{steps} = 2 \times \text{people} + 2"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>steps</mtext><mo>=</mo><mn>2</mn><mo>×</mo><mtext>people</mtext><mo>+</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">\text{steps} = 2 \times \text{people} + 2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8095em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">steps</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">people</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span></span></span></span></span></span></div>
                 <p>So eli-shop takes <span data-value="eli-steps">4</span> and pair-shop <span data-value="pair-steps">6</span>. With the notepad on, each lookup is followed by a step that writes its fact in the notes:</p>
@@ -154,14 +154,13 @@
             <h2>What the program prints</h2>
             <p class="lede">Then run it. Here is what it should print.</p>
             <div class="happening">
-                <p>Look at the panel under the controls. Each message is one line, labelled as in the trace: Task, Plan, Tool call, Result, Waiting for your yes, Your answer, Answer, and Stopped with the reason.</p>
-                <p>With send and ask before changes both on, the program stops at the question <code><span data-value="ask-prompt">Send this? y/n</span></code>. Type y or n and press Enter. So the panel shows two outputs: after a yes it sends; after a no the run stops as declined.</p>
-                <p>With either switch off there is no question, and one output.</p>
-                <p>Note: a yes covers the first question only. A run that asks again stops there.</p>
+                <p>Look at the panel: the program runs the three tasks in turn, one line per message, labelled as in the trace: Task, Plan, Tool call, Result, Waiting for your yes, Your answer, Answer, and Stopped with the reason. Your terminal should show the same.</p>
+                <p>With send and ask before changes both on, the program stops at the question <code><span data-value="ask-prompt">Send this? y/n</span></code> and waits. The panel shows two outputs: one if you type y (it sends), one if you type n (the run stops as declined).</p>
+                <p>Note: with either switch off there is no question, and one output. A yes covers the first question only; a run that asks again stops there.</p>
             </div>
             <details class="maths">
                 <summary>How this is checked</summary>
-                <p>The panel is worked out on this page from the same runs as the traces. On this site, tests run the program with Python for a sample of settings and check that it prints exactly what the page shows. Your terminal should show the same lines. A blank line separates the tasks.</p>
+                <p>The panel is worked out on this page from the same runs as the traces. On this site, tests run the program with Python for a sample of settings and check that it prints exactly what the page shows. A blank line separates the tasks.</p>
             </details>
         </li>
 
@@ -169,9 +168,9 @@
             <h2>Swapping in a real model</h2>
             <p class="lede">Last, the one part a real model would replace: <code>call_model</code>.</p>
             <div class="happening">
-                <p>Look at the marked block in the panel. <code>call_model</code> is given the messages in its window and returns a plan line and one action: a tool call or an answer.</p>
+                <p>Look at the marked block. <code>call_model</code> is given the messages in its window and returns a plan line and one action: a tool call or an answer.</p>
                 <p>To use a real model, write a new <code>call_model</code> that sends the messages to a language model and turns its text into one of those actions. Keep any key out of the file: read it from an environment variable.</p>
-                <p>Everything else stays: tools, loop, limits, window and ask. The limits and the ask still stop a run that goes wrong.</p>
+                <p>Everything else stays: the limits still stop a run that goes round in circles, and the ask lets a person say no.</p>
                 <p>Note: a real model can call a tool that does not exist, or write a wrong answer.</p>
             </div>
             <details class="maths">
