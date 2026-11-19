@@ -210,7 +210,7 @@ test('lesson page follows the contract', () => {
   assert.match(html, /Who runs the tool: the model or the loop\?/);
   const step1 = html.slice(html.indexOf('id="step-1"'), html.indexOf('id="step-2"'));
   assert.match(step1, /fixed rules/);
-  assert.match(step1, /a real agent makes them with a language model, which can write a wrong or malformed call/);
+  assert.match(step1, /A real model writes its own calls and can get them wrong/);
   // the rounding rule is stated in step 3, and R4's text matches RULES
   const step3 = html.slice(html.indexOf('id="step-3"'), html.indexOf('id="step-4"'));
   assert.match(step3, /round each number to one significant figure/);
