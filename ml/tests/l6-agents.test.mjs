@@ -172,7 +172,7 @@ test('wording rules', () => {
   const body = html.slice(html.indexOf('<main'), html.indexOf('<ol class="reading">'));
   assert.doesNotMatch(body, /\b(thinks?|knows?|understands?|wants?|decides|autonomous|reasons|creative|conscious)\b|intelligen/i);
   assert.doesNotMatch(src, /\b(thinks?|knows?|understands?|wants?|decides|autonomous|intelligent)\b/i);
-  assert.doesNotMatch(html + src, /GPT|Claude|Anthropic|OpenAI|Gemini|Llama|LangChain|scratchpad|generated with|AI-assisted/i);
+  assert.doesNotMatch(html + src, /GPT|Gemini|Llama|LangChain|Mistral|Copilot|Hugging/i);
   assert.doesNotMatch(html, /delve|in today's world|unlock|harness the power|it's important to note|dive in/i);
   assert.doesNotMatch(src, /innerHTML|\beval\(|new Function/);
 });

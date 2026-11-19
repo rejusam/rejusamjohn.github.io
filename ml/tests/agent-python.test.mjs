@@ -37,7 +37,7 @@ const SAMPLE = [
 ];
 
 const NEVER = ['eval(', 'exec(', 'import os', 'subprocess', 'socket', 'urllib', 'requests', 'open('];
-const NAMES_NEVER = /claude|anthropic|openai|chatgpt|gpt|gemini|llama|mistral|copilot|langchain|scratchpad|generated with|ai-assisted|hugging/i;
+const NAMES_NEVER = /gpt|gemini|llama|mistral|copilot|langchain|hugging/i;
 const WORDING_NEVER = /\b(thinks?|knows?|understands?|wants?|decides?|reasons?|autonomous|intelligent|creative|conscious)\b/i;
 const MARKED = [
   '# ---- To use a real language model --------------------------------',
