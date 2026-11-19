@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { DEFAULT_CONFIG, PRICES, TASKS, TOOLS, runAgent, calc, callText, fmtMoney, fmtNumber, lookupText } from '../assets/agent.js';
 import { WORLD } from '../assets/world.js';
 import * as S from '../agent-mistakes/stage.js';
+import { whyParagraphs } from '../assets/trace-view.js';
 
 const html = readFileSync(new URL('../agent-mistakes/index.html', import.meta.url), 'utf8');
 const src = readFileSync(new URL('../agent-mistakes/stage.js', import.meta.url), 'utf8');
@@ -91,6 +92,14 @@ test('tool error story', () => {
   assert.equal(c.messages[1].text, 'calculator("2+")');
   assert.deepEqual(c.messages[1].input, { expr: '2+' });
   assert.equal(c.messages[1].rule, undefined); // not written by the stand-in
+  // Each written-in row explains itself in "Why this step".
+  assert.equal(c.messages[1].why, S.WHY_CALL);
+  assert.match(S.WHY_CALL, /No rule wrote this call/);
+  assert.match(S.WHY_CALL, /stand-in never writes it/);
+  assert.equal(c.messages[2].why, S.WHY_RESULT);
+  assert.equal(c.messages[3].why, S.WHY_STOP);
+  assert.deepEqual(whyParagraphs(c.messages[1]), [S.WHY_CALL]);
+  assert.deepEqual(whyParagraphs(c.messages[3]), [S.WHY_STOP]);
   assert.equal(c.messages[2].text, TOOLS.calculator.run({ expr: '2+' }).text);
   assert.equal(c.stop, 'tool error');
   assert.equal(c.messages[3].text, 'tool error');
@@ -197,6 +206,19 @@ test('approve and decline stories', () => {
   assert.deepEqual(S.sentLines(no), ['sent: nothing']);
   assert.deepEqual(S.sentLines(yes), ['sent: 1 message', 'to zoe: "pears cost $1.10 each."']);
   for (const r of [wait, yes, no, off]) for (const l of S.sentLines(r)) assert.ok(l.length <= S.LINE_MAX, l);
+});
+
+test('every outcome line in the pictures fits at phone width', () => {
+  const runs = [...S.PAGE_RUNS.map((p) => p.run()), ...Object.keys(TASKS).map((id) => runAgent(id))];
+  for (const r of runs) {
+    for (const prefix of ['', 'this run: ']) {
+      const lines = S.outcomeLines(r, prefix);
+      for (const l of lines) assert.ok(l.length <= S.LINE_MAX, l);
+      // Joined back, the lines say the same as outcomeText.
+      assert.equal(lines.join(' '), prefix + S.outcomeText(r));
+    }
+  }
+  assert.deepEqual(S.outcomeLines(S.sendRun(true, true)), ['done after 3 steps:', 'Told zoe: pears cost $1.10 each.']);
 });
 
 test('the summary comes from the stop reasons the page produced', () => {

@@ -56,7 +56,7 @@
     <header class="lesson-head">
         <p class="crumbs"><a href="/ml/">ML Explorer</a> · Level 6 · Agents</p>
         <h1>Mistakes and limits</h1>
-        <p class="promise">Agents go wrong in a few recognisable ways. See a made-up answer, a run going in circles and a tool error, what stops each one, and why a person should say yes before a tool that changes things.</p>
+        <p class="promise">Agents go wrong in a few recognisable ways. See a made-up answer, a run going in circles and a tool error, and the safeguard for each one, and why a person should say yes before a tool that changes things.</p>
         <p class="meta">About 10 minutes · Every trace is computed in your browser, apart from one tool-error case that is written in and labelled</p>
     </header>
 
@@ -101,7 +101,7 @@
                 <p>kai is not one of the <span data-value="people-count">8</span> people in the invented world, so lookup returns "<span data-value="kai-result">not found: kai</span>". Rule R1 covers this case and has three settings. Pick one from the menu next to Run and Next message.</p>
                 <p><strong>say so:</strong> the answer is "<span data-value="sayso-answer">I could not find kai.</span>", after <span data-value="sayso-steps">2</span> steps. It is true, and plain.</p>
                 <p><strong>try again:</strong> step 2 writes <span data-value="kai-call">lookup("kai")</span> again. That cannot help: lookup gives the same text for the same input every time. The repeat check from <a href="/ml/agent-loop/">The loop and when to stop</a> stops the run after <span data-value="again-steps">2</span> steps, before the second call runs, so the loop ran lookup <span data-value="again-runs">1</span> time. With the check off, only the step limit of <span data-value="default-limit">8</span> would stop it.</p>
-                <p><strong>guess:</strong> this is what a careless loop does. The stand-in fills the gap with the first food in the food table, <span data-value="first-food">apples</span>, and answers "<span data-value="guess-answer">kai likes apples.</span>" That answer is made up: kai is not in the world at all, so no food would be right. It reads just as well as a true answer; only the trace shows where it came from.</p>
+                <p><strong>guess:</strong> this is what a careless instruction allows. The stand-in fills the gap with the first food in the food table, <span data-value="first-food">apples</span>, and answers "<span data-value="guess-answer">kai likes apples.</span>" That answer is made up: kai is not in the world at all, so no food would be right. It reads just as well as a true answer; only the trace shows where it came from.</p>
                 <p>A language model needs no guess rule to do this. It can write a plausible answer that nothing it was given supports, sometimes called a "hallucination". As in <a href="/ml/llms/">Large language models, in miniature</a>: fluent is not the same as true.</p>
             </div>
         </li>
@@ -121,16 +121,16 @@
             <h2>Only the tools a task needs</h2>
             <p class="lede">Give each task only the tools it needs, so a wrong call can reach less.</p>
             <div class="happening">
-                <p>The picture lists, for each of the <span data-value="task-count">6</span> tasks in this level, the tools it needs. Here "needs" means the tools its run with the default settings writes calls for, or asks to use. No task's default run calls <span data-value="unused-tools">notepad</span>.</p>
-                <p>Of the <span data-value="tool-count">4</span> tools, calculator, lookup and notepad only read. send is different: it <span data-value="send-kind">changes things</span>, because it sends a message to someone.</p>
+                <p>The picture lists, for each of the <span data-value="task-count">6</span> tasks in this level, the tools it needs. Here "needs" means the tools the stand-in writes calls for, or asks to use, in the task's default run. No task's default run calls <span data-value="unused-tools">notepad</span>.</p>
+                <p>Of the <span data-value="tool-count">4</span> tools, calculator and lookup only read, and notepad only writes the run's own notes; none of them changes anything outside the run. send is different: it <span data-value="send-kind">changes things</span>, because it sends a message to someone.</p>
                 <p>Run each task again with only its needed tools switched on, and the trace is the same, message for message: the other tools were never used. Pick a task from the menu to see its trace.</p>
                 <p>Why it matters: a real model can write a call it should not, to a tool the task never needed. If the loop runs only the tools it was given, a call to any other tool cannot run. Fewer tools means fewer ways for a wrong call to do harm.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
                 <p>For each task, take the set of tools its default run writes calls for or asks to use:</p>
-                <div class="eq"><span class="tex" data-display data-tex="\text{needs}(\text{task}) = \{\text{tools in the call and ask rows of its default run}\}"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>needs</mtext><mo stretchy="false">(</mo><mtext>task</mtext><mo stretchy="false">)</mo><mo>=</mo><mo stretchy="false">{</mo><mtext>tools in the call and ask rows of its default run</mtext><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">\text{needs}(\text{task}) = \{\text{tools in the call and ask rows of its default run}\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">needs</span></span><span class="mopen">(</span><span class="mord text"><span class="mord">task</span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">{</span><span class="mord text"><span class="mord">tools in the call and ask rows of its default run</span></span><span class="mclose">}</span></span></span></span></span></span></div>
-                <p>The union over the six tasks is calculator, lookup and send; notepad is in none of them. Giving a task exactly its set leaves every trace unchanged.</p>
+                <div class="eq"><span class="tex" data-display data-tex="\text{needs}(\text{task}) = \{\text{tools in the call rows and `Waiting for your yes' rows of its default run}\}"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>needs</mtext><mo stretchy="false">(</mo><mtext>task</mtext><mo stretchy="false">)</mo><mo>=</mo><mo stretchy="false">{</mo><mtext>tools in the call rows and ‘Waiting for your yes’ rows of its default run</mtext><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">\text{needs}(\text{task}) = \{\text{tools in the call rows and `Waiting for your yes&#x27; rows of its default run}\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">needs</span></span><span class="mopen">(</span><span class="mord text"><span class="mord">task</span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">{</span><span class="mord text"><span class="mord">tools in the call rows and ‘Waiting for your yes’ rows of its default run</span></span><span class="mclose">}</span></span></span></span></span></span></div>
+                <p>The union over the <span data-value="task-count">6</span> tasks is calculator, lookup and send; notepad is in none of them. Giving a task exactly its set leaves every trace unchanged.</p>
             </details>
         </li>
 
@@ -146,13 +146,13 @@
                     <li><strong>Switch off ask before changes:</strong> it sends without asking, done after <span data-value="off-steps">3</span> steps.</li>
                 </ul>
                 <p>On this page send only records the message in the list under the picture; nothing leaves the page.</p>
-                <p>Why ask: a reading tool can run again with no harm, but a message, once sent, cannot be unsent. The same holds for tools that pay, delete or book. A person's yes before such a tool is the last check before a wrong call becomes a real change.</p>
+                <p>Why ask: a reading tool can run again with no harm, but a message, once sent, cannot be unsent. The same holds for tools that pay, delete or book. A person's yes before such a tool is the last check before a wrong call becomes a real change. It only helps if the person reads the call before saying yes.</p>
             </div>
         </li>
 
         <li class="step" id="step-6">
-            <h2>What the safeguards stopped</h2>
-            <p class="lede">Each safeguard on this page stopped one kind of failure. None of them makes a run correct.</p>
+            <h2>What the safeguards did</h2>
+            <p class="lede">Each safeguard on this page deals with one kind of failure. None of them makes a run correct.</p>
             <div class="happening">
                 <p>Across the runs on this page there were <span data-value="stop-count">5</span> different ways to stop: done, repeated call, tool error, waiting for approval and declined. The picture lists what each safeguard did. Pick any run of this lesson from the menu to see its trace and which safeguard, if any, stopped it.</p>
                 <ul>
@@ -162,7 +162,7 @@
                     <li><strong>Asking before changes:</strong> nothing was sent without a yes.</li>
                     <li><strong>Only the needed tools:</strong> no stop of its own; it limits what a wrong call can reach.</li>
                 </ul>
-                <p>No safeguard caught the guess: "<span data-value="guess-answer">kai likes apples.</span>" ended as done, like a true answer. Only the instruction prevents it. Real agents add many more safeguards, and still go wrong in these ways.</p>
+                <p>No safeguard caught the guess: "<span data-value="guess-answer">kai likes apples.</span>" ended as done, like a true answer. Here, only choosing "say so" avoids it; for a language model, an instruction to say so cannot rule a made-up answer out. Real agents add many more safeguards, and still go wrong in these ways.</p>
             </div>
         </li>
     </ol>

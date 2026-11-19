@@ -37,6 +37,14 @@ export function outcomeText(r) {
 // The longest text line in the picture, in characters; it fits at phone width.
 export const LINE_MAX = 46;
 
+// outcomeText split into picture lines of at most LINE_MAX characters.
+export function outcomeLines(r, prefix = '') {
+  const one = prefix + outcomeText(r);
+  if (one.length <= LINE_MAX) return [one];
+  if (r.stop === 'done') return [`${prefix}done after ${plural(r.steps, 'step')}:`, r.answer];
+  return [`${prefix}stopped: ${r.stop}`, `after ${plural(r.steps, 'step')}, no answer`];
+}
+
 // ---- a tool error: a written-in case ----------------------------------------------------
 
 // The stand-in never writes a call the calculator cannot read, so this case is written in:
@@ -50,6 +58,10 @@ export function stopAfter(tool, r) {
   return !r.ok && !notFound ? 'tool error' : null;
 }
 
+export const WHY_CALL = 'No rule wrote this call: it is written into the page as an example of a malformed call a language model could write. The stand-in never writes it.';
+export const WHY_RESULT = "The calculator's real reply to this input: the loop ran the tool. No rule applies.";
+export const WHY_STOP = 'No rule applies: the loop on this page stops when a tool fails, apart from lookup\'s "not found". Here the calculator could not read its input.';
+
 export function toolErrorCase() {
   const input = { expr: BAD_EXPR };
   const r = TOOLS.calculator.run(input, {});
@@ -58,9 +70,9 @@ export function toolErrorCase() {
     writtenIn: true,
     messages: [
       { role: 'task', text: TASKS[TASK_SUM].text, step: 0 },
-      { role: 'call', text: callText('calculator', input), step: 1, tool: 'calculator', input },
-      { role: 'result', text: r.text, step: 1, tool: 'calculator', input },
-      { role: 'stop', text: stop, step: 1 },
+      { role: 'call', text: callText('calculator', input), step: 1, tool: 'calculator', input, why: WHY_CALL },
+      { role: 'result', text: r.text, step: 1, tool: 'calculator', input, why: WHY_RESULT },
+      { role: 'stop', text: stop, step: 1, why: WHY_STOP },
     ],
     stop, answer: null, steps: 1, state: { notes: [], sent: [] },
   };
@@ -360,26 +372,27 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     { lines: ['the wrong tool, or one that does not exist', 'named only: the stand-in never writes one'], dashed: true },
   ];
   function drawWays() {
-    frame(330);
+    const out = outcomeLines(result, 'this run: ');
+    frame(310 + out.length * 20);
     label(10, 20, 'four ways a run can go wrong', { fill: STRONG, weight: 700 });
     let y = 34;
     for (const w of WAYS) y = textBox(y, w.lines, false, { dashed: w.dashed }) + 10;
-    label(10, 320, `this run: ${outcomeText(result)}`, { fill: STRONG });
+    out.forEach((t, k) => label(10, 320 + k * 20, t, { fill: STRONG }));
     return `Four ways a run can go wrong: ${WAYS.map((w) => w.lines.join(': ')).join('; ')}. The last is dashed: this page names it but does not run it. This run: ${outcomeText(result)}.`;
   }
 
   // Step 2: the three instructions side by side; the chosen one bold.
   function drawNotFound() {
-    frame(258);
+    const outs = NOT_FOUND_OPTIONS.map((o) => outcomeLines(notFoundRun(o)));
+    frame(34 + outs.reduce((n, l) => n + 24 + (l.length + 1) * 20, 0) + 34);
     label(10, 20, 'lookup("kai") gives "not found: kai"', { fill: STRONG, weight: 700 });
     const parts = [];
     let y = 34;
     NOT_FOUND_OPTIONS.forEach((o, k) => {
-      const out = outcomeText(notFoundRun(o));
-      y = textBox(y, [`"${o}"`, out], k === nfIdx) + 10;
-      parts.push(`"${o}": ${out}${k === nfIdx ? ' (shown in the trace)' : ''}`);
+      y = textBox(y, [`"${o}"`, ...outs[k]], k === nfIdx) + 10;
+      parts.push(`"${o}": ${outcomeText(notFoundRun(o))}${k === nfIdx ? ' (shown in the trace)' : ''}`);
     });
-    label(10, 248, `kai is not one of the ${WORLD.people.length} people in the world`);
+    label(10, y + 14, `kai is not one of the ${WORLD.people.length} people in the world`);
     return `When lookup("kai") gives "not found: kai". ${parts.join('. ')}. kai is not one of the ${WORLD.people.length} people in the invented world.`;
   }
 
@@ -416,14 +429,16 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     table.forEach((row, k) => { y = textBox(y, [rowLine(row)], k === taskIdx) + 10; });
     const unused = unusedTools();
     label(10, y + 14, `called by no task: ${listText(unused)}`);
-    label(10, y + 36, `send ${TOOLS.send.kind}; the others read`);
-    return `The tools each task's default run calls or asks to use. ${table.map(rowLine).join('. ')}. Called by no task: ${listText(unused)}. Send ${TOOLS.send.kind}; the others only read. Shown in the trace: ${table[taskIdx].id}.`;
+    label(10, y + 36, `send ${TOOLS.send.kind} outside the run`);
+    return `The tools each task's default run calls or asks to use. ${table.map(rowLine).join('. ')}. Called by no task: ${listText(unused)}. Send ${TOOLS.send.kind} outside the run; calculator and lookup only read, and notepad only writes the run's own notes. Shown in the trace: ${table[taskIdx].id}.`;
   }
 
   // Step 5: the ask, the answer, and the sent list.
   function drawSend() {
-    frame(262);
     const r = result;
+    const out = outcomeLines(r);
+    const sl = sentLines(r);
+    frame(232 + (out.length + sl.length) * 20);
     const askRow = sendRun(undefined, true).messages.find((m) => m.role === 'approval');
     label(10, 20, `send ${TOOLS.send.kind}`, { fill: STRONG, weight: 700 });
     textBox(34, ['ask first:', callText(askRow.tool, askRow.input)], ask && approve === undefined, { dashed: !ask });
@@ -435,10 +450,11 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       label(x + 104, 124, t, { anchor: 'middle', fill: on ? STRONG : MUTED, weight: on ? 700 : 400 });
     });
     label(10, 162, ask ? 'ask before changes: on' : 'ask before changes: off, no ask', { fill: STRONG });
-    label(10, 184, outcomeText(r));
-    const sl = sentLines(r);
-    sl.forEach((t, k) => label(10, 212 + k * 20, t, { fill: STRONG, weight: k === 0 ? 700 : 400 }));
-    label(10, 254, 'recorded on this page only; nothing leaves it', { size: 12 });
+    let y = 164;
+    for (const t of out) { y += 20; label(10, y, t); }
+    y += 8;
+    sl.forEach((t, k) => { y += 20; label(10, y, t, { fill: STRONG, weight: k === 0 ? 700 : 400 }); });
+    label(10, y + 24, 'recorded on this page only; nothing leaves it', { size: 12 });
     const state = !ask ? 'Ask before changes is off, so there is no ask.' : approve === undefined ? 'No answer yet.' : approve ? 'Approved.' : 'Declined.';
     return `Send ${TOOLS.send.kind}. The ask: ${callText(askRow.tool, askRow.input)}. ${state} ${outcomeText(r)}. ${sl.join('; ')}. The message is only recorded on this page; nothing leaves it.`;
   }
