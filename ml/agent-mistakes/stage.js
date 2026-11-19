@@ -58,7 +58,7 @@ export function stopAfter(tool, r) {
   return !r.ok && !notFound ? 'tool error' : null;
 }
 
-export const WHY_CALL = 'No rule wrote this call: it is written into the page as an example of a malformed call a language model could write. The stand-in never writes it.';
+export const WHY_CALL = 'No rule wrote this call: it is written into the page as an example of a broken call a language model could write. The stand-in never writes it.';
 export const WHY_RESULT = "The calculator's real reply to this input: the loop ran the tool. No rule applies.";
 export const WHY_STOP = 'No rule applies: the loop on this page stops when a tool fails, apart from lookup\'s "not found". Here the calculator could not read its input.';
 
@@ -438,7 +438,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     const r = result;
     const out = outcomeLines(r);
     const sl = sentLines(r);
-    frame(232 + (out.length + sl.length) * 20);
+    frame(210 + (out.length + sl.length) * 20);
     const askRow = sendRun(undefined, true).messages.find((m) => m.role === 'approval');
     label(10, 20, `send ${TOOLS.send.kind}`, { fill: STRONG, weight: 700 });
     textBox(34, ['ask first:', callText(askRow.tool, askRow.input)], ask && approve === undefined, { dashed: !ask });
