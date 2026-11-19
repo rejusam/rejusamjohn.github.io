@@ -210,6 +210,16 @@ export function pageValues() {
   return {
     params: String(paramCount(SIZES)),
     eta: String(ETA),
+    depth: String(DEPTH),
+    width: String(WIDTH),
+    layers: String(N_LAYERS),
+    'n-train': String(N_TRAIN),
+    'n-class': String(N_TRAIN / 2),
+    batch: String(BATCH),
+    epochs: String(EPOCHS),
+    'sd-small': String(SMALL_SD),
+    'sd-large': String(LARGE_SD),
+    'bar-top': `10${sup(LOG_RANGE[1])}`,
   };
 }
 
