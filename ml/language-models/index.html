@@ -102,7 +102,7 @@
             <div class="happening">
                 <p>Look at the bars: how often each character followed "␣li" in the training text of <span data-value="n-train">2,000</span> sentences (<span data-value="train-chars">42,030</span> characters).</p>
                 <p>"␣li" occurs <span data-value="ctx-total">1,699</span> times: k follows <span data-value="top-count">830</span> times, v <span data-value="v-count">782</span> and m <span data-value="m-count">87</span>. So the probability of k is about <span data-value="top-count">830</span> out of <span data-value="ctx-total">1,699</span>: <span data-value="top-p">0.488</span>.</p>
-                <p>First each count gets a small extra k = 0.01 (add-k smoothing; here k is a number, not the letter). So a character never seen after "␣li" gets <span data-value="zero-p">0.0000059</span>, not 0.</p>
+                <p>Before dividing, each count gets a small extra k = 0.01 (add-k smoothing; here k is a number, not the letter). So a character never seen after "␣li" gets <span data-value="zero-p">0.0000059</span>, not 0.</p>
                 <p>A context never seen in training has all its counts 0, so every character gets 1/28.</p>
             </div>
             <details class="maths">
@@ -119,9 +119,9 @@
             <p class="lede">Now choose the text. Type in the box under the picture; the bars show what comes next.</p>
             <div class="happening">
                 <p>Look at the chips under the box: the outlined ones are the context, the last n known characters. The "context n" slider sets n from 1 to 8.</p>
-                <p>Try "zoe likes ", then "zoe li", then letters that never appear in the invented world.</p>
+                <p>Try "zoe likes ", "zoe li", then letters the invented world never uses, such as q or x.</p>
                 <p>If the context never occurred in training, or there are fewer than n known characters, every bar is 1/28.</p>
-                <p>Note: capitals become lower case. A digit, comma or emoji shows as a dashed chip with a ? and is skipped. What you type is never stored or sent.</p>
+                <p>Note: capitals become lower case; a digit, comma or emoji shows as a dashed ? chip and is skipped. What you type is never stored or sent.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -131,12 +131,11 @@
 
         <li class="step" id="step-4">
             <h2>Draw, add, repeat</h2>
-            <p class="lede">To write: draw at random, add, repeat. Temperature τ reshapes the bars first.</p>
+            <p class="lede">To write, the model picks the next character at random, using bar heights as odds, adds it and repeats. Temperature τ can sharpen or flatten them.</p>
             <div class="happening">
-                <p>Look under the picture: text written at four temperatures. The "temperature τ" slider picks which the bars show.</p>
-                <p>τ = 1 uses the model's own probabilities; smaller τ sharpens them, larger τ flattens them. τ = 0 always takes the likeliest (greedy); ties, like h and l after "he␣", are broken at random.</p>
-                <p>"Generate" uses a new seed each press. τ changes only the drawing, not the counts.</p>
-                <p>Over many presses (at n = 3, from the starting text), τ = 0 repeats a few words; τ = 1.5 gives more words outside the invented world.</p>
+                <p>Look under the picture: one text per τ. The bars follow the "temperature τ" slider.</p>
+                <p>τ = 1 uses the model's own probabilities. τ = 0 always takes the likeliest (greedy); ties, like h and l after "he␣", break at random. "Generate" uses a new seed each press. τ changes the drawing, not the counts.</p>
+                <p>Over many presses (at n = 3, from the starting text), τ = 0 repeats a few words; τ = 1.5 picks unlikely characters more often, so more words fall outside the invented world.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -152,7 +151,7 @@
             <p class="lede">How good are the guesses? Test the model on text it never counted.</p>
             <div class="happening">
                 <p>Look at the bars, one per n: scores on held-out text, <span data-value="n-held">300</span> new sentences never counted.</p>
-                <p>The model gave the true next character probability p, costing <span class="tex" data-tex="-\log_2 p"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>2</mn></msub><mi>p</mi></mrow><annotation encoding="application/x-tex">-\log_2 p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9386em;vertical-align:-0.2441em;"></span><span class="mord">−</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">p</span></span></span></span></span> bits (0 for a sure, right guess). The average is the cross-entropy; lower is better. A 1/28 guess costs <span data-value="uniform-bits">4.81</span>.</p>
+                <p>The model gave the true next character probability p, costing <span class="tex" data-tex="-\log_2 p"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>2</mn></msub><mi>p</mi></mrow><annotation encoding="application/x-tex">-\log_2 p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9386em;vertical-align:-0.2441em;"></span><span class="mord">−</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">p</span></span></span></span></span> bits (0 for a sure, right guess; more, the less probability it gave the right character). The average is the cross-entropy; lower is better.</p>
                 <p>With the full text, bits fall from <span data-value="full-bits-1">1.99</span> at n = 1 to <span data-value="full-bits-3">0.47</span> at n = 3, then only to <span data-value="full-bits-8">0.31</span> at n = 8.</p>
                 <p>Now switch to "Small training text" (the title shows which). Held-out bits are lowest at n = 3, <span data-value="small-bits-3">0.59</span>, and rise to <span data-value="small-bits-8">1.32</span> at n = 8, while the training dashes stay low (<span data-value="small-train-8">0.33</span> at n = 8): good on counted text, poor on new text.</p>
             </div>
@@ -169,10 +168,10 @@
             <h2>Why counting runs out</h2>
             <p class="lede">Why the rise? Each extra character gives 28 times as many possible contexts.</p>
             <div class="happening">
-                <p>Look at the lines (full text solid, small text dashed) and the "unseen" row.</p>
-                <p>That row is the share of held-out contexts the small text never saw: up to <span data-value="small-unseen-8">15.3%</span> at n = 8. Each costs the full uniform guess, <span data-value="uniform-bits">4.81</span> bits, so the dashed line turns up after n = 3.</p>
-                <p>The full text copes because the world is tiny. Of the <span class="tex" data-tex="28^8"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><msup><mn>8</mn><mn>8</mn></msup></mrow><annotation encoding="application/x-tex">28^8</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">2</span><span class="mord"><span class="mord">8</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">8</span></span></span></span></span></span></span></span></span></span></span></span> = <span data-value="possible-8">377,801,998,336</span> possible 8-character contexts it has only <span data-value="full-contexts-8">731</span>, yet every held-out context is among them.</p>
-                <p>Counts treat every context on its own: with n = 7, seeing "mia lik" many times teaches nothing about "zoe lik", although an e comes next in both.</p>
+                <p>Look at the "unseen" row: held-out contexts the small text never saw, up to <span data-value="small-unseen-8">15.3%</span> at n = 8. Each costs a uniform guess, <span data-value="uniform-bits">4.81</span> bits, so the dashed line rises after n = 3.</p>
+                <p>The full text copes because the world is tiny and regular: of the <span class="tex" data-tex="28^8"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><msup><mn>8</mn><mn>8</mn></msup></mrow><annotation encoding="application/x-tex">28^8</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord">2</span><span class="mord"><span class="mord">8</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">8</span></span></span></span></span></span></span></span></span></span></span></span> = <span data-value="possible-8">377,801,998,336</span> possible 8-character contexts it contains only <span data-value="full-contexts-8">731</span>, yet every 8-character context in the held-out text is among them.</p>
+                <p>Counts do not share: with n = 7, seeing "mia lik" many times teaches nothing about "zoe lik", although an e comes next in both.</p>
+                <p>Note: neural models share learning across similar contexts; the next lessons build one.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
