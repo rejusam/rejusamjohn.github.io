@@ -348,7 +348,10 @@ test('approve answers the first ask only', () => {
   const y = runAgent('tell-zoe', cfg({budget: 5}), {approve: true});
   assert.equal(y.stop, 'waiting for approval');
   assert.equal(y.state.sent.length, 1);
-  assert.equal(y.messages.filter(m => m.role === 'approval' && m.text === 'Yes.').length, 1);
+  assert.equal(y.messages.filter(m => m.role === 'reply' && m.text === 'Yes.').length, 1);
+  // The ask rows keep role 'approval'; the person's answer is its own 'reply' row.
+  assert.ok(y.messages.filter(m => m.role === 'approval').every(m => m.text.startsWith('Waiting for a yes before ')));
+  assert.equal(y.messages[y.messages.findIndex(m => m.role === 'reply') - 1].role, 'approval');
   const n = runAgent('tell-zoe', cfg({budget: 5}), {approve: false});
   assert.equal(n.stop, 'declined');
   assert.deepEqual(n.state.sent, []);
@@ -437,6 +440,8 @@ test('trace view text helpers', () => {
   assert.equal(statusText({stop: 'done', steps: 4}), 'Stopped: done · 4 steps');
   assert.equal(statusText({stop: 'done', steps: 1}), 'Stopped: done · 1 step');
   assert.equal(ROLE_LABELS.approval, 'Waiting for your yes');
+  assert.equal(ROLE_LABELS.reply, 'Your answer');
+  assert.equal(NO_RULE_TEXT.reply, 'Your answer: the loop sends only after a yes.');
   assert.deepEqual(rulesFor({rules: ['R1', 'R6'], rule: 'R6'}).map((r) => r.id), ['R1', 'R6']);
   assert.equal(rulesFor({rule: 'R3'})[0].id, 'R3');
   assert.ok(rulesFor({rule: 'R3'})[0].text.length > 0);

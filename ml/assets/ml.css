@@ -3402,7 +3402,8 @@ html:not(.js) .hub-demo {
 .trace-row.role-result,
 .trace-row.role-answer { border-left-color: var(--ml-cyan); }
 .trace-row.role-stop,
-.trace-row.role-approval { border-left: 2px dashed var(--ml-ink); }
+.trace-row.role-approval,
+.trace-row.role-reply { border-left: 2px dashed var(--ml-ink); }
 
 .trace-row button {
   display: flex;
@@ -3446,7 +3447,8 @@ html:not(.js) .hub-demo {
   color: var(--ml-bg);
 }
 .trace-row.role-stop .trace-chip,
-.trace-row.role-approval .trace-chip {
+.trace-row.role-approval .trace-chip,
+.trace-row.role-reply .trace-chip {
   border-style: dashed;
   border-color: var(--ml-ink);
   color: var(--ml-ink);

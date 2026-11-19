@@ -45,7 +45,7 @@ export function trueAnswer(taskId) {
 export const isRight = (taskId, answer) => answer === trueAnswer(taskId);
 
 // Which box of the loop picture a row belongs to.
-const BOX_OF = { task: 'read', note: 'read', plan: 'choose', answer: 'choose', approval: 'choose', call: 'act', result: 'see', stop: 'stop' };
+const BOX_OF = { task: 'read', note: 'read', plan: 'choose', answer: 'choose', approval: 'choose', reply: 'choose', call: 'act', result: 'see', stop: 'stop' };
 export const loopBox = (msg) => BOX_OF[msg.role] || 'read';
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;

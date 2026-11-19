@@ -185,7 +185,7 @@ test('approve and decline stories', () => {
   assert.equal(fmtMoney(PRICES.pears), '$1.10');
   assert.equal(calls(yes).filter((m) => m.tool === 'send').length, 1);
   assert.equal(calls(yes).find((m) => m.tool === 'send').step, 2); // the send runs within step 2, no new model call
-  assert.deepEqual(yes.messages.filter((m) => m.role === 'approval').map((m) => m.text).slice(1), ['Yes.']);
+  assert.deepEqual(yes.messages.filter((m) => m.role === 'reply').map((m) => m.text), ['Yes.']);
   // Decline: nothing sent, stopped as declined after 2 steps.
   const no = S.sendRun(false, true);
   assert.equal(no.stop, 'declined');
@@ -193,7 +193,7 @@ test('approve and decline stories', () => {
   assert.equal(no.answer, null);
   assert.deepEqual(no.state.sent, []);
   assert.equal(calls(no).filter((m) => m.tool === 'send').length, 0);
-  assert.deepEqual(no.messages.filter((m) => m.role === 'approval').map((m) => m.text).slice(1), ['No.']);
+  assert.deepEqual(no.messages.filter((m) => m.role === 'reply').map((m) => m.text), ['No.']);
   // Ask before changes off: it sends without asking.
   const off = S.sendRun(undefined, false);
   assert.equal(off.stop, 'done');

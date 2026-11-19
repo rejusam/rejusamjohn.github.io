@@ -8,7 +8,7 @@ export const RUN_MS = 450;
 
 export const ROLE_LABELS = {
   task: 'Task', plan: 'Plan', call: 'Tool call', result: 'Result', answer: 'Answer',
-  stop: 'Stopped', note: 'Note', approval: 'Waiting for your yes',
+  stop: 'Stopped', note: 'Note', approval: 'Waiting for your yes', reply: 'Your answer',
 };
 
 // What to say in the "Why this step" box when a row carries no rule.
@@ -21,6 +21,7 @@ export const NO_RULE_TEXT = {
   stop: 'No rule applies: the loop stopped here.',
   note: 'No rule applies: this is a note from the loop.',
   approval: 'No rule applies: the loop waits for a yes or no.',
+  reply: 'Your answer: the loop sends only after a yes.',
 };
 
 // Row indices to reveal, one per tick. Reduced motion: one tick that reveals everything.

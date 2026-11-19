@@ -4,12 +4,14 @@
 // build tasks only (two shopping sums and one message to send).
 import {WORLD} from './world.js';
 import {PRICES, TASKS, DEFAULT_CONFIG, runAgent} from './agent.js';
+import {ROLE_LABELS} from './trace-view.js';
 
 export const BUILD_TASKS = ['eli-shop', 'pair-shop', 'tell-zoe'];
 
-// Row labels, the same words the trace view shows next to each message.
-export const ROLE_LABELS = {task: 'Task', plan: 'Plan', call: 'Tool call', result: 'Result',
-  answer: 'Answer', stop: 'Stopped', note: 'Note', approval: 'Waiting for your yes'};
+// Row labels: the trace view's own, so the program prints the same words the page shows.
+export {ROLE_LABELS};
+// The roles the program prints, in the order of its LABELS literal.
+const PY_ROLES = ['task', 'plan', 'call', 'result', 'answer', 'stop', 'approval', 'reply'];
 
 export const ASK_PROMPT = 'Send this? y/n ';
 
@@ -23,7 +25,7 @@ function merge(config) {
 export function traceLines(result, typed) {
   const out = [];
   for (const m of result.messages) {
-    if (typed && m.role === 'approval' && (m.text === 'Yes.' || m.text === 'No.')) out.push(ASK_PROMPT + typed);
+    if (typed && m.role === 'reply') out.push(ASK_PROMPT + typed);
     out.push(`${ROLE_LABELS[m.role]}: ${m.text}`);
   }
   return out;
@@ -108,8 +110,7 @@ export function toPython(config) {
     add('# A guess uses the first food in the food table or the first price in the price list.',
       `FIRST_FOOD = ${py(firstFood)}`, `FIRST_PRICE = ${py(firstPrice)}`);
   }
-  add(...pyDict('LABELS', {task: 'Task', plan: 'Plan', call: 'Tool call', result: 'Result',
-    answer: 'Answer', stop: 'Stopped', approval: 'Waiting for your yes'}));
+  add(...pyDict('LABELS', Object.fromEntries(PY_ROLES.map(r => [r, ROLE_LABELS[r]]))));
   if (t.notepad) add('NOTES = []');
   if (t.send) add('SENT = []');
   add('',
@@ -343,9 +344,9 @@ export function toPython(config) {
       '                return "waiting for approval"',
       '            asked = True',
       '            if not yes():',
-      '                say(messages, "approval", "No.")',
+      '                say(messages, "reply", "No.")',
       '                return "declined"',
-      '            say(messages, "approval", "Yes.")');
+      '            say(messages, "reply", "Yes.")');
   }
   add('        say(messages, "call", call, tool, tool_input)',
     '        if REPEAT_CHECK and call == last_call:',

@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {DEFAULT_CONFIG, TASKS, TOOLS, fmtNumber, fmtMoney, runAgent, standIn} from '../assets/agent.js';
 import {toPython, BUILD_TASKS, ROLE_LABELS, ASK_PROMPT, traceLines, expectedOutput} from '../assets/agent-py.js';
+import {ROLE_LABELS as TRACE_LABELS} from '../assets/trace-view.js';
 
 // Task 10's option space: 2^4 tool subsets x onNotFound 3 x sums 2 x stepLimit 3 x budget 2 x ask 2.
 const NAMES = ['calculator', 'lookup', 'notepad', 'send'];
@@ -116,7 +117,10 @@ test('program length stays readable', () => {
 
 test('trace lines use the row labels', () => {
   assert.deepEqual(ROLE_LABELS, {task: 'Task', plan: 'Plan', call: 'Tool call', result: 'Result',
-    answer: 'Answer', stop: 'Stopped', note: 'Note', approval: 'Waiting for your yes'});
+    answer: 'Answer', stop: 'Stopped', note: 'Note', approval: 'Waiting for your yes',
+    reply: 'Your answer'});
+  assert.equal(ROLE_LABELS, TRACE_LABELS); // one source: the trace view's labels
+  assert.ok(toPython(DEFAULT_CONFIG).includes('"approval": "Waiting for your yes", "reply": "Your answer"}'));
   const r = runAgent('eli-shop', DEFAULT_CONFIG);
   assert.deepEqual(traceLines(r), [
     'Task: eli buys 4 of the food eli likes. What does that cost?',
@@ -134,7 +138,7 @@ test('trace lines use the row labels', () => {
     'Stopped: done',
   ]);
   const y = traceLines(runAgent('tell-zoe', DEFAULT_CONFIG, {approve: true}), 'y');
-  const i = y.indexOf('Waiting for your yes: Yes.');
+  const i = y.indexOf('Your answer: Yes.');
   assert.equal(y[i - 1], ASK_PROMPT + 'y');
   assert.equal(y[i - 2], 'Waiting for your yes: Waiting for a yes before send("zoe", "pears cost $1.10 each.")');
   const out = expectedOutput(DEFAULT_CONFIG, 'n');

@@ -418,11 +418,11 @@ export function runAgent(taskId, config, opts) {
       asked = true;
       if (o.approve === undefined || !firstAsk) { stop = 'waiting for approval'; break; }
       if (o.approve === false) {
-        messages.push({role: 'approval', text: 'No.', step: steps});
+        messages.push({role: 'reply', text: 'No.', step: steps});
         stop = 'declined';
         break;
       }
-      messages.push({role: 'approval', text: 'Yes.', step: steps});
+      messages.push({role: 'reply', text: 'Yes.', step: steps});
     }
     const call = {role: 'call', text: callText(run.tool, run.input), step: steps, rule: out.rule,
       rules: out.rules.slice(), tool: run.tool, input: run.input};

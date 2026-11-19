@@ -327,6 +327,8 @@ test('page values are computed and match the page', () => {
 });
 
 test('the page has the lesson parts and no free-text input', () => {
+  // The row labels listed in step 4 are the trace view's, the person's answer included.
+  assert.match(html, /Task, Plan, Tool call, Result, Waiting for your yes, Your answer, Answer, and Stopped/);
   assert.match(html, /<title>Build your own agent · ML Explorer<\/title>/);
   assert.match(html, /Level 6 · Agents/);
   assert.match(html, /href="\/ml\/agent-mistakes\/"/);
