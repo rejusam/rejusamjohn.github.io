@@ -229,12 +229,31 @@
 </head>
 <body>
 <a class="ml-skip" href="#main">Skip to the content</a>
+<nav class="site-nav" aria-label="Site">
+    <div class="site-nav-in">
+        <a class="site-logo" href="/" aria-label="Reju Sam John, home">RSJ</a>
+        <button type="button" class="site-toggle" aria-label="Site menu" aria-expanded="false" aria-controls="site-links">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="site-links" id="site-links">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#projects">Projects</a></li>
+            <li><a href="/ml/" class="is-here" aria-current="page">ML Explorer</a></li>
+            <li><a href="/#publications">Publications</a></li>
+            <li><a href="/#showcase">Showcase</a></li>
+            <li><a href="/#education">Education</a></li>
+            <li><a href="/#contact" class="site-cta">Get in Touch</a></li>
+        </ul>
+    </div>
+</nav>
 <header class="ml-top">
     <a class="ml-brand" href="/ml/">ML Explorer</a>
-    <a class="ml-site" href="/">Reju Sam John</a>
 </header>
-<main class="hub" id="main">
+<main class="hub hub-landing" id="main">
 
+    <div class="hub-hero">
     <header class="hub-head">
         <p class="hub-cap">Machine learning, one idea at a time</p>
         <h1>ML Explorer</h1>
@@ -248,6 +267,16 @@
             <a class="hub-btn" href="/ml/notation/">Notation</a>
         </div>
     </header>
+
+    <figure class="hub-demo" aria-labelledby="hub-demo-cap">
+        <svg viewBox="0 0 560 250" role="img" aria-labelledby="hub-demo-cap"></svg>
+        <div class="hub-demo-bar">
+            <p class="hub-demo-read">step <b data-k>0</b> <span>slope w</span> <b data-w>−1.00</b> <span>loss</span> <b data-loss>–</b></p>
+            <button type="button" class="hub-demo-replay">Run again</button>
+        </div>
+        <figcaption id="hub-demo-cap">Gradient descent at work: each step moves the slope w a little downhill on the loss curve (left), and the line turns to fit the eight points (right). Computed in your browser. <a href="/ml/gradient-descent/">Lesson 7 shows how</a>.</figcaption>
+    </figure>
+    </div>
 
     <section class="hub-path-sec" id="path" aria-labelledby="path-title">
         <h2 id="path-title">The path</h2>

@@ -1,11 +1,12 @@
 // Entry point for every ML Explorer page:
 // <script type="module" src="/ml/assets/ml.js"></script>
 
-import { PATH, TOTAL_LIVE, lessonHref, startLink } from './path.js';
+import { PATH, TOTAL_LIVE, lessonHref, startLink, firstNotDone } from './path.js';
 import { createProgress } from './progress.js';
 import { initCoffee } from './coffee.js';
 import { startLesson } from './engine.js';
 import { initSearch } from './search.js';
+import { initHubDemo } from './hub-demo.js';
 import { prefersReducedMotion } from './plot.js';
 
 const root = document.documentElement;
@@ -179,6 +180,36 @@ function initHub(list) {
     a.appendChild(make('span', 'vh', ' (done)'));
   }
 
+  // Each level's head says how far the reader has got through it.
+  for (const levelEl of list.querySelectorAll('.hub-level')) {
+    const links = [...levelEl.querySelectorAll('a[data-slug]')];
+    if (!links.length) continue;
+    const done = links.filter((a) => isDone(a.dataset.slug)).length;
+    const head = levelEl.querySelector('.hub-level-head');
+    if (!head) continue;
+    const tally = make('p', 'hub-tally');
+    const bar = make('span', 'hub-tally-bar');
+    bar.setAttribute('aria-hidden', 'true');
+    const fill = make('i');
+    fill.style.width = `${(done / links.length) * 100}%`;
+    bar.appendChild(fill);
+    tally.append(bar, make('span', null, `${done} of ${links.length} done`));
+    head.appendChild(tally);
+    if (done === links.length) levelEl.classList.add('is-complete');
+  }
+
+  // The next lesson along the path gets a marker.
+  const next = firstNotDone(isDone);
+  if (next) {
+    const a = list.querySelector(`a[data-slug="${next.slug}"]`);
+    const card = a && a.closest('.hub-lesson');
+    if (card) {
+      card.classList.add('is-next');
+      const n = card.querySelector('.hub-n');
+      if (n) n.appendChild(make('span', 'hub-next', 'Up next'));
+    }
+  }
+
   // Rewrite the existing start button in place, so nothing moves on load.
   const start = document.querySelector('.hub-start');
   if (start) {
@@ -188,7 +219,40 @@ function initHub(list) {
   }
 }
 
+// --- The site menu on phones (the same links as the home page) ---
+
+function initSiteNav() {
+  const toggle = document.querySelector('.site-toggle');
+  const links = document.getElementById('site-links');
+  if (!toggle || !links) return;
+  const narrow = window.matchMedia('(max-width: 768px)');
+  const setOpen = (open, { restoreFocus = true } = {}) => {
+    root.classList.toggle('site-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    if (open) {
+      const first = links.querySelector('a');
+      if (first) first.focus();
+    } else if (restoreFocus) {
+      toggle.focus();
+    }
+  };
+  toggle.addEventListener('click', () => setOpen(!root.classList.contains('site-open')));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && root.classList.contains('site-open')) setOpen(false);
+  });
+  document.addEventListener('click', (e) => {
+    if (!root.classList.contains('site-open')) return;
+    if (toggle.contains(e.target) || links.contains(e.target)) return;
+    setOpen(false, { restoreFocus: false });
+  });
+  narrow.addEventListener('change', () => {
+    if (!narrow.matches && root.classList.contains('site-open')) setOpen(false, { restoreFocus: false });
+  });
+}
+
 // --- Start ---
+
+initSiteNav();
 
 const top = document.querySelector('header.ml-top');
 const nav = document.querySelector('nav.ml-path');
@@ -201,6 +265,15 @@ initCoffee(document);
 
 const hubPath = document.querySelector('ol.hub-path');
 if (hubPath) initHub(hubPath);
+const hubDemo = document.querySelector('.hub-demo');
+if (hubDemo) {
+  try {
+    initHubDemo(hubDemo, { reduced: prefersReducedMotion() });
+  } catch (err) {
+    console.error(err);
+    hubDemo.hidden = true;
+  }
+}
 
 if (lessonMain) {
   // The engine builds the controls synchronously, before it waits for
