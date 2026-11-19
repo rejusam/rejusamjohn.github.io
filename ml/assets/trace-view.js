@@ -85,6 +85,9 @@ export function whyParagraphs(msg, unseen = false) {
 //   const tv = createTraceView(host, {tools, label: 'Trace of mia-food', onSelect, reduced, announce});
 //   tv.show(runAgent(...), {animate: true});   // animate false (or reduced) shows it all
 //   tv.stop();                                  // cancel any running timer; keeps rows
+// onSelect(i) is called for every selection: a click, the arrow keys, select(i), and the
+// view's own selection of the newest row on show, Run and Next message. A handler must
+// not call select() itself.
 // Options: reduced (prefers-reduced-motion); announce(text) (the lesson's live region).
 // Announcements: if announce is given, status text goes there and the view's own status
 // span is plain text; if not, the span is a polite live region (role=status).
@@ -173,7 +176,7 @@ export function createTraceView(host, {tools, label = 'Agent trace', onSelect, r
   function reveal(upTo, {follow = true} = {}) {
     const wasLast = selected < 0 || selected === shown - 1;
     while (shown <= upTo && shown < total()) { addRow(shown); shown++; }
-    if (follow && wasLast) select(shown - 1, {notify: false});
+    if (follow && wasLast) select(shown - 1);
     sync();
   }
 

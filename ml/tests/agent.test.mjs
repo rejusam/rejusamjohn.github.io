@@ -455,3 +455,52 @@ test('why box: unseen note shows with and without rules', () => {
   assert.match(withRules[2], note);
   assert.equal(whyParagraphs({role: 'result'}, false).length, 1);
 });
+
+// A minimal stand-in for the few DOM calls createTraceView makes, so selection can be tested in Node.
+function fakeDocument() {
+  const doc = {};
+  const make = (tag) => {
+    const n = {
+      tagName: tag, ownerDocument: doc, children: [], attrs: {}, listeners: {}, className: '', textContent: '', disabled: false,
+      classList: {set: new Set(), add(c) { this.set.add(c); }, toggle(c, on) { if (on) this.set.add(c); else this.set.delete(c); }},
+      get firstChild() { return this.children[0]; },
+      append(...xs) { for (const x of xs) this.children.push(x); },
+      replaceChildren() { this.children = []; },
+      setAttribute(k, v) { this.attrs[k] = String(v); },
+      removeAttribute(k) { delete this.attrs[k]; },
+      addEventListener(type, f) { (this.listeners[type] ||= []).push(f); },
+      click() { for (const f of this.listeners.click || []) f(); },
+      focus() {},
+    };
+    return n;
+  };
+  doc.createElement = make;
+  doc.createTextNode = (t) => ({textContent: t});
+  return doc;
+}
+
+import {createTraceView} from '../assets/trace-view.js';
+
+test('onSelect hears every selection, including the view\'s own', () => {
+  const doc = fakeDocument();
+  const host = doc.createElement('div');
+  const tools = doc.createElement('div');
+  const heard = [];
+  const tv = createTraceView(host, {tools, onSelect: (i) => heard.push(i)});
+  const r = runAgent('mia-food');
+  tv.show(r, {animate: false});
+  assert.deepEqual(heard, [r.messages.length - 1]);   // show selects the newest row
+  tv.select(1);
+  assert.equal(heard.at(-1), 1);
+  // Next message, after a fresh show: re-render, then step on one row at a time
+  const [run, next] = tools.children[0].children;
+  heard.length = 0;
+  tv.show(r, {animate: false});
+  run.click();                                          // animated Run: first row now, rest by timer
+  tv.stop();
+  const before = heard.length;
+  next.click();
+  assert.equal(heard.length, before + 1);
+  assert.equal(heard.at(-1), tv.selected);
+  assert.equal(tv.selected, 1);
+});
