@@ -290,6 +290,7 @@ export function pageValues() {
     'n-blobs': String(N_BLOBS),
     'n-spiral': String(spiralData().length),
     'ellipse-share': pct(1 - Math.exp(-ELLIPSE_K * ELLIPSE_K / 2)),
+    presses: String(PRESSES),
   };
 }
 
@@ -716,7 +717,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     if (step === 2) return `The ${N_BLOBS} training points in three groups, with one large ellipse for a single fitted Gaussian and three dashed ellipses for the Gaussians that made the data. ${rest}.`;
     if (step === 3) return `EM fitting a mixture of three Gaussians: the points, each drawn as a circle, triangle or square for its likeliest component and faded when shared, three ellipses, and the mean log-likelihood after each of the ${getLive().iter} iterations so far. ${rest}.`;
     if (step === 4) return `The training points with the ellipses of the K = ${kSel} fit, and a chart of mean log-likelihood against K from 1 to ${K_MAX}: a solid line with circles for the training points and a dashed line with triangles for the held-out points. ${rest}.`;
-    return `Two scatter plots. Left, the blobs as hollow circles with ${N_BLOBS} filled points sampled from the K = ${K_TRUE} fit; right, the spiral as hollow circles with ${spiralData().length} filled points sampled from a K = ${K_SPIRAL} mixture, whose five broad dashed ellipses overlap and spread the new points over the whole disc, between the arms as well as on them. ${rest}.`;
+    return `Two scatter plots. Left, the blobs as hollow circles with ${N_BLOBS} filled points sampled from the K = ${K_TRUE} fit; right, the spiral as hollow circles with ${spiralData().length} filled points sampled from a K = ${K_SPIRAL} mixture, whose broad dashed ellipses overlap and spread the new points over the whole disc, between the arms as well as on them. ${rest}.`;
   }
 
   const spoken = () => `${readout(step, info()).join('. ')}.`;
