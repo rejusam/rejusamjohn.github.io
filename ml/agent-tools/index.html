@@ -85,7 +85,7 @@
 
     <ol class="steps">
         <li class="step" id="step-1">
-            <h2>The model writes; the loop runs the tool</h2>
+            <h2>The model writes, the loop runs the tool</h2>
             <p class="lede">A model can only write text. To get a sum worked out, it writes a request, and the loop does the work.</p>
             <div class="happening">
                 <p>Look at the trace: one row per message. Select a row and the picture marks who made it: the model, the loop or the tool.</p>
@@ -97,7 +97,7 @@
 
         <li class="step" id="step-2">
             <h2>A tool call up close</h2>
-            <p class="lede">Now the eli task from the last lesson. Each call names one tool and gives it an exact input.</p>
+            <p class="lede">Now the eli task from the last lesson: what do <span data-value="eli-qty">4</span> of eli's favourite food cost? Each call names one tool and gives it an exact input.</p>
             <div class="happening">
                 <p>Look at the picture: it shows the call in the selected row's step, and the result that came back.</p>
                 <p>The first call is <span data-value="eli-call-1">lookup("eli")</span>. The tool is lookup; the input is <span data-value="eli-input-1">key = "eli"</span>.</p>
@@ -136,7 +136,7 @@
             <p class="lede">Now the eli task with lookup off: eli buys <span data-value="eli-qty">4</span> of the food eli likes. The stand-in has to guess the facts.</p>
             <div class="happening">
                 <p>Look at the two boxes: the guesses on top, the looked-up facts below.</p>
-                <p>With no lookup, the stand-in takes the first food in its table, <span data-value="guess-food">apples</span>, at the first price in its list, <span data-value="guess-price">$0.80</span>. Its first plan line uses <span data-value="nolookup-rules">R3 and R4</span> (guess the fact, then work out the sum).</p>
+                <p>With no lookup, the stand-in takes the first food in the food table, <span data-value="guess-food">apples</span>, at the first price in the price list, <span data-value="guess-price">$0.80</span>. Its first plan line uses <span data-value="nolookup-rules">R3 and R4</span> (guess the fact, then work out the sum).</p>
                 <p>The calculator is still on, so it writes <span data-value="nolookup-call">calculator("4*0.8")</span> and answers <span data-value="nolookup-answer">$3.20</span>, in <span data-value="nolookup-steps">2</span> steps.</p>
                 <p>But eli likes <span data-value="eli-food">plums</span>, at <span data-value="eli-price">$1.25</span> each: the true cost is <span data-value="true-eli">$5.00</span>. The answer is wrong by <span data-value="nolookup-error">$1.80</span>. The sum was exact; the facts were not.</p>
             </div>
@@ -146,10 +146,10 @@
             <h2>Switch each tool on or off</h2>
             <p class="lede">Now you choose. Tick or untick a tool and the eli task runs again.</p>
             <div class="happening">
-                <p>Look at the line under the tool boxes: the answer is right, or wrong by how much. The tick boxes sit next to "Run".</p>
-                <p>Only runs with lookup and the calculator both on are right. With the calculator off, the stand-in rounds to <span data-value="nocalc-expr">4*1</span> and answers <span data-value="nocalc-answer">$4.00</span>.</p>
-                <p>The notepad changes no answer. After each lookup the stand-in writes the fact in the notes (rule <span data-value="notepad-rule">R2</span>). With every tool on, that takes <span data-value="notepad-steps">6</span> steps instead of <span data-value="eli-steps">4</span>, <span data-value="notepad-extra">2</span> more.</p>
-                <p>With lookup off there is nothing to note. Notes matter when old messages drop out of what the model is given (the lesson on memory).</p>
+                <p>Use the tick boxes by the "Run" button. The line under the tool boxes says right, or wrong by how much.</p>
+                <p>Only runs with lookup and the calculator on are right. With lookup on but the calculator off, it rounds to <span data-value="nocalc-expr">4*1</span> and answers <span data-value="nocalc-answer">$4.00</span>.</p>
+                <p>The notepad changes no answer. With the notepad on, after each lookup the stand-in notes the fact (rule <span data-value="notepad-rule">R2</span>). With every tool on, that takes <span data-value="notepad-steps">6</span> steps instead of <span data-value="eli-steps">4</span>, <span data-value="notepad-extra">2</span> more. With lookup off there is nothing to note.</p>
+                <p>Notes matter when old messages drop out of what the model is given (the lesson on memory).</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
