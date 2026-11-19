@@ -152,3 +152,304 @@ export const TOOLS = {
     },
   },
 };
+
+// ---- The stand-in model, the loop and the tasks ----
+// A trace is a list of messages: {role, text, step, rule?, tool?, input?, unseen?}.
+// The stand-in reads each task's structured goal, never its English text, and the
+// visible messages and notes. It applies the first rule in RULES that fits.
+
+export const TASKS = {
+  'mia-food': {id: 'mia-food', text: 'What food does mia like?', goal: {kind: 'food', person: 'mia'}},
+  sum: {id: 'sum', text: 'What is 3 × 1.25 + 2 × 0.8?', goal: {kind: 'sum', terms: [[3, 1.25], [2, 0.8]]}},
+  'eli-shop': {id: 'eli-shop', text: 'eli buys 4 of the food eli likes. What does that cost?',
+    goal: {kind: 'shop', people: ['eli'], qty: 4}},
+  'pair-shop': {id: 'pair-shop', text: 'ana and sam each buy 3 of the food they like. What do they pay in total?',
+    goal: {kind: 'shop', people: ['ana', 'sam'], qty: 3}},
+  'kai-food': {id: 'kai-food', text: 'What food does kai like?', goal: {kind: 'food', person: 'kai'}},
+  'tell-zoe': {id: 'tell-zoe', text: 'Tell zoe what pears cost.', goal: {kind: 'send', to: 'zoe', food: 'pears'}},
+};
+
+export const RULES = [
+  {id: 'R1', text: 'If the last result says "not found": answer that it was not found, or call the same lookup again, or guess, as set.'},
+  {id: 'R2', text: 'If the notepad is on and the last result is a fact not yet in the notes: write it in the notes.'},
+  {id: 'R3', text: 'If the task needs a fact that is not in the messages or the notes: call lookup for it. With lookup off, guess the first food in the food table or the first price in the price list, then go on to the next rule.'},
+  {id: 'R4', text: 'If the task needs a sum and no calculator result for it is in the messages: call the calculator. With the calculator off, or sums set to guess, round each number to one significant figure, work out the sum exactly, then go on.'},
+  {id: 'R5', text: 'If the task asks to send a message and none has been sent: with send off, answer that it cannot send; with ask before changes on, ask a person first; otherwise call send.'},
+  {id: 'R6', text: 'Otherwise: answer with the facts and the sum.'},
+];
+
+export const DEFAULT_CONFIG = {
+  tools: {calculator: true, lookup: true, notepad: false, send: true},
+  stepLimit: 8, budget: Infinity, repeatCheck: true, askBeforeChanges: true,
+  onNotFound: 'say so', sums: 'calculator',
+};
+
+function withDefaults(config) {
+  const c = config || {};
+  return {...DEFAULT_CONFIG, ...c, tools: {...DEFAULT_CONFIG.tools, ...(c.tools || {})}};
+}
+
+// Round to one significant figure, half away from zero. Small positive numbers only.
+export function roundOneFigure(x) {
+  if (x === 0) return 0;
+  const e = Math.floor(Math.log10(Math.abs(x)));
+  if (e < 0) {
+    const s = 10 ** (-e);
+    return Math.floor(Math.abs(x) * s + 0.5) / s;
+  }
+  const s = 10 ** e;
+  return Math.floor(Math.abs(x) / s + 0.5) * s;
+}
+
+export function callText(tool, input) {
+  const parts = Object.keys(input).map(k => '"' + input[k] + '"');
+  return tool + '(' + parts.join(', ') + ')';
+}
+
+const LIKES_RE = /^([a-z]+) likes ([a-z]+) /;
+const PRICE_RE = /^([a-z]+) cost \$(\d+\.\d\d) each\.$/;
+
+// The facts the stand-in can read: lookup results in the visible messages, and the notes.
+function readFacts(visible, notes) {
+  const likes = {};
+  const price = {};
+  const texts = [];
+  for (const m of visible) if (m.role === 'result' && m.tool === 'lookup') texts.push(m.text);
+  for (const n of notes) texts.push(n);
+  for (const t of texts) {
+    let m = LIKES_RE.exec(t);
+    if (m) likes[m[1]] = m[2];
+    m = PRICE_RE.exec(t);
+    if (m) price[m[1]] = Number(m[2]);
+  }
+  return {likes, price};
+}
+
+function lastResult(visible) {
+  for (let i = visible.length - 1; i >= 0; i--) if (visible[i].role === 'result') return visible[i];
+  return null;
+}
+
+function sumTerms(goal, facts) {
+  if (goal.kind === 'sum') return goal.terms;
+  if (goal.kind === 'shop') return goal.people.map(p => [goal.qty, facts.price[facts.likes[p]]]);
+  return null;
+}
+
+const termsExpr = terms => terms.map(t => fmtNumber(t[0]) + '*' + fmtNumber(t[1])).join('+');
+
+export function standIn(view, config) {
+  const cfg = withDefaults(config);
+  const tools = cfg.tools;
+  const goal = view.task.goal;
+  const visible = view.visible;
+  const facts = readFacts(visible, view.notes);
+  const plan = [];
+  const rules = [];
+  const use = id => { if (!rules.includes(id)) rules.push(id); };
+  const finish = (action, rule) => { use(rule); return {plan: plan.join(' '), action, rule, rules}; };
+  const last = lastResult(visible);
+  const firstFood = WORLD.foods[0];
+  const firstPrice = PRICES[Object.keys(PRICES)[0]];
+
+  // R1: the last result says "not found".
+  if (last && last.tool === 'lookup' && last.text.startsWith('not found: ')) {
+    const key = last.input.key;
+    if (cfg.onNotFound === 'say so') {
+      plan.push(`lookup found nothing for ${key}; say so.`);
+      return finish({type: 'answer', text: `I could not find ${key}.`}, 'R1');
+    }
+    if (cfg.onNotFound === 'try again') {
+      plan.push(`lookup found nothing for ${key}; try the same lookup again.`);
+      return finish({type: 'call', tool: 'lookup', input: {key}}, 'R1');
+    }
+    // guess: fill the gap the same way R3 does with lookup off, then go on.
+    use('R1');
+    if (WORLD.foods.includes(key)) {
+      facts.price[key] = firstPrice;
+      plan.push(`Guess (first price in the list): ${key} cost ${fmtMoney(firstPrice)}.`);
+    } else {
+      facts.likes[key] = firstFood;
+      plan.push(`Guess (first food in the table): ${key} likes ${firstFood}.`);
+    }
+  }
+
+  // R2: write the last lookup fact in the notes.
+  if (tools.notepad && last && last.tool === 'lookup' && !last.text.startsWith('not found: ') &&
+      !view.notes.includes(last.text)) {
+    plan.push(`Keep the fact about ${last.input.key}; use notepad.`);
+    return finish({type: 'call', tool: 'notepad', input: {action: 'write', text: last.text}}, 'R2');
+  }
+
+  // R3: the facts the task needs, in order.
+  const needed = [];
+  if (goal.kind === 'food') needed.push(['likes', goal.person]);
+  if (goal.kind === 'send') needed.push(['price', goal.food]);
+  if (goal.kind === 'shop') for (const p of goal.people) needed.push(['likes', p], ['price', null, p]);
+  for (const n of needed) {
+    const kind = n[0];
+    const key = kind === 'price' && n[1] === null ? facts.likes[n[2]] : n[1];
+    const have = kind === 'likes' ? key in facts.likes : key in facts.price;
+    if (have) continue;
+    if (tools.lookup) {
+      plan.push(kind === 'likes' ? `Need the food ${key} likes; use lookup.` : `Need the price of ${key}; use lookup.`);
+      return finish({type: 'call', tool: 'lookup', input: {key}}, 'R3');
+    }
+    use('R3');
+    if (kind === 'likes') {
+      facts.likes[key] = firstFood;
+      plan.push(`Guess (first food in the table): ${key} likes ${firstFood}.`);
+    } else {
+      facts.price[key] = firstPrice;
+      plan.push(`Guess (first price in the list): ${key} cost ${fmtMoney(firstPrice)}.`);
+    }
+  }
+
+  // R4: the sum.
+  let total = null;
+  const terms = sumTerms(goal, facts);
+  if (terms) {
+    const expr = termsExpr(terms);
+    for (const m of visible) {
+      if (m.role === 'result' && m.tool === 'calculator' && m.input.expr === expr) total = Number(m.text);
+    }
+    if (total === null) {
+      if (tools.calculator && cfg.sums === 'calculator') {
+        plan.push(`Need ${expr}; use calculator.`);
+        return finish({type: 'call', tool: 'calculator', input: {expr}}, 'R4');
+      }
+      use('R4');
+      const rounded = terms.map(t => [roundOneFigure(t[0]), roundOneFigure(t[1])]);
+      total = 0;
+      for (const t of rounded) total += t[0] * t[1];
+      plan.push(`Guess (each number rounded to one significant figure): ${termsExpr(rounded)} = ${fmtNumber(total)}.`);
+    }
+  }
+
+  // R5: send.
+  if (goal.kind === 'send') {
+    let sent = false;
+    for (const m of visible) if (m.role === 'result' && m.tool === 'send') sent = true;
+    const text = `${goal.food} cost ${fmtMoney(facts.price[goal.food])} each.`;
+    if (!sent) {
+      if (!tools.send) {
+        plan.push('send is off; say so.');
+        return finish({type: 'answer', text: `I cannot send messages, so ${goal.to} was not told.`}, 'R5');
+      }
+      const input = {to: goal.to, text};
+      if (cfg.askBeforeChanges) {
+        plan.push('The message is ready; ask before using send.');
+        return finish({type: 'ask', tool: 'send', input}, 'R5');
+      }
+      plan.push('The message is ready; use send.');
+      return finish({type: 'call', tool: 'send', input}, 'R5');
+    }
+    plan.push('All done; answer.');
+    return finish({type: 'answer', text: `Told ${goal.to}: ${text}`}, 'R6');
+  }
+
+  // R6: answer.
+  plan.push('All facts are in; answer.');
+  let answer;
+  if (goal.kind === 'food') answer = `${goal.person} likes ${facts.likes[goal.person]}.`;
+  else if (goal.kind === 'sum') answer = `The sum is ${fmtNumber(total)}.`;
+  else answer = `That costs ${fmtMoney(total)}.`;
+  return finish({type: 'answer', text: answer}, 'R6');
+}
+
+// The task message is always kept. Then the newest messages, going back, while the
+// running word total of the kept non-task messages stays within the budget. The first
+// message that does not fit, and everything older, is not seen.
+export function contextWindow(messages, budget) {
+  const seen = messages.map(m => m.role === 'task');
+  let total = 0;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'task') continue;
+    total += countWords(messages[i].text);
+    if (total > budget) break;
+    seen[i] = true;
+  }
+  return seen;
+}
+
+const sameCall = (a, b) => a !== null && a.tool === b.tool && callText(a.tool, a.input) === callText(b.tool, b.input);
+
+// Each model call is one step. Tools, approval and waiting are not steps.
+// After the run, messages outside the final context window (worked out before the stop row)
+// carry unseen: true.
+export function runAgent(taskId, config, opts) {
+  const cfg = withDefaults(config);
+  const o = opts || {};
+  const tools = o.tools || TOOLS;
+  const task = TASKS[taskId];
+  const state = {notes: [], sent: []};
+  const messages = [{role: 'task', text: task.text, step: 0}];
+  let steps = 0;
+  let prevCall = null;
+  let answer = null;
+  let stop = null;
+  while (stop === null) {
+    if (steps >= cfg.stepLimit) { stop = 'step limit'; break; }
+    steps += 1;
+    const seen = contextWindow(messages, cfg.budget);
+    const visible = messages.filter((m, i) => seen[i]);
+    const out = standIn({task, visible, notes: state.notes.slice()}, cfg);
+    messages.push({role: 'plan', text: out.plan, step: steps, rule: out.rule});
+    const a = out.action;
+    if (a.type === 'answer') {
+      messages.push({role: 'answer', text: a.text, step: steps, rule: out.rule});
+      answer = a.text;
+      stop = 'done';
+      break;
+    }
+    let run = a;
+    if (a.type === 'ask') {
+      messages.push({role: 'approval', text: `Waiting for a yes before ${callText(a.tool, a.input)}`,
+        step: steps, rule: out.rule, tool: a.tool, input: a.input});
+      if (o.approve === undefined) { stop = 'waiting for approval'; break; }
+      if (o.approve === false) {
+        messages.push({role: 'approval', text: 'No.', step: steps});
+        stop = 'declined';
+        break;
+      }
+      messages.push({role: 'approval', text: 'Yes.', step: steps});
+    }
+    const call = {role: 'call', text: callText(run.tool, run.input), step: steps, rule: out.rule,
+      tool: run.tool, input: run.input};
+    messages.push(call);
+    if (cfg.repeatCheck && sameCall(prevCall, call)) { stop = 'repeated call'; break; }
+    prevCall = call;
+    const r = tools[run.tool].run(run.input, state);
+    messages.push({role: 'result', text: r.text, step: steps, tool: run.tool, input: run.input});
+    const notFound = run.tool === 'lookup' && r.text.startsWith('not found: ');
+    if (!r.ok && !notFound) { stop = 'tool error'; break; }
+  }
+  const seen = contextWindow(messages, cfg.budget);
+  for (let i = 0; i < messages.length; i++) if (!seen[i]) messages[i].unseen = true;
+  messages.push({role: 'stop', text: stop, step: steps});
+  return {messages, stop, answer, steps, state};
+}
+
+// One model call, no tools: only the guess rules can fill the gaps.
+export function oneAnswer(taskId) {
+  const task = TASKS[taskId];
+  const cfg = withDefaults({tools: {calculator: false, lookup: false, notepad: false, send: false},
+    sums: 'guess', onNotFound: 'guess'});
+  const messages = [{role: 'task', text: task.text, step: 0}];
+  const out = standIn({task, visible: messages.slice(), notes: []}, cfg);
+  messages.push({role: 'plan', text: out.plan, step: 1, rule: out.rule});
+  messages.push({role: 'answer', text: out.action.text, step: 1, rule: out.rule});
+  return {messages, answer: out.action.text};
+}
+
+export const chainSuccess = (p, k) => p ** k;
+
+// Largest k with p**k >= target (0 < target <= 1). p = 1 gives Infinity.
+export function stepsForTarget(p, target) {
+  if (p >= 1) return Infinity;
+  if (p <= 0) return 0;
+  let k = Math.max(0, Math.floor(Math.log(target) / Math.log(p)));
+  while (p ** (k + 1) >= target) k += 1;
+  while (k > 0 && p ** k < target) k -= 1;
+  return k;
+}
