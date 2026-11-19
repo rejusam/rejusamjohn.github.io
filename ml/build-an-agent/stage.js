@@ -293,6 +293,9 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   reset.addEventListener('click', () => { config = merge(DEFAULT_CONFIG); changed(); });
   builder.append(reset);
   svg.after(builder);
+  // On steps 2 to 5 the picture is hidden; this visually hidden line says what the panels show.
+  const panelNote = make('p', { className: 'vh' });
+  builder.before(panelNote);
 
   function syncBuilder() {
     for (const [sel, opts, key] of selects) sel.value = String(opts.indexOf(config[key]));
@@ -447,10 +450,10 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     let aria = '';
     if (step === 0) aria = drawParts();
     if (step === 1) { drawResults(); aria = `The three tasks. ${summary()}.`; }
-    if (step === 2) { drawCode(); aria = `The program ${FILE_NAME}, ${lineCount(config)} lines, shown below the picture.`; }
+    if (step === 2) { drawCode(); aria = `The program ${FILE_NAME}, ${lineCount(config)} lines, shown below the controls.`; }
     if (step === 3) { drawOutputs(); aria = `What ${FILE_NAME} prints: ${outputs(config).map((o) => o.label).join('; ')}.`; }
     if (step === 4) { blockPre.textContent = markedBlock(config); aria = 'The marked block in the program, where a real model would go.'; }
-    svg.setAttribute('aria-label', aria);
+    if (step === 0) { svg.setAttribute('aria-label', aria); panelNote.textContent = ''; } else panelNote.textContent = aria;
   }
 
   function changed() {

@@ -343,6 +343,10 @@ test('the page has the lesson parts and no free-text input', () => {
   assert.match(step3, /no network/);
   const step5 = html.split('id="step-5"')[1].split('</li>')[0];
   assert.match(step5, /environment variable/);
+  // call_model returns a plan line and an action, as the program's loop unpacks it.
+  assert.match(step5, /returns a plan line and one action/);
+  assert.match(S.markedBlock(DEFAULT_CONFIG), /a plan line and one of the same actions/);
+  assert.match(S.programText(DEFAULT_CONFIG), /plan, action = call_model\(/);
   assert.ok(!/<input[^>]*type="(text|search|number)"/.test(html + src));
   assert.ok(!/<textarea/.test(html + src));
   assert.ok(!/innerHTML|eval\(|new Function|data:text|createObjectURL/.test(src));
