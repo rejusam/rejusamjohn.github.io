@@ -168,6 +168,16 @@ export function pageValues() {
     'qb-x100-cls': String(qb.cls),
     'qb-std-cls': String(qc.cls),
     'qb-shared': String(qa.idx.filter((i) => qb.idx.includes(i)).length),
+    'n-train': String(TR.X.length),
+    'n-train0': String(TR.y.filter((v) => v === 0).length),
+    'n-train1': String(TR.y.filter((v) => v === 1).length),
+    'n-test0': String(TE.y.filter((v) => v === 0).length),
+    'k-vote': String(K_VOTE),
+    'k-min': String(KS[0]),
+    'k-max': String(KS[KS.length - 1]),
+    'k3': String(rows[1].k),
+    'k1-train': pct(rows[0].train),
+    'scale': String(SCALE),
   };
 }
 

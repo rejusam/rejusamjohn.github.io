@@ -140,6 +140,8 @@ test('knn read-out rows and page', () => {
   assert.ok(keys.length >= 10);
   for (const key of keys) assert.ok(key in pv, key);
   for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+  // Spans written out in the page hold exactly the stage's value.
+  for (const [, key, text] of html.matchAll(/<span data-value="([^"]+)">([^<]+)<\/span>/g)) assert.equal(text, pv[key], key);
 });
 
 test('knn page values match the computations', () => {
