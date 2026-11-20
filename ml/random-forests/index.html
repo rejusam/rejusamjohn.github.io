@@ -86,7 +86,7 @@
             <div class="happening">
                 <p>Look at the three small maps. Each is a full tree, grown until every leaf is pure (one class each), on its own random resample of the <span data-value="n-train">80</span> training rows. Cyan-tinted shading means class 0, violet-tinted class 1.</p>
                 <p>The small boxes, where a tree chased a few points, move from tree to tree.</p>
-                <p>Under the maps, on <span data-value="n-test">400</span> test cases, the three trees score <span data-value="t1-test">71.8%</span>, <span data-value="t2-test">74.5%</span> and <span data-value="t3-test">75.3%</span>. One full tree on all the rows scores <span data-value="full-test">78.3%</span>.</p>
+                <p>Under the maps, on <span data-value="n-test">400</span> test cases (new points kept out of training), the three trees score <span data-value="t1-test">71.8%</span>, <span data-value="t2-test">74.5%</span> and <span data-value="t3-test">75.3%</span>. One full tree on all the rows scores <span data-value="full-test">78.3%</span>.</p>
                 <p>A method whose model changes a lot when its data change a little has high variance. Full trees are a classic case.</p>
             </div>
             <details class="maths">
@@ -101,7 +101,7 @@
             <h2>Bootstrap samples</h2>
             <p class="lede">Each resample is drawn at random, with replacement.</p>
             <div class="happening">
-                <p>Look at tree 1's sample: a dashed ring marks a row left out, "×2" a row drawn twice. The bars count rows by times drawn.</p>
+                <p>Look at tree 1's sample: a dashed ring marks a row left out, and "×2", "×3" and so on a row drawn that many times. The bars count rows by times drawn.</p>
                 <p>Pick one of the <span data-value="n-train">80</span> rows at random, note it, put it back, and repeat <span data-value="n-train">80</span> times. This sampling with replacement gives a bootstrap sample: as many rows as the data, some repeated, some missing.</p>
                 <p>Tree 1's sample holds <span data-value="s-distinct">46</span> distinct rows (<span data-value="s-share">57.5%</span>); <span data-value="s-out">34</span> were left out.</p>
                 <p>On average a sample keeps <span data-value="expected-pct">63.4%</span> of the rows (the read-out's "expected") and leaves out <span data-value="p-out-pct">36.6%</span>, about a third.</p>
@@ -118,11 +118,11 @@
 
         <li class="step" id="step-3">
             <h2>Bagging: a vote</h2>
-            <p class="lede">Grow a full tree on each of B bootstrap samples, and let the trees vote.</p>
+            <p class="lede">Grow a full tree on each of B bootstrap samples, then let them vote.</p>
             <div class="happening">
-                <p>Look at the map: it shades the vote, cyan-tinted for class 0 and violet-tinted for class 1. Each tree votes, and the majority wins. This is bagging (bootstrap aggregating).</p>
-                <p>Slide "Trees, B" through B = 1, 3, 5, 11, 25, 51 or 101. On the chart, tree 1 alone scores <span data-value="bag-1">71.8%</span> on test cases, below one full tree on all rows (<span data-value="full-test">78.3%</span>, dotted); 101 trees score <span data-value="bag-101">81.8%</span>.</p>
-                <p>The trees go wrong in different places, so their quirks get outvoted. As B grows, the map settles. More trees steady the vote without causing overfitting.</p>
+                <p>Look at the map: it shades the vote, cyan-tinted for class 0, violet-tinted for 1. Each tree votes; the majority wins. This is bagging (bootstrap aggregating).</p>
+                <p>Slide "Trees, B" through B = 1, 3, 5, 11, 25, 51 or 101. Tree 1 alone scores <span data-value="bag-1">71.8%</span> on test cases, below one full tree on all rows (<span data-value="full-test">78.3%</span>, dotted); 101 trees score <span data-value="bag-101">81.8%</span>.</p>
+                <p>The trees go wrong in different places, so their quirks get outvoted and the map settles. On test cases, the vote's score never drops as B grows here. Adding trees does not make it overfit (fit quirks of the training rows); each full tree still can, and B does not change that.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -139,9 +139,9 @@
             <h2>Random forests</h2>
             <p class="lede">Now make the trees less alike.</p>
             <div class="happening">
-                <p>Look at the map, now a random forest's vote, and the chart: bagging (white line) against the forest (cyan dashes).</p>
-                <p>At each split, a forest tree may look at only a random subset of the features, here x₁ or x₂ at random. Bagged trees see both, so they make similar mistakes, and a vote cancels mistakes only where trees disagree.</p>
-                <p>Two forest trees disagree on <span data-value="rf-dis">23.3%</span> of the test cases on average, two bagged trees on <span data-value="bag-dis">16.5%</span>. One forest tree is a little worse on average (<span data-value="rf-tree">75.2%</span> against <span data-value="bag-tree">77.5%</span>), yet the vote of 101 scores <span data-value="rf-101">83.8%</span>, against <span data-value="bag-101">81.8%</span> for bagging, on this one dataset and seed.</p>
+                <p>Look at the map, now a random forest's vote, and the chart: bagging (white line) against the forest (cyan).</p>
+                <p>A random forest is bagging with one change: each tree still grows on its own bootstrap sample, but at each split it may look at only one feature, x₁ or x₂, picked at random. Bagged trees see both, so they make similar mistakes, and a vote cancels mistakes only where trees disagree.</p>
+                <p>Two forest trees disagree on <span data-value="rf-dis">23.3%</span> of test cases on average, two bagged trees on <span data-value="bag-dis">16.5%</span>. One forest tree is a little worse on average (<span data-value="rf-tree">75.2%</span> against <span data-value="bag-tree">77.5%</span>), yet the vote of 101 scores <span data-value="rf-101">83.8%</span>, against <span data-value="bag-101">81.8%</span> for bagging, on this one dataset and seed.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -157,11 +157,11 @@
             <h2>Out-of-bag score</h2>
             <p class="lede">The rows a tree left out can test it.</p>
             <div class="happening">
-                <p>Look at the chart: the forest's test (cyan) and out-of-bag (white) accuracy.</p>
+                <p>Look at the chart: the forest's test accuracy (cyan dashes) and out-of-bag accuracy (white dotted line, diamonds).</p>
                 <p>A row's out-of-bag (OOB) prediction comes only from trees whose sample left it out. None saw the row, so it is new to them. OOB accuracy is the share of rows it gets right.</p>
                 <p>With one tree, only <span data-value="oob-1-rows">34</span> rows get a vote ("rows with a vote"); from B = <span data-value="oob-full-b">11</span>, all <span data-value="n-train">80</span> do.</p>
-                <p>At B = 101, OOB accuracy is <span data-value="oob-101">82.5%</span>, near the <span data-value="rf-101">83.8%</span> on <span data-value="n-test">400</span> test cases, from training rows only.</p>
-                <p>The next lesson, gradient boosting, grows trees one at a time, not side by side.</p>
+                <p>Slide "Trees, B" to 101: OOB accuracy is <span data-value="oob-101">82.5%</span>, near the <span data-value="rf-101">83.8%</span> on <span data-value="n-test">400</span> test cases, from training rows only.</p>
+                <p>The next lesson, gradient boosting, grows small trees one at a time, each fitted to what the model still gets wrong.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
