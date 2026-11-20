@@ -3589,3 +3589,59 @@ html:not(.js) .hub-demo {
 @media (max-width: 760px) {
   .trace { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Build your own agent: the parts of the agent, as controls. */
+.agent-builder {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--ml-line);
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.agent-part {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+}
+
+/* Phones: the groups flow on, sharing rows, so the picture under them shows
+   sooner. Each group stays one element (inline, not display: contents, which
+   can drop its name for screen readers); the DOM order, and so the focus
+   order, is unchanged. */
+@media (max-width: 760px) {
+  .agent-builder {
+    display: block;
+    margin-top: 8px;
+    padding: 5px 8px;
+    font-size: 0.8125rem;
+  }
+
+  .agent-part {
+    display: inline;
+  }
+
+  .agent-part > *,
+  .agent-builder > button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 24px;
+    margin: 3px 8px 3px 0;
+    vertical-align: middle;
+  }
+
+  .agent-builder > button {
+    margin-right: 0;
+  }
+
+  .agent-part > :first-child {
+    margin-right: 6px;
+  }
+
+  .agent-builder select {
+    min-height: 24px;
+    font: inherit;
+  }
+}

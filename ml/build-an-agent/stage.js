@@ -250,11 +250,12 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   svg.style.marginInline = 'auto';
 
   // ---- the builder: the parts, as controls ----
-  const builder = make('div', {}, { display: 'grid', gap: '8px', justifyItems: 'start', marginTop: '12px', padding: '10px 12px', border: `1px solid ${LINE}`, borderRadius: '8px', ...small });
+  // Laid out in ml.css (.agent-builder, .agent-part): on phones the groups share rows.
+  const builder = make('div', { className: 'agent-builder' });
   builder.setAttribute('role', 'group');
   builder.setAttribute('aria-label', 'The parts of your agent');
   const sub = (label) => {
-    const g = make('div', {}, { display: 'flex', flexWrap: 'wrap', gap: '6px 12px', alignItems: 'center' });
+    const g = make('div', { className: 'agent-part' });
     g.setAttribute('role', 'group');
     g.setAttribute('aria-label', label);
     g.append(make('span', { textContent: `${label}:` }, { color: MUTED }));
@@ -293,7 +294,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   selects.push(selectIn(gMem, 'window', OPTIONS.budget, (b) => (b === Infinity ? 'no limit' : `${b} words`), 'budget'));
   const gAsk = sub('safety');
   checks.push(checkIn(gAsk, 'ask before changes', () => config.askBeforeChanges, (v) => { config = { ...config, askBeforeChanges: v }; }, true));
-  const reset = make('button', { type: 'button', textContent: 'Back to the defaults' }, btnStyle);
+  const reset = make('button', { type: 'button', textContent: 'Back to the defaults' }, { ...btnStyle, fontSize: 'inherit' });
   reset.addEventListener('click', () => { config = merge(DEFAULT_CONFIG); changed(); });
   builder.append(reset);
   svg.after(builder);
