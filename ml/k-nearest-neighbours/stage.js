@@ -492,10 +492,6 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     const val = filled[span.dataset.value];
     if (val !== undefined) span.textContent = val;
   }
-  for (const p of doc.querySelectorAll('main.lesson [data-fill][hidden]')) {
-    const spans = [...p.querySelectorAll('[data-value]')];
-    if (spans.every((sp) => sp.dataset.value in filled)) p.hidden = false;
-  }
 
   render();
   if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(render, () => {});

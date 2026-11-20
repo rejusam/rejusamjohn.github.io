@@ -81,7 +81,7 @@
     <ol class="steps">
         <li class="step" id="step-1">
             <h2>Predict a label</h2>
-            <p class="lede">So far every model has predicted a number. This one predicts a label, one of two classes. This is classification.</p>
+            <p class="lede">Each case here has a label: one of two classes. Predicting that label is called classification.</p>
             <div class="happening">
                 <p>Look at the plot. Each point is a case with two made-up measurements, "feature 1" and "feature 2", with no units. Cyan circles are class 0 and violet triangles class 1.</p>
                 <p>The read-out counts <span data-value="n-train">40</span> training cases: <span data-value="n-train0">20</span> circles and <span data-value="n-train1">20</span> triangles. The clouds overlap, so some cases sit among the other class.</p>
@@ -149,7 +149,7 @@ M1001 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
                 <p>Look at the chart: training accuracy is the solid line with dots, and test accuracy the dashed line with squares. The upright dashed line marks the slider’s k.</p>
                 <p>Training accuracy is <span data-value="k1-train">100%</span> only at k = <span data-value="k-min">1</span>. At k = <span data-value="k3">3</span> it is <span data-value="k3-train">90.0%</span>: a case surrounded by the other class gets outvoted.</p>
                 <p>Test accuracy is lowest at k = <span data-value="k-min">1</span>, <span data-value="k1-test">78.3%</span>. Every larger k on the slider does better.</p>
-                <p>k = <span data-value="k-min">1</span> shows <a href="/ml/overfitting/">overfitting</a>: a big gap between training and test accuracy, because it learns the noise. A very large k is too smooth and loses real shape.</p>
+                <p>k = <span data-value="k-min">1</span> shows <a href="/ml/overfitting/">overfitting</a>: a big gap between training and test accuracy, because it learns the noise. A very large k can go too far and smooth away real shape.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -180,10 +180,10 @@ M1001 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
             <h2>Units matter</h2>
             <p class="lede">Now change the units of one feature.</p>
             <div class="happening">
-                <p>Press "Feature 2 × 100". Distance adds the gaps in both features. A gap of 1 in feature 2 counts as <span data-value="scale">100</span>. So feature 1 hardly matters, and the dashed neighbourhood is a flat band. At k = <span data-value="best-k">11</span>, the read-out’s test accuracy falls from <span data-value="u-raw">85.7%</span> to <span data-value="u-x100">71.3%</span>, and the new case, at its starting spot, flips to class <span data-value="qb-x100-cls">0</span>.</p>
-                <p>Press "Standardised". Each feature becomes a z-score: subtract its training mean, divide by its training standard deviation. The units drop out: the original and × <span data-value="scale">100</span> data predict the same.</p>
-                <p>Note: test accuracy is <span data-value="u-std">84.0%</span>, a little below <span data-value="u-raw">85.7%</span>. It does not promise a better score.</p>
-                <p>Next, logistic regression gives a probability.</p>
+                <p>Press "Feature 2 × 100". A gap of 1 in feature 2 counts as <span data-value="scale">100</span>, so feature 1 hardly matters and the dashed neighbourhood flattens. Test accuracy falls to <span data-value="u-x100">71.3%</span>. The new case, at its start, flips from class <span data-value="qb-raw-cls">1</span> to <span data-value="qb-x100-cls">0</span>.</p>
+                <p>Press "Standardised": each feature becomes a z-score, rescaled so its training mean is 0 and its standard deviation 1. Then the × <span data-value="scale">100</span> change makes no difference.</p>
+                <p>Note: standardised, test accuracy is <span data-value="u-std">84.0%</span>, just below the original <span data-value="u-raw">85.7%</span>. Standardising does not promise a better score; it stops the units deciding the answer.</p>
+                <p>The next lesson, logistic regression, gives each case a probability instead of a vote.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
