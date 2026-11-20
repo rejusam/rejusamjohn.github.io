@@ -229,6 +229,9 @@ test('random forests read-out rows and page', () => {
   const keys = [...html.matchAll(/data-value="([^"]+)"/g)].map((m) => m[1]);
   assert.ok(keys.length >= 15);
   for (const key of keys) assert.ok(key in pv, key);
+  // Spans written out in the page hold exactly the stage's value.
+  for (const [, key, text] of html.matchAll(/<span data-value="([^"]+)">([^<]+)<\/span>/g)) assert.equal(text, pv[key], key);
+  assert.doesNotMatch(html, /<span data-value="[^"]+"><\/span>/);
   assert.match(html, /James, Witten, Hastie &amp; Tibshirani,/);
   assert.doesNotMatch(html, /Taylor/);
   assert.doesNotMatch(html, /delve|unlock|harness the power|it's important to note|dive in|in today's world/i);
