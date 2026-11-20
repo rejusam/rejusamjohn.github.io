@@ -81,7 +81,7 @@
     <ol class="steps">
         <li class="step" id="step-1">
             <h2>Centre the data</h2>
-            <p class="lede">Like k-means, principal component analysis (PCA) uses no labels.</p>
+            <p class="lede">Principal component analysis (PCA) looks at how points spread around their centre, so first move the centre to zero.</p>
             <div class="happening">
                 <p>Look at the plot: <span data-value="n">50</span> grey dots, one per person, height across and arm span up, in cm. Taller people tend to have longer arms, so the cloud leans.</p>
                 <p>Centring subtracts the means, <span data-value="mean-h">169.7</span> cm of height and <span data-value="mean-a">169.5</span> cm of arm span, from everyone, so the centre sits at 0, where the dashed lines cross. Press "Raw" or "Centred": only zero moves.</p>
@@ -99,9 +99,9 @@
             <h2>Turn a line</h2>
             <p class="lede">Now drop each person onto a line through the centre, at a right angle.</p>
             <div class="happening">
-                <p>Look at the white line, turned by the "angle" slider. Each cyan dot is a person's projection; a grey segment joins the two.</p>
-                <p>Along is the cyan dots' spread, their sample variance (<a href="/ml/centre-and-spread/">Lesson 3</a>); across is the same for the segments. At 0° (slider at left), along is height's variance, <span data-value="var-h">40.0</span> cm², and across is arm span's, <span data-value="var-a">45.8</span> cm²: <span data-value="total">85.8</span> cm² in all.</p>
-                <p>On the chart: cyan along, dashed violet across, dotted total; a dashed upright line marks your angle. The total never changes: what along gains, across loses.</p>
+                <p>Look at the white line, turned by the "angle" slider. Each cyan dot is a person's projection, where the person lands on the line; a grey segment joins the two.</p>
+                <p>Along is the cyan dots' spread, their sample variance (<a href="/ml/centre-and-spread/">Lesson 3</a>); across is the same for the segments. Move the slider to the left end, 0°: along is then height's variance, <span data-value="var-h">40.0</span> cm², and across is arm span's, <span data-value="var-a">45.8</span> cm², <span data-value="total">85.8</span> cm² in all.</p>
+                <p>The chart plots along (cyan), across (dashed violet) and their total (dotted) for every angle. A dashed upright line marks your angle. The total never changes: what along gains, across loses.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -136,9 +136,8 @@ c100.7 8.3 195.3 44 280 108 55.3 42 101.7 93 139 153l9 14c2.7-4 5.7-8.7 9-14
             <p class="lede">Along peaks in one direction: the first principal component, PC1.</p>
             <div class="happening">
                 <p>Look at the line: it sits on PC1, at <span data-value="pc1-angle">47.7</span>°, where along is largest: <span data-value="gamma1">73.9</span> cm², written γ₁ (gamma one). "Snap to PC1" brings it back.</p>
-                <p>PC1 can be computed from a 2 × 2 table, the covariance matrix S: step 2's two variances and their covariance, <span data-value="cov">30.8</span> cm² (how height and arm span rise together).</p>
-                <p>Multiplying by S only stretches an eigenvector, by its eigenvalue. PC1 is the eigenvector with the larger eigenvalue, γ₁.</p>
-                <p>Note: PC1 is stored as two numbers. Software may flip both signs; the line stays.</p>
+                <p>PC1 can be computed from a 2 × 2 table, the covariance matrix S: the two variances and their covariance, <span data-value="cov">30.8</span> cm² (how height and arm span rise together). An eigenvector of S is a direction that S only stretches, never turns. The stretch is its eigenvalue. PC1 is the one with the larger eigenvalue, γ₁.</p>
+                <p>Note: PC1 is stored as two numbers, a step in height and a step in arm span. Software may flip both signs; the line stays the same, so the signs alone mean nothing.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -170,7 +169,7 @@ s76,-153,76,-153s77,-151,77,-151c0.7,0.7,35.7,202,105,604c67.3,400.7,102,602.7,1
                 <p>Look at the arrows: PC1 solid cyan, PC2 dashed violet, each two standard deviations long.</p>
                 <p>PC2 is the other eigenvector of S. Along it the variance is γ₂ = <span data-value="gamma2">11.9</span> cm², the least of any direction.</p>
                 <p><span data-value="gamma1">73.9</span> + <span data-value="gamma2">11.9</span> = <span data-value="total">85.8</span> cm², the total. PC1 explains <span data-value="e1">86.1%</span> of it, its share of the variance, and PC2 explains <span data-value="e2">13.9%</span>. The cyan and violet bars show these shares.</p>
-                <p>Note: PCA never sees an outcome, so a large share need not help predict one.</p>
+                <p>Note: PCA never sees an outcome (something you want to predict), so a large share need not help predict one.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -187,8 +186,8 @@ s76,-153,76,-153s77,-151,77,-151c0.7,0.7,35.7,202,105,604c67.3,400.7,102,602.7,1
             <p class="lede">Next comes dimension reduction: one number per person, their place on PC1.</p>
             <div class="happening">
                 <p>Look at the strip: each dot is one person's score. "Rebuilt" puts everyone on the line at their score, "Original" puts them back, and grey segments show what is lost.</p>
-                <p>The ringed person scores <span data-value="p1-t">−5.2</span> and is rebuilt <span data-value="p1-lost">5.7</span> cm away, losing their short arms. The segments' mean squared length, the reconstruction error, is <span data-value="mse">11.7</span> cm². PC1 has the most along, so the least across (step 2): no line through the centre loses less.</p>
-                <p>Note: the regression line of arm span on height differs; it shrinks up-and-down gaps.</p>
+                <p>The ringed person scores <span data-value="p1-t">−5.2</span> and is rebuilt <span data-value="p1-lost">5.7</span> cm away. The segments' mean squared length, the reconstruction error, is <span data-value="mse">11.7</span> cm². PC1 has the most along, so the least across (step 2): no line through the centre loses less. Keeping only the score keeps PC1's share, <span data-value="e1">86.1%</span> of the variance.</p>
+                <p>Note: PCA makes the right-angle grey gaps small. The regression line of arm span on height makes the up-and-down gaps small instead, so the two lines differ.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -207,9 +206,9 @@ s76,-153,76,-153s77,-151,77,-151c0.7,0.7,35.7,202,105,604c67.3,400.7,102,602.7,1
             <p class="lede">Last, PCA sees only numbers, not units.</p>
             <div class="happening">
                 <p>Look at the PC1 arrow, then press "Arm span mm". Arm-span numbers grow <span data-value="mm-factor">10</span>-fold and their variance <span data-value="mm-var-factor">100</span>-fold, so PC1 swings to <span data-value="mm-angle">86.1</span>°, <span data-value="mm-off">3.9</span>° from the arm-span axis.</p>
-                <p>Press "Standardised": each feature has its mean subtracted and is divided by its standard deviation. Then PC1 sits at <span data-value="std-angle">45.0</span>° in cm or mm; plain PCA does not rescale.</p>
+                <p>Press "Standardised": each feature has its mean subtracted and is divided by its standard deviation, which cancels the factor of <span data-value="mm-factor">10</span>. PC1 then sits at <span data-value="std-angle">45.0</span>° in cm or mm. Plain PCA does not rescale.</p>
                 <p>Note: if the features share a unit whose spread matters, plain PCA can be right. If units differ or are arbitrary, standardise.</p>
-                <p>The next lesson, the artificial neuron, starts Level 4, Deep learning.</p>
+                <p>The next lesson, the artificial neuron, starts Level 4, Deep learning, with a weighted sum, a bias and a squashing curve.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
