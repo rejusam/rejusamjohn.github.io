@@ -106,8 +106,8 @@
             <div class="happening">
                 <p>The violet line touches the curve at the ball. Its slope is the slope of the loss at that w, written L′(w). The arrow marked "downhill" shows which way to move.</p>
                 <p hidden data-fill>At the starting w, <span data-value="w0"></span>, the slope is <span data-value="slope-w0"></span>. It is negative, so downhill is to the right.</p>
-                <p>Left of the bottom the slope is negative, and right of it the slope is positive. As in <a href="/ml/slopes/">Lesson 5</a>, downhill is always the opposite way to the slope's sign.</p>
-                <p>The slope also shows how steep the curve is: steep far from the bottom, close to 0 near it. Move the w slider to see both.</p>
+                <p>Left of the bottom the slope is negative, and right of it, positive. As in <a href="/ml/slopes/">Lesson 5</a>, downhill is the opposite way to the slope's sign.</p>
+                <p>The slope also shows how steep the curve is: steep far from the bottom, close to 0 near it.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -123,7 +123,7 @@
             <h2>Take a step downhill</h2>
             <p class="lede">Now use the slope to move w downhill, one small step at a time.</p>
             <div class="happening">
-                <p>Each step replaces w with w − η × slope. The learning rate η (the Greek letter eta) is a small positive number that sets the step size. Subtracting turns the slope's sign round, so every step goes downhill.</p>
+                <p>Each step replaces w with w − η × slope. The learning rate η (the Greek letter eta) is a small positive number that sets the step size. Subtracting turns the slope's sign round, so every step heads the downhill way.</p>
                 <p hidden data-fill>Here η = <span data-value="eta-default"></span>. From the start, w = <span data-value="w0"></span> and the slope is <span data-value="slope-w0"></span>, so the first step takes w right, to <span data-value="w1"></span>.</p>
                 <p>Press "Take a step" a few times. Faded dots mark the earlier steps. "Start again" puts the ball back.</p>
                 <p>Repeating this step until w stops moving is gradient descent.</p>
@@ -140,10 +140,9 @@
             <h2>The steps shrink by themselves</h2>
             <p class="lede">Now let the steps run on, with η fixed.</p>
             <div class="happening">
-                <p>The chart on the right plots w after each step. It closes in on w*, the bottom of the bowl. "Run again" replays the run.</p>
-                <p hidden data-fill>The steps get shorter. The first moves w by <span data-value="step1"></span>, the next by <span data-value="step2"></span>. Each is about <span data-value="r-default"></span> times as long as the one before.</p>
-                <p>Why? Each step is η times the slope, and near the bottom the slope is close to 0. Nothing tells the model to slow down.</p>
-                <p hidden data-fill>If it runs until its steps are smaller than 10⁻¹⁰, it takes <span data-value="conv-steps"></span> steps to reach w = <span data-value="w-conv"></span>. That is Lesson 6's slope <span class="tex" data-tex="\hat{b}"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>b</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{b}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9579em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9579em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">b</span></span><span style="top:-3.2634em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">^</span></span></span></span></span></span></span></span></span></span></span> = <span data-value="b-hat"></span>, so this is Lesson 6's line.</p>
+                <p>The chart on the right plots w after each step. It closes in on w*, the bottom of the bowl.</p>
+                <p hidden data-fill>The steps get shorter. The first moves w by <span data-value="step1"></span>, the next by <span data-value="step2"></span>, each about <span data-value="r-default"></span> times the one before. Each step uses all <span data-value="n"></span> points and is η times the slope, and near the bottom the slope is close to 0. Nothing tells the model to slow down.</p>
+                <p hidden data-fill>If it runs until its steps are smaller than 10⁻¹⁰, it takes <span data-value="conv-steps"></span> steps to reach w = <span data-value="w-conv"></span>. That matches Lesson 6's slope <span class="tex" data-tex="\hat{b}"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>b</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{b}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9579em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9579em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">b</span></span><span style="top:-3.2634em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">^</span></span></span></span></span></span></span></span></span></span></span> = <span data-value="b-hat"></span> to four decimal places, so this is Lesson 6's line.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -160,12 +159,11 @@
 
         <li class="step" id="step-5">
             <h2>Too small, too big</h2>
-            <p class="lede">Now move the learning-rate slider. The box names what happens.</p>
+            <p class="lede">Now move the learning-rate slider. The box at the top right names what happens.</p>
             <div class="happening">
-                <p hidden data-fill>Below η = <span data-value="eta-half"></span>, w walks to the bottom from one side ("steady"). A tiny η is slow: <span data-value="k"></span> steps cover only part of the way.</p>
-                <p hidden data-fill>Between <span data-value="eta-half"></span> and <span data-value="eta-one"></span>, each step jumps past the bottom, but by less each time ("zig-zags but settles").</p>
-                <p hidden data-fill>At exactly <span data-value="eta-one"></span>, w jumps between two points for ever ("never settles"). Above it, each jump lands further away ("diverges"), and far enough above, w runs off the chart. So a bigger η is faster only up to a point.</p>
-                <p>Note: these boundaries come from this data. More spread-out x makes them smaller.</p>
+                <p hidden data-fill>The charts show only the first <span data-value="k"></span> steps. Below η = <span data-value="eta-half"></span>, w walks to the bottom from one side ("steady"). A tiny η is slow and covers only part of the way in them.</p>
+                <p hidden data-fill>At exactly <span data-value="eta-half"></span>, a slider stop, the first step lands on the bottom ("lands in one step"). Between <span data-value="eta-half"></span> and <span data-value="eta-one"></span>, each step jumps past the bottom, but by less each time ("zig-zags but settles").</p>
+                <p hidden data-fill>At exactly <span data-value="eta-one"></span>, w jumps between two points for ever ("never settles"). Above it, each jump lands further away ("diverges"), and w soon runs off the chart. So a bigger η is faster only up to a point.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -178,18 +176,17 @@
                 </ul>
                 <p hidden data-fill>The slider runs on a log scale, from η = <span data-value="eta-min"></span> to <span data-value="eta-max"></span>: moving it the same distance always multiplies η by the same amount. It has a stop at exactly each of the two boundaries.</p>
                 <p>A curiosity: at exactly <span class="tex" data-tex="\eta = 1/(2\sigma_x^2)"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>η</mi><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><msubsup><mi>σ</mi><mi>x</mi><mn>2</mn></msubsup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\eta = 1/(2\sigma_x^2)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">η</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord">1/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-2.453em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">x</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span>, <span class="tex" data-tex="q = 0"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">q = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span></span> and the first step lands on <span class="tex" data-tex="w^*"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>w</mi><mo>∗</mo></msup></mrow><annotation encoding="application/x-tex">w^*</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6887em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6887em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">∗</span></span></span></span></span></span></span></span></span></span></span></span>. That works only because this loss is an exact parabola whose curvature we know.</p>
-                <p>These exact boundaries hold for a loss that is a perfect parabola. For other smooth losses the picture is similar close to a minimum, but the boundaries are no longer exact.</p>
+                <p>The boundaries come from this data: the more spread out x is, the smaller they are. These exact boundaries hold for a loss that is a perfect parabola. For other smooth losses the picture is similar close to a minimum, but the boundaries are no longer exact.</p>
             </details>
         </li>
 
         <li class="step" id="step-6">
             <h2>One bottom, or many dips?</h2>
-            <p class="lede">A bumpy loss is harder than a bowl.</p>
+            <p class="lede">So far the loss was a bowl. Now add bumps.</p>
             <div class="happening">
-                <p>The small curve on the right is made up, not this loss. It has two dips.</p>
-                <p hidden data-fill>Started on the right, gradient descent stops in the nearer dip ("stops here"), where the slope is 0, at height <span data-value="bump-stop-h"></span>. The "lower dip" reaches <span data-value="bump-low-h"></span> but is never found.</p>
-                <p>That dip is a local minimum, lowest only nearby. So gradient descent does not always find the best answer.</p>
-                <p>This lesson's loss never bends down: it is convex. With a stable η, gradient descent closes in on its bottom from any start. Neural network losses are usually bumpy.</p>
+                <p hidden data-fill>The small curve is made up, not this loss. Started on the right, gradient descent stops in the nearer of its two dips ("stops here"), where the slope is 0, at height <span data-value="bump-stop-h"></span>. The "lower dip" reaches <span data-value="bump-low-h"></span> but is never found.</p>
+                <p>That dip is a local minimum, lowest only nearby. So gradient descent can miss the lowest point of all, the global minimum.</p>
+                <p hidden data-fill>This bowl never bends down: it is convex, so its one bottom is the global minimum. With η below <span data-value="eta-one"></span> (step 5), gradient descent closes in on it from any start. Neural network losses are usually bumpy.</p>
                 <p>Next: <a href="/ml/loss-surface/">Many features and the loss surface</a>.</p>
             </div>
             <details class="maths">
