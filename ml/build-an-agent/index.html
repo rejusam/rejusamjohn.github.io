@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Build your own agent · ML Explorer</title>
-    <meta name="description" content="Choose the parts of an agent, run it on three tasks and see each pass or fail with the reason, then copy it as a small Python program you can run on your own computer.">
+    <meta name="description" content="Choose the parts of an agent, run it on four tasks and see each pass or fail with the reason, then copy it as a small Python program you can run on your own computer.">
     <link rel="canonical" href="https://rejusamjohn.pages.dev/ml/build-an-agent/">
     <meta property="og:title" content="Build your own agent · ML Explorer">
-    <meta property="og:description" content="Choose the parts of an agent, run it on three tasks and see each pass or fail with the reason, then copy it as a small Python program you can run on your own computer.">
+    <meta property="og:description" content="Choose the parts of an agent, run it on four tasks and see each pass or fail with the reason, then copy it as a small Python program you can run on your own computer.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://rejusamjohn.pages.dev/ml/build-an-agent/">
     <meta property="og:image" content="https://rejusamjohn.pages.dev/ml/og.png">
@@ -56,14 +56,14 @@
     <header class="lesson-head">
         <p class="crumbs"><a href="/ml/">ML Explorer</a> · Level 6 · Agents</p>
         <h1>Build your own agent</h1>
-        <p class="promise">An agent is a handful of parts you can name and choose. Choose them, run your agent on three tasks, and take it home as a small Python program.</p>
+        <p class="promise">An agent is a handful of parts you can name and choose. Choose them, run your agent on four tasks, and take it home as a small Python program.</p>
         <p class="meta">About 12 minutes · Every run, every pass or fail and the program itself are computed in your browser</p>
     </header>
 
     <section class="overview" aria-labelledby="overview-title">
         <h2 id="overview-title">Overview</h2>
         <p>The last five lessons took an agent apart: the loop in <a href="/ml/agents/">What is an agent?</a>, tools in <a href="/ml/agent-tools/">Tools</a>, the step limit and the repeat check in <a href="/ml/agent-loop/">The loop and when to stop</a>, the window in <a href="/ml/agent-memory/">Memory</a>, and asking before changes in <a href="/ml/agent-mistakes/">Mistakes and limits</a>. Here you put the parts together.</p>
-        <p>Your agent runs on three fixed tasks, and the page says whether each one passes, and why. Then the same agent appears as a Python program that you can copy, read and run on your own computer, with no model and no network.</p>
+        <p>Your agent runs on four fixed tasks, and the page says whether each one passes, and why. Then the same agent appears as a Python program that you can copy, read and run on your own computer, with no model and no network.</p>
         <h2>You'll learn</h2>
         <ul>
             <li>to name the parts of an agent and choose each one</li>
@@ -108,22 +108,23 @@
         </li>
 
         <li class="step" id="step-2">
-            <h2>Run three tasks</h2>
-            <p class="lede">Now run your agent on three tasks.</p>
+            <h2>Run four tasks</h2>
+            <p class="lede">Now run your agent on four tasks.</p>
             <div class="happening">
-                <p>Tasks: eli-shop (one person's shopping), pair-shop (two people's) and tell-zoe (tell zoe a price). Pick one. All pass at the start. Now change one part at a time:</p>
+                <p>Pick a task. kai-food asks about kai, who is not in the lookup table. All pass at the start. Change one part at a time:</p>
                 <ul>
                     <li><strong>Step limit 5:</strong> pair-shop stops with no answer; it needs <span data-value="l5-needs">6</span> steps.</li>
-                    <li><strong>Calculator off:</strong> the sums are guessed, so both shopping answers are wrong.</li>
+                    <li><strong>Calculator off:</strong> both shopping sums are guessed, and wrong.</li>
                     <li><strong>12-word window:</strong> facts drop out and calls repeat: shopping runs hit the step limit, tell-zoe asks twice.</li>
                     <li><strong>Notepad too:</strong> facts are kept, but pair-shop needs <span data-value="bn-needs">10</span> steps, more than <span data-value="default-limit">8</span>.</li>
+                    <li><strong>"When lookup finds nothing":</strong> "say so" passes kai-food; "guess" makes up "<span data-value="kai-guess">kai likes apples.</span>"; "try again" stops with no answer.</li>
                 </ul>
-                <p>Note: every lookup here finds its fact, so the "when lookup finds nothing" menu changes only the program.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
-                <p>The tasks: eli-shop, "<span data-value="eli-task">eli buys 4 of the food eli likes. What does that cost?</span>"; pair-shop, "<span data-value="pair-task">ana and sam each buy 3 of the food they like. What do they pay in total?</span>"; and tell-zoe, "<span data-value="zoe-task">Tell zoe what pears cost.</span>"</p>
-                <p>A shopping task passes when the run is done with the right answer: the one the same rules give with every tool on and no limits. tell-zoe passes when it sends the right message and answers, or, with ask before changes on, when it waits for a yes before the right message and, after a yes, sends it and answers.</p>
+                <p>The tasks: eli-shop, "<span data-value="eli-task">eli buys 4 of the food eli likes. What does that cost?</span>"; pair-shop, "<span data-value="pair-task">ana and sam each buy 3 of the food they like. What do they pay in total?</span>"; tell-zoe, "<span data-value="zoe-task">Tell zoe what pears cost.</span>"; and kai-food, "<span data-value="kai-task">What food does kai like?</span>"</p>
+                <p>A shopping task passes when the run is done with the right answer: the one the same rules give with every tool on and no limits. tell-zoe passes when it sends the right message and answers, or, with ask before changes on, when it waits for a yes before the right message and, after a yes, sends it and answers. kai-food passes when it answers that kai was not found.</p>
+                <p>When lookup finds nothing, it says so in its result: "not found: kai". A good agent passes that on, and does not invent an answer or call the same tool again and again. With "say so", kai-food is done in <span data-value="kai-steps">2</span> steps: "<span data-value="kai-answer">I could not find kai.</span>" With "guess", the stand-in takes the first food in the food table; the answer reads like a fact but is made up. With "try again", it writes <span data-value="kai-call">lookup("kai")</span> again; the repeat check stops the run before that call runs. With lookup off, every setting guesses.</p>
                 <p>With the starting settings, pair-shop answers "<span data-value="pair-answer">That costs $12.90.</span>" and eli-shop is done after <span data-value="eli-steps">4</span> steps: "<span data-value="eli-answer">That costs $5.00.</span>" tell-zoe stops after <span data-value="zoe-steps">2</span> steps, waiting for a yes before <span data-value="zoe-call">send("zoe", "pears cost $1.10 each.")</span>; after a yes it is done in <span data-value="zoe-yes-steps">3</span>.</p>
                 <p>With the calculator off, the stand-in rounds each number to one significant figure: "<span data-value="co-eli">That costs $4.00.</span>" and "<span data-value="co-pair">That costs $14.40.</span>" With a 12-word window, tell-zoe asks to send a second time after a yes; with the notepad on as well, eli-shop and tell-zoe pass again.</p>
                 <p>A shopping task with every tool but the notepad, no window limit and no step limit takes two lookups per person (the food, then its price; here each person likes a different food), one calculator call and one answer, each a step:</p>
@@ -138,7 +139,7 @@
             <h2>Your agent as a program</h2>
             <p class="lede">Next, the same agent as a Python program.</p>
             <div class="happening">
-                <p>Look at the program under the controls. It is built from your settings: switch a tool off and its code goes. With the starting settings it is <span data-value="default-lines">206</span> lines.</p>
+                <p>Look at the program under the controls. It is built from your settings: switch a tool off and its code goes. With the starting settings it is <span data-value="default-lines">212</span> lines.</p>
                 <p>The stand-in's rules sit in a function named <code>call_model</code>. The loop around it has your step limit, window, repeat check and ask before changes.</p>
                 <p>To run it, press "Copy" and save the text as <code><span data-value="file-name">my_agent.py</span></code>. In a terminal in that folder, type <code><span data-value="run-line">python3 my_agent.py</span></code>. It needs Python 3.8 or later.</p>
                 <p>It runs with the stand-in: no model and no network. Read it once before you run it.</p>
@@ -154,7 +155,7 @@
             <h2>What the program prints</h2>
             <p class="lede">Then run it. Here is what it should print.</p>
             <div class="happening">
-                <p>Look at the panel: the program runs the three tasks in turn, one line per message, labelled as in the trace: Task, Plan, Tool call, Result, Waiting for your yes, Your answer, Answer, and Stopped with the reason. Your terminal should show the same.</p>
+                <p>Look at the panel: the program runs the four tasks in turn, one line per message, labelled as in the trace: Task, Plan, Tool call, Result, Waiting for your yes, Your answer, Answer, and Stopped with the reason. Your terminal should show the same.</p>
                 <p>With send and ask before changes both on, the program stops at the question <code><span data-value="ask-prompt">Send this? y/n</span></code> and waits. The panel shows two outputs: one if you type y (it sends), one if you type n (the run stops as declined).</p>
                 <p>Note: with either switch off there is no question, and one output. A yes covers the first question only; a run that asks again stops there.</p>
             </div>
@@ -223,6 +224,7 @@
         <ul class="misconceptions">
             <li>"More tools always help." With the notepad on, pair-shop needed <span data-value="bn-needs">10</span> steps instead of <span data-value="pair-steps">6</span>, more than the limit of <span data-value="default-limit">8</span>.</li>
             <li>"An agent program needs a real model to run." Your program runs with the stand-in: no model, no network.</li>
+            <li>"A good agent always gives an answer." With "guess", kai-food answered "<span data-value="kai-guess">kai likes apples.</span>", which is made up: kai is not in the lookup table. "Say so" passes because it tells you the lookup found nothing.</li>
             <li>"With a real model, the limits are no longer needed." The loop's limits and the ask before changes are what stop a run that goes wrong, whatever writes the calls.</li>
         </ul>
 
@@ -236,7 +238,7 @@
             <li>Schick et al., "Toolformer: Language Models Can Teach Themselves to Use Tools", arXiv 2302.04761 (2023), in which a language model is trained to write calls to tools, among them a calculator and search engines, inside its own text, and to use their results.</li>
         </ol>
 
-        <p class="data-note"><strong>About the data.</strong> Nothing here is random: the same task, settings and rules give the same trace, and the same program, every time. The tasks use the invented world from Level 5 and the invented price list from this level; the program carries the same tables. A run is called right when its answer equals the answer the same rules give with every tool on and no limits. The send tool only records the message, on this page and in the program.</p>
+        <p class="data-note"><strong>About the data.</strong> Nothing here is random: the same task, settings and rules give the same trace, and the same program, every time. The tasks use the invented world from Level 5 and the invented price list from this level; the program carries the same tables. A run is called right when its answer equals the answer the same rules give with every tool on, no limits and the starting instructions ("say so", sums with the calculator). The send tool only records the message, on this page and in the program.</p>
 
         <p class="coffee-line">If this helped, you can <button type="button" data-coffee>buy me a coffee</button>.</p>
     </section>

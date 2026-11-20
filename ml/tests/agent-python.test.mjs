@@ -86,7 +86,7 @@ test('toPython is pure and deterministic', () => {
   const c = Object.freeze({...DEFAULT_CONFIG, tools: Object.freeze({...DEFAULT_CONFIG.tools})});
   assert.equal(toPython(c), toPython(c));
   assert.equal(toPython(c), toPython(DEFAULT_CONFIG));
-  assert.deepEqual(BUILD_TASKS, ['eli-shop', 'pair-shop', 'tell-zoe']);
+  assert.deepEqual(BUILD_TASKS, ['eli-shop', 'pair-shop', 'tell-zoe', 'kai-food']);
 });
 
 test('program avoids features newer than 3.8', () => {
@@ -102,17 +102,18 @@ test('program avoids features newer than 3.8', () => {
 });
 
 // Ruling R8: the brief asked for 40-140 lines; with the stand-in rules, the safe
-// calculator and only the chosen parts, the option space measures 128-246 lines.
+// calculator and only the chosen parts, the option space measures 134-252 lines
+// (four build tasks, one of them a question about a person who is not in the table).
 test('program length stays readable', () => {
   let lo = Infinity, hi = 0;
   for (const c of [DEFAULT_CONFIG, ...optionSpace()]) {
     const n = toPython(c).split('\n').length - 1;
     lo = Math.min(lo, n);
     hi = Math.max(hi, n);
-    assert.ok(n >= 120 && n <= 250, `${n} lines for ${JSON.stringify(c)}`);
+    assert.ok(n >= 120 && n <= 260, `${n} lines for ${JSON.stringify(c)}`);
     for (const line of toPython(c).split('\n')) assert.ok(line.length <= 99, line);
   }
-  assert.deepEqual([lo, hi], [128, 246]);
+  assert.deepEqual([lo, hi], [134, 252]);
 });
 
 test('trace lines use the row labels', () => {
@@ -142,8 +143,9 @@ test('trace lines use the row labels', () => {
   assert.equal(y[i - 1], ASK_PROMPT + 'y');
   assert.equal(y[i - 2], 'Waiting for your yes: Waiting for a yes before send("zoe", "pears cost $1.10 each.")');
   const out = expectedOutput(DEFAULT_CONFIG, 'n');
-  assert.ok(out.endsWith('Stopped: declined\n'));
-  assert.equal(out.split('\n\n').length, 3);
+  assert.ok(out.split('\n\n')[2].endsWith('Stopped: declined'));
+  assert.ok(out.endsWith('Answer: I could not find kai.\nStopped: done\n'));
+  assert.equal(out.split('\n\n').length, 4);
 });
 
 function writeSample(dir) {
@@ -235,7 +237,7 @@ test('Python numbers and sums match the page', {skip: PY ? false : 'python3 not 
 });
 
 test('rule 1 (not found) matches the page', {skip: PY ? false : 'python3 not found'}, () => {
-  // The three build tasks never meet a missing entry, so rule 1 is checked call by call.
+  // Rule 1 checked call by call, on views no build task reaches (kai-food is checked below).
   const dir = mkdtempSync(join(tmpdir(), 'agent-py-'));
   try {
     const task = {role: 'task', text: TASKS['eli-shop'].text, step: 0};
@@ -261,5 +263,30 @@ test('rule 1 (not found) matches the page', {skip: PY ? false : 'python3 not fou
         assert.deepEqual(got[j], [js.plan, action], `${JSON.stringify(c)} view ${j}`);
       });
     });
+  } finally { rmSync(dir, {recursive: true, force: true}); }
+});
+
+test('kai-food: the program and the page agree for every "not found" setting', {skip: PY ? false : 'python3 not found'}, () => {
+  // kai is not in the lookup table: each onNotFound option, with lookup on and off, the notepad
+  // on and off and both windows. The program's kai-food block must equal the page's run.
+  const dir = mkdtempSync(join(tmpdir(), 'agent-py-'));
+  try {
+    let i = 0;
+    for (const onNotFound of ['say so', 'try again', 'guess']) for (const lookup of [true, false])
+      for (const notepad of [false, true]) for (const budget of [Infinity, 12]) {
+        const c = cfg({lookup, notepad}, {onNotFound, budget, askBeforeChanges: false});
+        const file = join(dir, `kai_${i++}.py`);
+        writeFileSync(file, toPython(c), 'utf8');
+        const r = spawnSync('python3', [file], {input: '', encoding: 'utf8', env: ENV});
+        assert.equal(r.status, 0, r.stderr);
+        assert.equal(r.stdout, expectedOutput(c, 'y'), JSON.stringify(c));
+        const block = r.stdout.trimEnd().split('\n\n')[3];
+        const run = runAgent('kai-food', c);
+        assert.equal(block, traceLines(run).join('\n'));
+        const last = block.split('\n').slice(-2);
+        if (lookup && onNotFound === 'say so') assert.deepEqual(last, ['Answer: I could not find kai.', 'Stopped: done']);
+        else if (lookup && onNotFound === 'try again') assert.deepEqual(last, ['Tool call: lookup("kai")', 'Stopped: repeated call']);
+        else assert.deepEqual(last, ['Answer: kai likes apples.', 'Stopped: done']);
+      }
   } finally { rmSync(dir, {recursive: true, force: true}); }
 });

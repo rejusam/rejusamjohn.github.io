@@ -5,6 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DEFAULT_CONFIG, RULES, TASKS, TOOLS, runAgent, fmtMoney, PRICES } from '../assets/agent.js';
+import { WORLD } from '../assets/world.js';
 import { toPython, BUILD_TASKS, ASK_PROMPT, traceLines, expectedOutput } from '../assets/agent-py.js';
 import * as S from '../build-an-agent/stage.js';
 
@@ -31,7 +32,7 @@ function expectPass(id, c) {
 }
 
 test('the build runs match runAgent, and eli-shop costs $5.00', () => {
-  assert.deepEqual(S.BUILD_TASKS, ['eli-shop', 'pair-shop', 'tell-zoe']);
+  assert.deepEqual(S.BUILD_TASKS, ['eli-shop', 'pair-shop', 'tell-zoe', 'kai-food']);
   assert.equal(S.STEP_COUNT, 5);
   for (const id of BUILD_TASKS) {
     assert.deepEqual(S.buildRun(id, DEFAULT_CONFIG), runAgent(id, DEFAULT_CONFIG));
@@ -40,6 +41,7 @@ test('the build runs match runAgent, and eli-shop costs $5.00', () => {
   assert.equal(S.rightRun('eli-shop').answer, 'That costs $5.00.'); // the one literal
   assert.equal(RIGHT['pair-shop'].answer, `That costs ${fmtMoney(3 * PRICES.apples + 3 * PRICES.grapes)}.`);
   assert.equal(RIGHT['tell-zoe'].answer, `Told zoe: pears cost ${fmtMoney(PRICES.pears)} each.`);
+  assert.equal(RIGHT['kai-food'].answer, 'I could not find kai.'); // kai is not in the lookup table
 });
 
 test('the option space is the one the page offers', () => {
@@ -102,6 +104,16 @@ test('every fail reason says why, from the run', () => {
           assert.ok(r.messages[first + 1].unseen, `${id} ${JSON.stringify(c)}`);
         }
         if (r.state.sent.length) assert.ok(v.reason.includes(`sent ${r.state.sent.length} message`), v.reason);
+      } else if (r.stop === 'repeated call') {
+        // Only kai-food with "try again": the same lookup twice in a row, after "not found".
+        assert.equal(id, 'kai-food');
+        assert.equal(c.onNotFound, 'try again');
+        assert.equal(v.reason, 'no answer: it wrote lookup("kai") twice in a row, so the repeat check stopped the run; it never said kai was not found');
+      } else if (r.stop === 'done' && id === 'kai-food') {
+        assert.equal(r.answer, `kai likes ${WORLD.foods[0]}.`);
+        assert.ok(!c.tools.lookup || c.onNotFound === 'guess', JSON.stringify(c));
+        const why = c.tools.lookup ? 'lookup found nothing for kai' : 'lookup is off';
+        assert.equal(v.reason, `made-up answer "${r.answer}": ${why}, so it guessed the food`);
       } else if (r.stop === 'done') {
         if (id === 'tell-zoe' && !c.tools.send) assert.equal(v.reason, 'nothing sent: send is off');
         else {
@@ -139,7 +151,7 @@ test('plan lines split into sentences as a lookbehind split would', () => {
 test('stories told in step 2', () => {
   // Defaults: all three pass.
   const d = BUILD_TASKS.map((id) => S.verdict(id, DEFAULT_CONFIG));
-  assert.deepEqual(d.map((v) => v.pass), [true, true, true]);
+  assert.deepEqual(d.map((v) => v.pass), [true, true, true, true]);
   assert.equal(d[0].result.steps, 4);
   assert.equal(d[1].result.steps, 6);
   assert.equal(d[2].result.stop, 'waiting for approval');
@@ -147,22 +159,22 @@ test('stories told in step 2', () => {
   assert.equal(runAgent('tell-zoe', DEFAULT_CONFIG, { approve: true }).steps, 3);
   // Step limit 5: only pair-shop fails; it needs 6 steps.
   const l5 = BUILD_TASKS.map((id) => S.verdict(id, cfg({}, { stepLimit: 5 })));
-  assert.deepEqual(l5.map((v) => v.pass), [true, false, true]);
+  assert.deepEqual(l5.map((v) => v.pass), [true, false, true, true]);
   assert.match(l5[1].reason, /needs 6 steps/);
   // Calculator off: wrong sums.
   const co = BUILD_TASKS.map((id) => S.verdict(id, cfg({ calculator: false })));
-  assert.deepEqual(co.map((v) => v.pass), [false, false, true]);
+  assert.deepEqual(co.map((v) => v.pass), [false, false, true, true]);
   assert.equal(co[0].result.answer, 'That costs $4.00.');
   assert.equal(co[1].result.answer, 'That costs $14.40.');
-  // A 12-word window: all three fail.
+  // A 12-word window: all but kai-food fail.
   const b = BUILD_TASKS.map((id) => S.verdict(id, cfg({}, { budget: 12 })));
-  assert.deepEqual(b.map((v) => v.pass), [false, false, false]);
+  assert.deepEqual(b.map((v) => v.pass), [false, false, false, true]);
   assert.match(b[0].reason, /went round in circles/);
   assert.match(b[1].reason, /went round in circles/);
   assert.match(b[2].reason, /^after a yes: /);
   // A 12-word window and the notepad: eli-shop and tell-zoe pass; pair-shop needs 10 steps.
   const bn = BUILD_TASKS.map((id) => S.verdict(id, cfg({ notepad: true }, { budget: 12 })));
-  assert.deepEqual(bn.map((v) => v.pass), [true, false, true]);
+  assert.deepEqual(bn.map((v) => v.pass), [true, false, true, true]);
   assert.match(bn[1].reason, /needs 10 steps/);
   // The notepad alone (no window limit): pair-shop needs 10 steps, more than 8.
   const np = S.verdict('pair-shop', cfg({ notepad: true }));
@@ -170,7 +182,7 @@ test('stories told in step 2', () => {
   assert.match(np.reason, new RegExp(`step limit of ${DEFAULT_CONFIG.stepLimit}; this run needs 10 steps`));
   // Step 4: after a no the run is declined; a yes covers the first question only.
   const def = S.outputs(DEFAULT_CONFIG);
-  assert.ok(def[1].text.endsWith('Stopped: declined\n'));
+  assert.ok(def[1].text.trimEnd().split('\n\n')[2].endsWith('Stopped: declined'));
   assert.ok(def[0].text.endsWith('Stopped: done\n'));
   const w = S.outputs(cfg({}, { budget: 12 }))[0].text.trimEnd().split('\n\n')[2].split('\n');
   assert.equal(w.filter((l) => l.startsWith('Waiting for your yes: Waiting for a yes before')).length, 2);
@@ -188,7 +200,7 @@ test('code shown equals toPython(config)', () => {
     assert.equal(S.programText(c), toPython(c));
     assert.equal(S.lineCount(c), toPython(c).split('\n').length - 1);
   }
-  assert.equal(S.lineCount(DEFAULT_CONFIG), 206);
+  assert.equal(S.lineCount(DEFAULT_CONFIG), 212);
   // Switching a default tool off drops its code, so the program gets shorter.
   for (const t of ['calculator', 'lookup', 'send']) assert.ok(S.lineCount(cfg({ [t]: false })) < S.lineCount(DEFAULT_CONFIG), t);
   assert.ok(S.lineCount(cfg({ notepad: true })) > S.lineCount(DEFAULT_CONFIG));
@@ -231,7 +243,8 @@ test('expected output lines equal the parity runs', () => {
     }
     // Each task's block is the trace of the run the page shows (or its yes/no run).
     const blocks = outs[0].text.trimEnd().split('\n\n');
-    assert.equal(blocks.length, 3);
+    assert.equal(blocks.length, 4);
+    assert.equal(blocks[3], traceLines(runAgent('kai-food', c)).join('\n'));
     assert.deepEqual(blocks.slice(0, 2), ['eli-shop', 'pair-shop'].map((id) => traceLines(runAgent(id, c)).join('\n')));
   }
 });
@@ -319,6 +332,11 @@ test('page values are computed and match the page', () => {
     'zoe-steps': String(zoe.steps),
     'zoe-yes-steps': String(yes.steps),
     'zoe-call': zoe.messages.find((m) => m.role === 'approval').text.replace('Waiting for a yes before ', ''),
+    'kai-task': 'What food does kai like?',
+    'kai-answer': 'I could not find kai.',
+    'kai-steps': '2',
+    'kai-guess': `kai likes ${WORLD.foods[0]}.`,
+    'kai-call': 'lookup("kai")',
     'l5-needs': String(runAgent('pair-shop', { stepLimit: S.CAP }).steps),
     'co-eli': runAgent('eli-shop', { tools: { calculator: false } }).answer,
     'co-pair': runAgent('pair-shop', { tools: { calculator: false } }).answer,
@@ -378,4 +396,52 @@ test('the page has the lesson parts and no free-text input', () => {
     assert.ok(!new RegExp(`\\b${w}\\b`, 'i').test(text), w);
   }
   assert.ok(!/30.60 lines|30 to 60/.test(text));
+});
+
+test('kai-food: the "when lookup finds nothing" menu changes the run and the verdict', () => {
+  assert.ok(!WORLD.people.includes('kai'), 'kai is not in the lookup table');
+  const runs = {};
+  for (const o of S.OPTIONS.onNotFound) {
+    const r = runAgent('kai-food', cfg({}, { onNotFound: o }));
+    assert.deepEqual(r, runAgent('kai-food', cfg({}, { onNotFound: o })), 'deterministic');
+    runs[o] = r;
+  }
+  const lines = (r) => r.messages.map((m) => `${m.role}: ${m.text}`);
+  assert.deepEqual(lines(runs['say so']), ['task: What food does kai like?', 'plan: Need the food kai likes; use lookup.',
+    'call: lookup("kai")', 'result: not found: kai', 'plan: Lookup found nothing for kai; say so.',
+    'answer: I could not find kai.', 'stop: done']);
+  assert.deepEqual(lines(runs['try again']).slice(4), ['plan: Lookup found nothing for kai; try the same lookup again.',
+    'call: lookup("kai")', 'stop: repeated call']);
+  assert.equal(runs['try again'].answer, null);
+  assert.deepEqual(lines(runs.guess).slice(4), ['plan: Guess (first food in the table): kai likes apples. All facts are in; answer.',
+    'answer: kai likes apples.', 'stop: done']);
+  // Over every setting the page offers: with lookup on, only "say so" passes; with lookup off, all guess.
+  const seen = new Set();
+  for (const c of S.optionSpace()) {
+    const v = S.verdict('kai-food', c);
+    assert.equal(v.pass, c.tools.lookup && c.onNotFound === 'say so', JSON.stringify(c));
+    seen.add(`${c.tools.lookup} ${c.onNotFound} ${v.pass} ${v.reason}`);
+  }
+  assert.equal(seen.size, 6);
+  // The menu changes runs now: some setting gives a different kai-food run for each pair of options.
+  for (const c of S.optionSpace().filter((x) => x.onNotFound === 'say so' && x.tools.lookup)) {
+    const a = JSON.stringify(runAgent('kai-food', c));
+    assert.notEqual(a, JSON.stringify(runAgent('kai-food', { ...c, onNotFound: 'try again' })));
+    assert.notEqual(a, JSON.stringify(runAgent('kai-food', { ...c, onNotFound: 'guess' })));
+  }
+  // The other three tasks never meet a missing entry, so the menu leaves them alone.
+  for (const c of S.optionSpace()) for (const id of ['eli-shop', 'pair-shop', 'tell-zoe']) {
+    assert.deepEqual(runAgent(id, c), runAgent(id, { ...c, onNotFound: 'say so' }));
+  }
+});
+
+test('the page says four tasks, never three', () => {
+  assert.equal(S.BUILD_TASKS.length, 4);
+  assert.ok(!/three (fixed )?tasks/.test(html + src), 'no "three tasks" left');
+  assert.match(html, /<h2>Run four tasks<\/h2>/);
+  assert.match(src, /'The four tasks: pick one to see its trace'/);
+  assert.ok(!/changes only the program/.test(html));
+  const step2 = html.split('id="step-2"')[1].split('id="step-3"')[0];
+  assert.match(step2, /kai-food asks about kai, who is not in the lookup table/);
+  assert.match(step2, /"When lookup finds nothing"/);
 });

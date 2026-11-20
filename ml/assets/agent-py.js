@@ -1,12 +1,13 @@
 // Level 6 take-home program: writes the page's agent as one small Python file
 // (3.8 or later, standard library only). Pure: the text depends only on the config.
-// The program holds the same rules as the stand-in in agent.js, written for the three
-// build tasks only (two shopping sums and one message to send).
+// The program holds the same rules as the stand-in in agent.js, written for the four
+// build tasks only (two shopping sums, one message to send and one question about a
+// person who is not in the lookup table).
 import {WORLD} from './world.js';
 import {PRICES, TASKS, DEFAULT_CONFIG, runAgent} from './agent.js';
 import {ROLE_LABELS} from './trace-view.js';
 
-export const BUILD_TASKS = ['eli-shop', 'pair-shop', 'tell-zoe'];
+export const BUILD_TASKS = ['eli-shop', 'pair-shop', 'tell-zoe', 'kai-food'];
 
 // Row labels: the trace view's own, so the program prints the same words the page shows.
 export {ROLE_LABELS};
@@ -31,7 +32,7 @@ export function traceLines(result, typed) {
   return out;
 }
 
-// What the program prints for the three build tasks when the reader types `typed`.
+// What the program prints for the build tasks when the reader types `typed`.
 export function expectedOutput(config, typed = 'y') {
   return BUILD_TASKS.map(id => traceLines(runAgent(id, config, {approve: typed === 'y'}), typed).join('\n'))
     .join('\n\n') + '\n';
@@ -259,15 +260,16 @@ export function toPython(config) {
         '        return " ".join(plan), ("call", "notepad", {"action": "write", "text": last["text"]})');
     }
   }
-  add('    # Rule 3: each person\'s food and its price (shopping), or one price (sending).',
-    '    shop = goal["kind"] == "shop"',
-    '    for person in goal["people"] if shop else [None]:');
+  add('    # Rule 3: each person\'s food and its price (shopping), one price (sending),',
+    '    # or one person\'s food (a question about a person).',
+    '    kind = goal["kind"]',
+    '    for person in goal["people"] if kind == "shop" else [goal.get("person")]:');
   if (t.lookup) {
     add('        if person and person not in likes:',
       '            plan.append("Need the food %s likes; use lookup." % person)',
       '            return " ".join(plan), ("call", "lookup", {"key": person})',
       '        food = likes[person] if person else goal["food"]',
-      '        if food not in price:',
+      '        if kind != "food" and food not in price:',
       '            plan.append("Need the price of %s; use lookup." % food)',
       '            return " ".join(plan), ("call", "lookup", {"key": food})');
   } else {
@@ -275,12 +277,15 @@ export function toPython(config) {
       '            likes[person] = FIRST_FOOD',
       '            plan.append("Guess (first food in the table): %s likes %s." % (person, FIRST_FOOD))',
       '        food = likes[person] if person else goal["food"]',
-      '        if food not in price:',
+      '        if kind != "food" and food not in price:',
       '            price[food] = FIRST_PRICE',
       '            plan.append("Guess (first price in the list): %s cost %s."',
       '                        % (food, fmt_money(FIRST_PRICE)))');
   }
-  add('    if shop:  # rule 4: the sum',
+  add('    if kind == "food":  # rule 6',
+    '        plan.append("All facts are in; answer.")',
+    '        return " ".join(plan), ("answer", "%s likes %s." % (goal["person"], likes[goal["person"]]))',
+    '    if kind == "shop":  # rule 4: the sum',
     '        terms = [(goal["qty"], price[likes[p]]) for p in goal["people"]]');
   if (calcSums) {
     add('        expr = sum_text(terms)',

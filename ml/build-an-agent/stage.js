@@ -48,10 +48,13 @@ export function optionSpace() {
 // The run the page shows: no answer to an ask yet.
 export const buildRun = (id, config) => runAgent(id, merge(config));
 
-// The right answer: all tools on, no step limit, no window, no ask.
+// The right answer: all tools on, no step limit, no window, no ask, and the starting
+// instructions ("say so", sums with the calculator). For kai-food, who is not in the
+// lookup table, that answer says kai was not found.
 const RIGHT_CONFIG = {
   tools: Object.fromEntries(OPTIONS.tools.map((t) => [t, true])),
   stepLimit: Infinity, budget: Infinity, askBeforeChanges: false,
+  onNotFound: 'say so', sums: 'calculator',
 };
 export const rightRun = (id) => runAgent(id, RIGHT_CONFIG);
 
@@ -85,8 +88,17 @@ function limitReason(id, c, r, opts) {
   return s;
 }
 
+// The lookup results that found nothing, in a run.
+const notFound = (r) => r.messages.filter((m) => m.role === 'result' && m.tool === 'lookup' && m.text.startsWith('not found: '));
+
 function stopReason(id, c, r, opts) {
   if (r.stop === 'step limit') return limitReason(id, c, r, opts);
+  if (r.stop === 'repeated call') {
+    const call = r.messages.filter((m) => m.role === 'call').at(-1);
+    let s = `no answer: it wrote ${call.text} twice in a row, so the repeat check stopped the run`;
+    if (notFound(r).length) s += `; it never said ${call.input.key} was not found`;
+    return s;
+  }
   if (r.stop === 'waiting for approval') return `it sent ${plural(r.state.sent.length, 'message')}, then asked to send again`;
   return `no answer: stopped (${r.stop})`;
 }
@@ -106,6 +118,11 @@ export function verdict(id, config) {
     }
     if (send && !c.tools.send) return { pass: false, result: r, reason: 'nothing sent: send is off' };
     const g = listText(guessed(r));
+    if (TASKS[id].goal.kind === 'food') {
+      const who = TASKS[id].goal.person;
+      const why = notFound(r).length ? `lookup found nothing for ${who}` : 'lookup is off';
+      return { pass: false, result: r, reason: `made-up answer "${r.answer}": ${why}, so it guessed ${g}` };
+    }
     if (send) return { pass: false, result: r, reason: `wrong price: it sent "${r.state.sent[0].text}"; it guessed ${g}` };
     return { pass: false, result: r, reason: `wrong answer "${r.answer}" (right: "${right.answer}"); it guessed ${g}` };
   }
@@ -175,6 +192,8 @@ export function pageValues() {
   const pair = buildRun('pair-shop');
   const zoe = buildRun('tell-zoe');
   const yes = runAgent('tell-zoe', DEFAULT_CONFIG, { approve: true });
+  const kai = buildRun('kai-food');
+  const again = buildRun('kai-food', { onNotFound: 'try again' });
   return {
     'rule-count': String(RULES.length),
     'tool-count': String(OPTIONS.tools.length),
@@ -189,6 +208,11 @@ export function pageValues() {
     'zoe-steps': String(zoe.steps),
     'zoe-yes-steps': String(yes.steps),
     'zoe-call': zoe.messages.find((m) => m.role === 'approval').text.slice(ASK_HEAD.length),
+    'kai-task': TASKS['kai-food'].text,
+    'kai-answer': kai.answer,
+    'kai-steps': String(kai.steps),
+    'kai-guess': buildRun('kai-food', { onNotFound: 'guess' }).answer,
+    'kai-call': again.messages.filter((m) => m.role === 'call').at(-1).text,
     'l5-needs': String(runAgent('pair-shop', { stepLimit: CAP }).steps),
     'co-eli': buildRun('eli-shop', { tools: { calculator: false } }).answer,
     'co-pair': buildRun('pair-shop', { tools: { calculator: false } }).answer,
@@ -310,7 +334,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   // ---- step 2: pass or fail per task ----
   const results = make('div', {}, { display: 'grid', gap: '8px', marginTop: '12px' });
   results.setAttribute('role', 'group');
-  results.setAttribute('aria-label', 'The three tasks: pick one to see its trace');
+  results.setAttribute('aria-label', 'The four tasks: pick one to see its trace');
   builder.after(results);
   const taskButtons = BUILD_TASKS.map((id, k) => {
     const b = make('button', { type: 'button' }, { ...btnStyle, display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px' });
@@ -454,7 +478,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     syncBuilder();
     let aria = '';
     if (step === 0) aria = drawParts();
-    if (step === 1) { drawResults(); aria = `The three tasks. ${summary()}.`; }
+    if (step === 1) { drawResults(); aria = `The four tasks. ${summary()}.`; }
     if (step === 2) { drawCode(); aria = `The program ${FILE_NAME}, ${lineCount(config)} lines, shown below the controls.`; }
     if (step === 3) { drawOutputs(); aria = `What ${FILE_NAME} prints: ${outputs(config).map((o) => o.label).join('; ')}.`; }
     if (step === 4) { blockPre.textContent = markedBlock(config); aria = 'The marked block in the program, where a real model would go.'; }
