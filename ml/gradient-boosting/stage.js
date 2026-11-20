@@ -147,8 +147,16 @@ export function pageValues() {
     'end-test': fmtMSE(r.test[M_MAX]),
     'end-train': fmtMSE(r.train[M_MAX]),
     'split6': fmt(s6.threshold),
+    'n-train': String(N_TRAIN),
+    'n-gaps': String(N_TRAIN - 1),
+    'n-test': String(N_TEST),
+    'm-max': String(M_MAX),
+    'm-start': String(M_START),
+    'step6-m': String(STEP6_M),
+    'eta-early': etaText(ETA_EARLY),
   };
   ETAS.forEach((eta, k) => {
+    out[`eta-${k}`] = etaText(eta);
     out[`best-m-${k}`] = String(bestM(eta));
     out[`best-test-${k}`] = fmtMSE(run(eta).test[bestM(eta)]);
   });
@@ -465,10 +473,6 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   for (const span of doc.querySelectorAll('main.lesson [data-value]')) {
     const val = filled[span.dataset.value];
     if (val !== undefined) span.textContent = val;
-  }
-  for (const p of doc.querySelectorAll('main.lesson [data-fill][hidden]')) {
-    const spans = [...p.querySelectorAll('[data-value]')];
-    if (spans.every((sp) => sp.dataset.value in filled)) p.hidden = false;
   }
 
   render();

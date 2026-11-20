@@ -122,6 +122,9 @@ test('gb page structure and contract', () => {
   assert.ok(keys.length >= 10);
   for (const key of keys) assert.ok(key in pv, key);
   for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+  // Spans written out in the page hold exactly the stage's value.
+  for (const [, key, text] of html.matchAll(/<span data-value="([^"]+)">([^<]+)<\/span>/g)) assert.equal(text, pv[key], key);
+  assert.doesNotMatch(html, /<span data-value="[^"]+"><\/span>/);
 });
 
 test('gb page values match the computations', () => {
@@ -173,7 +176,7 @@ test('gb wording claims hold', () => {
   assert.equal(pv['best-m-0'], '207');
   assert.equal(pv['best-m-1'], '111');
   assert.equal(pv['best-test-0'], '0.097');
-  assert.match(html, /best M is <span data-value="best-m-0"><\/span> at η = 0\.05 against <span data-value="best-m-1"><\/span> at η = 0\.1/);
+  assert.match(html, /best M is <span data-value="best-m-0">207<\/span> at η = <span data-value="eta-0">0\.05<\/span> against <span data-value="best-m-1">111<\/span> at η = <span data-value="eta-1">0\.1<\/span>/);
   assert.match(html, /href="\/ml\/train-test\/"/);
   // Step 5: after its best round, η = 0.1's test MSE has risen by M = 300, while train still falls.
   const r = L.run(0.1);
@@ -186,6 +189,6 @@ test('gb wording claims hold', () => {
   assert.match(html, /Section 10\.10, "Numerical Optimization via Gradient Boosting"/);
   assert.match(html, /10\.12\.1, "Shrinkage"/);
   assert.doesNotMatch(html, /Taylor/);
-  assert.match(html, new RegExp(`after ${L.STEP6_M} rounds`));
-  assert.match(html, new RegExp(`M = ${L.M_START}\\b`));
+  assert.match(html, new RegExp(`after <span data-value="step6-m">${L.STEP6_M}</span> rounds`));
+  assert.match(html, new RegExp(`M = <span data-value="m-start">${L.M_START}</span>`));
 });
