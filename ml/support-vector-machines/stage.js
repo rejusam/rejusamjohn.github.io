@@ -37,7 +37,7 @@ export const overData = () => copy(OVER);
 // 20 points inside radius 1 (class 0, y = −1), then 20 between radius 1.6 and 2.4
 // (class 1, y = +1). For each point: r uniform, then the angle uniform on [0, 2π).
 export const RINGS = { inner: [0, 1], outer: [1.6, 2.4] };
-// The tilt grid (degrees) that step 3 scans to check the widest street.
+// The tilt grid step (degrees) for the check, in step 3's maths, that no tilt gives a wider street.
 export const SCAN_STEP = 0.01;
 function makeCircles() {
   const rng = mulberry32(SEED_CIRCLE);
@@ -300,8 +300,8 @@ const LX0 = 56;
 const LX1 = 266;
 const QX0 = 372;
 const QX1 = 582;
-const QY0 = 256;
-const QY1 = 46;
+const QY0 = 264;
+const QY1 = 54;
 
 const P = (v) => Number(v.toFixed(2));
 
@@ -411,12 +411,12 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   }
   const leftPts = el('g', {}, sixG);
   CIRC.X.forEach((x, i) => classMarker(leftPts, LXs(x[0]), LYs(x[1]), CIRC.cls[i], { r: 4 }));
-  const caption = (x, text) => el('text', { class: 'stage-text', x, y: 43, text }, sixG);
+  const caption = (x, text) => el('text', { class: 'stage-text', x, y: 51, text }, sixG);
   caption(LX0, 'the data, x₁ and x₂');
   const rightG = el('g', {}, sixG);
   const sideAxes = axes(rightG, UX, ZY, { xLabel: 'across, seen side-on', yLabel: 'x₁² + x₂²' });
   sideAxes.setAttribute('aria-hidden', 'true');
-  el('text', { class: 'stage-text', x: QX0, y: 43, text: 'side view' }, rightG);
+  el('text', { class: 'stage-text', x: QX0, y: 51, text: 'side view' }, rightG);
   const sideLines = el('g', { 'clip-path': 'url(#l34-right)' }, rightG);
   const fl = fitLifted();
   const sideLine = (k) => {

@@ -69,9 +69,10 @@ test('separable data has a hard margin', () => {
   assert.deepEqual(f.sv, [6, 11, 15]);
   // The widest street over every tilt (0.01° grid) matches the solver. The
   // width changes by at most 2R per radian of tilt, so the grid's best is within 2R·h.
-  const scan = L.bestTilt(0.01);
+  assert.equal(L.SCAN_STEP, 0.01);
+  const scan = L.bestTilt(L.SCAN_STEP);
   const R = Math.max(...X.map((x) => Math.hypot(x[0], x[1])));
-  assert.ok(f.margin - scan.width < 2 * R * (0.01 * Math.PI / 180), `${scan.width} vs ${f.margin}`);
+  assert.ok(f.margin - scan.width < 2 * R * (L.SCAN_STEP * Math.PI / 180), `${scan.width} vs ${f.margin}`);
   assert.ok(scan.width <= f.margin + 1e-9);
 });
 
