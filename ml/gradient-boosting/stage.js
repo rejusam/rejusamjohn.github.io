@@ -153,7 +153,6 @@ export function pageValues() {
     'm-max': String(M_MAX),
     'm-start': String(M_START),
     'step6-m': String(STEP6_M),
-    'eta-early': etaText(ETA_EARLY),
   };
   ETAS.forEach((eta, k) => {
     out[`eta-${k}`] = etaText(eta);
@@ -291,8 +290,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   el('line', { x1: CX0 + 30, x2: CX0 + 46, y1: CY1 - 16, y2: CY1 - 16, stroke: CYAN, 'stroke-width': 2 }, ckey);
   const ckA = el('text', { class: 'stage-text', x: CX0 + 50, y: CY1 - 12, text: 'train' }, ckey);
   ckA.style.fill = CYAN;
-  el('line', { x1: CX0 + 100, x2: CX0 + 116, y1: CY1 - 16, y2: CY1 - 16, stroke: VIOLET, 'stroke-width': 2, 'stroke-dasharray': '5 3' }, ckey);
-  const ckB = el('text', { class: 'stage-text', x: CX0 + 120, y: CY1 - 12, text: 'test' }, ckey);
+  el('line', { x1: CX0 + 106, x2: CX0 + 122, y1: CY1 - 16, y2: CY1 - 16, stroke: VIOLET, 'stroke-width': 2, 'stroke-dasharray': '5 3' }, ckey);
+  const ckB = el('text', { class: 'stage-text', x: CX0 + 126, y: CY1 - 12, text: 'test' }, ckey);
   ckB.style.fill = VIOLET;
   const trainCurve = el('path', { fill: 'none', stroke: CYAN, 'stroke-width': 2 }, chartG);
   const testCurve = el('path', { fill: 'none', stroke: VIOLET, 'stroke-width': 2, 'stroke-dasharray': '5 3' }, chartG);
