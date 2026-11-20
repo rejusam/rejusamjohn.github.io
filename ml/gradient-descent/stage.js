@@ -199,6 +199,7 @@ export function pageValues() {
   const conv = converge(d, ETA_DEFAULT);
   const b = bumpyRun();
   const low = bumpyLowest();
+  const first = runPath(ETA_DEFAULT, d, 2).path.map(([w]) => w);
   return {
     n: String(d.cx.length),
     xbar: fmt(d.xbar),
@@ -207,7 +208,11 @@ export function pageValues() {
     'w-star': fmt(p.wStar, 4),
     'loss-min': fmt(p.c),
     'loss-w0': fmt(loss(p, W0)),
+    'slope-w0': fmt(lossSlope(p, W0)),
     w0: fmt(W0),
+    w1: fmt(first[1]),
+    step1: fmt(Math.abs(first[1] - first[0])),
+    step2: fmt(Math.abs(first[2] - first[1])),
     'eta-default': fmtEta(ETA_DEFAULT),
     'eta-min': fmtEta(ETA_MIN),
     'eta-half': fmtEta(1 / (2 * p.a)),
