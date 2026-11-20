@@ -84,7 +84,7 @@
             <p class="lede">k-NN gave a label by a vote. Now we want a chance of passing.</p>
             <div class="happening">
                 <p>Look at the plot. Each point is a student: hours studied across, and the result up. A pass is y = 1, a violet triangle, and a fail y = 0, a cyan circle. Of the <span data-value="n">30</span> students, <span data-value="n-pass">13</span> passed and <span data-value="n-fail">17</span> failed. More hours go with more passes, but not neatly: the passes and fails overlap.</p>
-                <p>The dashed line is fitted to the 0s and 1s by least squares, as in <a href="/ml/linear-regression/">linear regression</a>. The read-out shows it at <span data-value="ols-0">−0.19</span> for 0 hours and <span data-value="ols-10">1.17</span> for <span data-value="hours-max">10</span> hours. But a chance must lie between 0 and 1, and the line leaves that range below <span data-value="ols-cross0">1.4</span> hours and above <span data-value="ols-cross1">8.7</span> hours, into the grey bands.</p>
+                <p>The dashed line is fitted to the 0s and 1s by least squares, as in <a href="/ml/linear-regression/">linear regression</a>. It is at <span data-value="ols-0">−0.19</span> for 0 hours and <span data-value="ols-10">1.17</span> for <span data-value="hours-max">10</span> hours. But a chance must lie between 0 and 1, and the line leaves that range below <span data-value="ols-cross0">1.4</span> hours and above <span data-value="ols-cross1">8.7</span> hours, into the grey bands.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -101,7 +101,7 @@
             <div class="happening">
                 <p>Look at the cyan curve. For a student who studied x hours, the score is z = b + w·x. The sigmoid σ (not a standard deviation here) squashes any score to between 0 and 1. The result is p̂, said "p-hat": the predicted probability of class 1, here the chance of passing.</p>
                 <p>At the start, b = <span data-value="start-b">−2.0</span> and w = <span data-value="start-w">0.40</span>, and the read-out shows p̂ = 0.5 at <span data-value="start-mid">5.00</span> hours, where the score is 0.</p>
-                <p>Move the "w" slider, the weight on hours. A larger w makes the S steeper, and a negative w turns it round. Move "b", the intercept, and the curve slides sideways.</p>
+                <p>Move the "w" slider, the weight on hours. A larger w makes the S steeper, and a negative w turns it round. Move "b", the intercept (also called the bias), and the curve slides sideways.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -141,7 +141,7 @@
             <p class="lede">Training finds the b and w with the smallest log-loss.</p>
             <div class="happening">
                 <p>Press "Fit". <a href="/ml/gradient-descent/">Gradient descent</a> starts from b = 0 and w = 0: a flat curve at 0.5, with log-loss <span data-value="loss-0">0.693</span>. Each step moves b and w downhill.</p>
-                <p>The chart shows the log-loss after each step, falling fast, then slowly. With learning rate (step size) η = <span data-value="gd-eta">0.25</span>, it is within <span data-value="gd-tol">0.001</span> of the lowest after <span data-value="gd-within">767</span> of its <span data-value="gd-steps">3000</span> steps.</p>
+                <p>The chart shows the log-loss after each step, falling fast, then slowly. With learning rate (step size) η = <span data-value="gd-eta">0.25</span>, it is within <span data-value="gd-tol">0.001</span> of its minimum after <span data-value="gd-within">767</span> of its <span data-value="gd-steps">3000</span> steps.</p>
                 <p>The dashed "Newton" curve is the best fit, from a faster method: b = <span data-value="fit-b">−5.41</span>, w = <span data-value="fit-w">1.07</span>. Its log-loss is the chart’s "Newton minimum".</p>
                 <p>Note: the log-loss here is convex, a bowl with one dip only, so walking downhill from any start ends there.</p>
             </div>
@@ -163,7 +163,7 @@
             <p class="lede">To act, we need a yes or no. Predict a pass when p̂ is at least a threshold t.</p>
             <div class="happening">
                 <p>Look at the plot. At the start t = <span data-value="t-start">0.50</span>, so the model predicts a pass from <span data-value="cut-50">5.06</span> hours up, the read-out’s "cut-off". Rings mark the mistakes. A ringed circle is a false positive, a fail predicted to pass; a ringed triangle is a false negative, a pass predicted to fail.</p>
-                <p>Precision is the share of predicted passes who really passed: <span data-value="prec-50">76.9%</span> at the start. Recall is the share of real passes that were predicted: <span data-value="rec-50">76.9%</span>.</p>
+                <p>Precision is the share of predicted passes who really passed: at the start, <span data-value="tp-50">10</span> of the <span data-value="pp-50">13</span> predicted passes, <span data-value="prec-50">76.9%</span>. Recall is the share of real passes that the model predicted to pass: <span data-value="tp-50">10</span> of the <span data-value="ap-50">13</span> real passes, <span data-value="rec-50">76.9%</span>.</p>
                 <p>Raise "t" and fewer students are predicted to pass: recall falls or stays put, and precision usually rises. The right t depends on what each mistake costs.</p>
             </div>
             <details class="maths">
@@ -193,10 +193,10 @@
             <h2>Two features</h2>
             <p class="lede">Now each case has two features, so the score is w₁x₁ + w₂x₂ + b.</p>
             <div class="happening">
-                <p>Look at the new made-up data: <span data-value="n-2d">80</span> cases, <span data-value="n-2d0">40</span> circles of class 0 and <span data-value="n-2d1">40</span> triangles of class 1. The shading shows p̂: stronger violet is nearer 1, stronger cyan nearer 0.</p>
-                <p>The solid line, the decision boundary, is where p̂ = 0.5 and the score is 0. It is straight, so logistic regression is a linear classifier.</p>
+                <p>Look at the new data: <span data-value="n-2d">80</span> cases, <span data-value="n-2d0">40</span> circles of class 0 and <span data-value="n-2d1">40</span> triangles of class 1. The shading shows p̂: stronger violet is nearer 1, stronger cyan nearer 0.</p>
+                <p>The solid line, the decision boundary, is where p̂ = 0.5 and the score is 0. It is straight, so logistic regression is a linear classifier. The dotted lines, where p̂ is <span data-value="lvl-lo">0.1</span> and <span data-value="lvl-hi">0.9</span>, run parallel to it.</p>
                 <p>Note: on the <span data-value="n-2d">80</span> cases it was fitted on, accuracy is <span data-value="acc-2d">87.5%</span>. No straight line splits the two classes perfectly.</p>
-                <p>The next lesson, Naive Bayes, finds a probability another way: it describes each class on its own.</p>
+                <p>The next lesson, Naive Bayes, finds a probability from each class on its own.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>

@@ -23,6 +23,8 @@ export const HOURS = 10;
 export const T_START = 0.5;
 // Gradient descent counts as close once its loss is within GD_TOL of the minimum.
 export const GD_TOL = 1e-3;
+// The dotted lines of equal p̂ in the 2D picture.
+export const LEVELS = [0.1, 0.9];
 
 // Hours x ~ U(0, 10); the student passes (y = 1) when rng() < σ(−5 + x).
 let D1 = null;
@@ -210,6 +212,11 @@ export function pageValues() {
     't-start': num(T_START, 2),
     'n-2d0': String(B2.y.filter((v) => v === 0).length),
     'n-2d1': String(B2.y.filter((v) => v === 1).length),
+    'lvl-lo': String(LEVELS[0]),
+    'lvl-hi': String(LEVELS[1]),
+    'tp-50': String(c5.tp),
+    'pp-50': String(c5.tp + c5.fp),
+    'ap-50': String(c5.tp + c5.fn),
   };
 }
 
@@ -327,7 +334,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     const at = (a) => (c - f2.w0 - f2.w[0] * a) / f2.w[1];
     return { x1: QX(X2_DOM[0]), y1: QY(at(X2_DOM[0])), x2: QX(X2_DOM[1]), y2: QY(at(X2_DOM[1])) };
   };
-  for (const q of [0.1, 0.9]) el('line', { ...level(q), stroke: MUTED, 'stroke-width': 1.2, 'stroke-dasharray': '2 3' }, linesG);
+  for (const q of LEVELS) el('line', { ...level(q), stroke: MUTED, 'stroke-width': 1.2, 'stroke-dasharray': '2 3' }, linesG);
   el('line', { ...level(0.5), stroke: STRONG, 'stroke-width': 2 }, linesG);
   const pts2 = el('g', {}, twoG);
   B2.X.forEach((r, i) => classMarker(pts2, QX(r[0]), QY(r[1]), B2.y[i], { r: 4.5 }));
@@ -336,7 +343,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   el('line', { x1: RX0 + 8, x2: RX0 + 30, y1: 140, y2: 140, stroke: STRONG, 'stroke-width': 2 }, lineKey);
   el('text', { class: 'stage-text', x: RX0 + 36, y: 144, text: 'p̂ = 0.5' }, lineKey);
   el('line', { x1: RX0 + 8, x2: RX0 + 30, y1: 162, y2: 162, stroke: MUTED, 'stroke-width': 1.2, 'stroke-dasharray': '2 3' }, lineKey);
-  el('text', { class: 'stage-text', x: RX0 + 36, y: 166, text: 'p̂ = 0.1, 0.9' }, lineKey);
+  el('text', { class: 'stage-text', x: RX0 + 36, y: 166, text: `p̂ = ${LEVELS.join(', ')}` }, lineKey);
 
   // ---- Loss chart (step 4).
   const chartG = el('g', {}, svg);
