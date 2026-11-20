@@ -81,13 +81,12 @@
     <ol class="steps">
         <li class="step" id="step-1">
             <h2>The mean is a balance point</h2>
-            <p class="lede">Add up the values and divide by how many there are. That is the mean.</p>
+            <p class="lede">First, the centre, where the values sit. Add them up and divide by how many there are: that is the mean, the everyday average.</p>
             <div class="happening">
-                <p>The mean is what most people call the average.</p>
-                <p>Each dot is one person's commute time, placed along a line from 0 to 120 minutes. Dots with nearly the same time are stacked so you can see them all.</p>
-                <p>Picture each dot as an equal weight on a plank. The plank balances on the mean. This is a picture, not physics: the plank weighs nothing and only the dots count.</p>
-                <p>It balances because the distances of the values below the mean add up to the same total as the distances of the values above it. The box shows both totals.</p>
-                <p>Drag any dot, or use the keyboard: Tab moves between the nine dots, and the arrow keys move the selected one. Watch the balance point move. Times are whole minutes; the box rounds to one decimal place.</p>
+                <p>Each dot is one person's commute time, in minutes.</p>
+                <p>Picture the dots as equal weights on a plank. It balances on the triangle under the mean, because in total the values below the mean fall as far short of it as the values above go over.</p>
+                <p hidden data-fill>Unless you have changed the data, the box gives <span data-value="gap-start"></span> minutes on each side.</p>
+                <p>Drag a dot, or use Tab and the arrow keys, and the balance point follows.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -102,11 +101,12 @@
 
         <li class="step" id="step-2">
             <h2>The median is the middle value</h2>
-            <p class="lede">Sort the values from smallest to largest. The median is the one in the middle.</p>
+            <p class="lede">Now a second measure of the centre. Sort the values, and the median is the one in the middle.</p>
             <div class="happening">
-                <p>With nine values, the middle one is the 5th: four values are at or below it and four at or above it. The box lists all nine in order.</p>
-                <p>The dashed line marks the median, and the ring shows which dot is the middle one.</p>
-                <p>With an even number of values there would be two in the middle, and the median would be halfway between them. Here there are always nine, so that never comes up.</p>
+                <p>Look at the box: it lists the times in order. The ring marks the middle dot, and the violet dashed line the median.</p>
+                <p>With <span data-value="n">9</span> values, the middle one is the <span data-value="mid-pos">5th</span>: four values are at or below it, and four at or above.</p>
+                <p hidden data-fill>Unless you have changed the data, the median is <span data-value="median-start"></span> minutes, a little below the mean of <span data-value="mean-start"></span>.</p>
+                <p>With an even number of values, the median is halfway between the two in the middle.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -117,14 +117,12 @@
 
         <li class="step" id="step-3">
             <h2>One far-out value</h2>
-            <p class="lede">Drag the largest value far to the right. The mean follows it, and the median stays where it is.</p>
+            <p class="lede">A value far from the rest is called an outlier. Press "Move the largest to <span data-value="hi">120</span>" to make one.</p>
             <div class="happening">
-                <p>A value far from the rest is called an outlier. Imagine one person's train broke down that morning.</p>
-                <p>The mean uses the size of every value. Moving one value by 9 minutes moves the mean by 1 minute, because there are 9 values.</p>
-                <p>The median is just the middle value of the sorted list. The largest value stays the largest however far it goes, so the middle value does not change.</p>
-                <p hidden data-fill>Moving the largest value from <span data-value="max-start"></span> to <span data-value="hi"></span> minutes raises the mean from <span data-value="mean-start"></span> to <span data-value="mean-moved"></span>. The median stays at <span data-value="median-moved"></span>.</p>
-                <p>Drag a value across the middle and the median can change, but only a little: it stays between the 4th and 6th values of the sorted list from before the move. Faint dotted lines mark where the mean and median started.</p>
-                <p>The button moves the largest value to 120 for you. Reset puts every value back.</p>
+                <p>Faint dotted lines mark where the mean and the median started. The box shows start → now.</p>
+                <p hidden data-fill>From the starting data, the button moves one value <span data-value="moved-by"></span> minutes further. Shared over <span data-value="n"></span> values, that raises the mean by <span data-value="mean-shift"></span>, to <span data-value="mean-moved"></span>.</p>
+                <p>The median depends only on the order, which has not changed, so it stays put. With a few far values on one side, the median can show a typical value better.</p>
+                <p>Note: an outlier may be a mistake, or your most interesting value. Check it before deleting it.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -136,17 +134,16 @@
 
         <li class="step" id="step-4">
             <h2>Variance: the average squared distance</h2>
-            <p class="lede">To measure spread, take each value's distance from the mean, square it, and average the squares. That average is the variance.</p>
+            <p class="lede">Now the spread, how far apart the values are. Square each value's distance from the mean, then average: that is the variance.</p>
             <div class="happening">
-                <p>Squaring a distance gives the area of a square with that side. Each faint square runs from a dot across to the mean, so its area is that dot's squared distance.</p>
-                <p>A value twice as far from the mean gets a square four times as big. Drag a dot far out and watch its square grow. A very large square runs off the top of the stage.</p>
-                <p>The bright square, standing on the mean, has the average area of the nine. Its area is the variance.</p>
-                <p>Squares are never negative, so values below the mean cannot cancel values above it, as the distances did in step 1.</p>
-                <p>Variance is in squared minutes, which is hard to picture. Step 6 deals with that. Here we divide by n, the number of values; the next step explains the other choice.</p>
+                <p>Each faint square runs from a dot to the mean: its area is that distance squared. The bright square has the average area, the variance.</p>
+                <p hidden data-fill>Unless you have changed the data, that is <span data-value="ss"></span> ÷ <span data-value="n"></span> = <span data-value="pop-var"></span> square minutes (min²).</p>
+                <p>Twice as far out means four times the area, so one far value makes the variance jump.</p>
+                <p>Note: here we divide by n, the number of values. Step 5 gives the other choice.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
-                <p>The average squared distance from the mean is</p>
+                <p>Squares are never negative, so values below the mean cannot cancel values above it, as the distances did in step 1. The average squared distance from the mean is</p>
                 <div class="eq"><span class="tex" data-display data-tex="\frac{1}{n}\sum_{i=1}^{n} (x_i - \bar{x})^2"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mn>1</mn><mi>n</mi></mfrac><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></munderover><mo stretchy="false">(</mo><msub><mi>x</mi><mi>i</mi></msub><mo>−</mo><mover accent="true"><mi>x</mi><mo>ˉ</mo></mover><msup><mo stretchy="false">)</mo><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\frac{1}{n}\sum_{i=1}^{n} (x_i - \bar{x})^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.9291em;vertical-align:-1.2777em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">n</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.6514em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.3em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.1141em;vertical-align:-0.25em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.5678em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">x</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.2222em;"><span class="mord">ˉ</span></span></span></span></span></span></span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span></span></div>
                 <p>If these nine values are the whole group you care about, the population, this is the population variance, written <span class="tex" data-tex="\sigma^2"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>σ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\sigma^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span>, and their mean is the population mean, written <span class="tex" data-tex="\mu"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>μ</mi></mrow><annotation encoding="application/x-tex">\mu</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">μ</span></span></span></span></span>. Lesson 2 used the same symbols, with a subscript <span class="tex" data-tex="j"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span></span></span></span></span> for each feature.</p>
                 <p hidden data-fill>For the starting data, the squared distances add up to <span data-value="ss"></span> min², so their average is <span data-value="ss"></span>/<span data-value="n"></span> = <span data-value="pop-var"></span> min².</p>
@@ -155,13 +152,12 @@
 
         <li class="step" id="step-5">
             <h2>Divide by n or by n&nbsp;−&nbsp;1?</h2>
-            <p class="lede">If the nine values are a sample from a bigger group and you want the spread of that whole group, divide by n&nbsp;−&nbsp;1 instead of n.</p>
+            <p class="lede">Often the values are only a sample: a few drawn from the population, the whole group you care about.</p>
             <div class="happening">
-                <p>Why? Distances measured from the sample's own mean come out too small on average, and dividing by n&nbsp;−&nbsp;1 instead of n corrects that exactly for the variance. The maths shows how.</p>
-                <p>The solid square divides by n = 9. The dashed square divides by n&nbsp;−&nbsp;1 = 8, so it is bigger, unless all nine values are the same. The shaded strip is the extra area, and the box gives the ratio.</p>
-                <p>Drag a dot far out: both squares grow, and the gap with them.</p>
-                <p>Dividing by n gives the population variance: the spread of exactly these nine values. Dividing by n&nbsp;−&nbsp;1 gives the sample variance: an estimate of the spread of the bigger group the nine came from, for example everyone who commutes in the same city.</p>
-                <p>With many values, the two hardly differ. Every page in the Explorer says which one it uses, and the box here shows both.</p>
+                <p>Divide by n for the population variance, the spread of just these values. Divide by n&nbsp;−&nbsp;1 for the sample variance, an estimate, or best guess, of the bigger group's spread.</p>
+                <p>Why? Distances from the sample's own mean come out a little too small. Dividing by n&nbsp;−&nbsp;1 fixes that on average over many samples: it is unbiased.</p>
+                <p>The dashed violet square (÷&nbsp;<span data-value="n-less">8</span>) is <span data-value="ratio">9/8 = 1.125</span> times the solid one (÷&nbsp;<span data-value="n">9</span>). The violet strip is the extra.</p>
+                <p>Note: with many values the two hardly differ. Say which you used.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -180,13 +176,13 @@
         </li>
 
         <li class="step" id="step-6">
-            <h2>Standard deviation and z-scores</h2>
-            <p class="lede">Take the square root of the variance and you are back in minutes. That is the standard deviation, or SD: roughly, a typical distance from the mean.</p>
+            <h2>Standard deviation, z-scores</h2>
+            <p class="lede">The standard deviation (SD) is the square root of the variance: roughly, a typical distance from the mean, in minutes.</p>
             <div class="happening">
-                <p>"Typical distance" is a simplification. The SD is the square root of the average squared distance, so big distances count for more than they would in a plain average.</p>
-                <p>The ruler above the dots is marked in SDs from the mean. A value's z-score says how many SDs it sits from the mean: positive above the mean, negative below. A z-score of −2 means two SDs below the mean.</p>
-                <p>Which SD? The population SD (divide by n) describes these nine values themselves. The sample SD (divide by n&nbsp;−&nbsp;1) estimates the spread of the bigger group they came from. For z-scores this page uses the population SD, a common convention when standardising and the one Lesson 2 used.</p>
-                <p>Drag or select a dot to see its z-score in the box. The box rounds z-scores to two decimal places.</p>
+                <p>The ruler labelled z counts SDs from the mean. A z-score is how many population SDs a value sits from the mean: positive above, negative below. So z = −2 is two SDs below, not two minutes.</p>
+                <p hidden data-fill>Unless you have changed the data or picked another dot, the ring is on person <span data-value="sel-person"></span> (<span data-value="max-start"></span> minutes): z = <span data-value="sel-z"></span>. With no spread, z is not defined.</p>
+                <p>Note: the square root brings a bias back. On average, the sample SD comes out a little below the true SD.</p>
+                <p>Next: "Measuring error".</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>

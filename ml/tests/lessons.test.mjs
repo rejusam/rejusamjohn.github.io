@@ -270,6 +270,13 @@ test('lesson3 page agrees with the stage', () => {
   assert.equal(values['mean-start'], '47.7');
   assert.equal(values['median-start'], '46');
   assert.equal(values['mean-moved'], '53.8');
+  // Every value is used, and spans that show text without the stage already hold the right value.
+  for (const k of Object.keys(values)) assert.ok(keys.includes(k), `unused ${k}`);
+  for (const [, key, text] of lesson3Html.matchAll(/data-value="([^"]+)">([^<]+)</g)) assert.equal(text, values[key], key);
+  // Step 3: moving the largest 55 minutes further raises the mean by 55/9.
+  assert.equal(values['moved-by'], '55');
+  assert.equal(values['mean-shift'], '6.1');
+  assert.equal(values['sel-z'], '2.00');
   // The quiz answers.
   const answer = (id) => lesson3Html.match(new RegExp(`<form class="q" id="${id}" data-answer="([^"]+)"`))[1];
   assert.equal(answer('q1'), 'median');

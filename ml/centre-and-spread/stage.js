@@ -147,8 +147,20 @@ function ordinal(k) {
 export function pageValues(values) {
   const st = stats(values);
   const moved = stats(moveLargest(values, HI));
+  const big = largestIndex(values);
   return {
     n: String(st.n),
+    'n-less': String(st.n - 1),
+    ratio: `${st.n}/${st.n - 1} = ${fmt(st.n / (st.n - 1), 3)}`,
+    'mid-pos': ordinal((st.n + 1) / 2),
+    // Step 1: the gaps below and above the mean, which are equal.
+    'gap-start': f1(st.below),
+    // Step 3: how far the button moves the largest value, and what that does to the mean.
+    'moved-by': whole(HI - values[big]),
+    'mean-shift': f1(moved.mean - st.mean),
+    // Step 6: the value chosen at the start (the largest) and its z-score.
+    'sel-person': String(big + 1),
+    'sel-z': fmt(zscore(values[big], st), 2),
     sum: whole(st.sum),
     'mean-start': f1(st.mean),
     'median-start': whole(st.median),
@@ -156,7 +168,6 @@ export function pageValues(values) {
     'max-start': whole(Math.max(...values)),
     hi: String(HI),
     'mean-moved': f1(moved.mean),
-    'median-moved': whole(moved.median),
     ss: f1(st.ss),
     'pop-var': f1(st.popVar),
     'sample-var': f1(st.sampleVar),
