@@ -36,13 +36,16 @@ export const overData = () => copy(OVER);
 
 // 20 points inside radius 1 (class 0, y = −1), then 20 between radius 1.6 and 2.4
 // (class 1, y = +1). For each point: r uniform, then the angle uniform on [0, 2π).
+export const RINGS = { inner: [0, 1], outer: [1.6, 2.4] };
+// The tilt grid (degrees) that step 3 scans to check the widest street.
+export const SCAN_STEP = 0.01;
 function makeCircles() {
   const rng = mulberry32(SEED_CIRCLE);
   const X = [];
   const cls = [];
   for (let i = 0; i < 40; i++) {
     const inner = i < 20;
-    const r = inner ? uniform(rng, 0, 1) : uniform(rng, 1.6, 2.4);
+    const r = inner ? uniform(rng, ...RINGS.inner) : uniform(rng, ...RINGS.outer);
     const t = uniform(rng, 0, 2 * Math.PI);
     X.push([r * Math.cos(t), r * Math.sin(t)]);
     cls.push(inner ? 0 : 1);
@@ -206,12 +209,12 @@ export function readout(step, { tilt = START.tilt, shift = START.shift, fit = nu
   if (step === 3) {
     const g = fit || fitSep();
     const s = stats(g, g.X || SEP.X, SEP.y);
-    return [`margin 2/‖w‖: ${width(g.margin)}`, `support vectors: ${s.sv}`, `margin violations: ${s.violations}`, `line moved: ${lineMoved(g) ? 'yes' : 'no'}`];
+    return [`street width: ${width(g.margin)}`, `support vectors: ${s.sv}`, `margin violations: ${s.violations}`, `line moved: ${lineMoved(g) ? 'yes' : 'no'}`];
   }
   if (step === 4) {
     const C = C_GRID[clamp(cIdx, 0, C_GRID.length - 1)];
     const s = overStats(C);
-    return [`C = ${cText(C)}`, `margin 2/‖w‖: ${width(s.margin)}`, `support vectors: ${s.sv}`, `margin violations: ${s.violations}`, `wrong side: ${s.wrong}`, `total hinge: ${num(s.hinge, 2)}`];
+    return [`C = ${cText(C)}`, `street width: ${width(s.margin)}`, `support vectors: ${s.sv}`, `margin violations: ${s.violations}`, `wrong side: ${s.wrong}`, `total hinge: ${num(s.hinge, 2)}`];
   }
   if (!lifted) return ['straight line', `right: ${pct(circleLineAcc())}`];
   return ['flat plane, 3 features', `right: ${pct(liftedAcc())}`, `street width: ${width(fitLifted().margin)}`];
@@ -227,6 +230,12 @@ export function pageValues() {
   const lin = circleLineAcc();
   return {
     'n-sep': String(SEP.X.length),
+    'n-sep0': String(SEP.y.filter((v) => v === -1).length),
+    'n-sep1': String(SEP.y.filter((v) => v === 1).length),
+    'n-over0': String(OVER.y.filter((v) => v === -1).length),
+    'n-over1': String(OVER.y.filter((v) => v === 1).length),
+    'scan-step': String(SCAN_STEP),
+    'c-start': cText(C_GRID[C_START]),
     'start-tilt': String(START.tilt),
     'start-shift': num(START.shift, 1),
     'start-width': num(c.width, 2),
@@ -256,6 +265,11 @@ export function pageValues() {
     'c1-width': num(one.margin, 2),
     'c1-viol': String(one.violations),
     'n-circ': String(CIRC.X.length),
+    'n-circ0': String(CIRC.y.filter((v) => v === -1).length),
+    'n-circ1': String(CIRC.y.filter((v) => v === 1).length),
+    'circ-r-in': String(RINGS.inner[1]),
+    'circ-z-in': String(RINGS.inner[1] ** 2),
+    'circ-z-out': num(RINGS.outer[0] ** 2, 2),
     'circ-line-acc': pct(lin),
     'circ-line-right': String(Math.round(lin * CIRC.X.length)),
     'lift-acc': pct(liftedAcc()),
