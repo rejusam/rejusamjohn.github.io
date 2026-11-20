@@ -6,7 +6,7 @@
 
 import { mulberry32 } from '../assets/maths.js';
 import { sigmoid } from '../assets/classify.js';
-import { shapeImages, cnnInit, cnnForward, cnnBackward, cnnFlatten, cnnUnflatten, cnnParamCount, denseParamCount } from '../assets/conv.js';
+import { convOutSize, shapeImages, cnnInit, cnnForward, cnnBackward, cnnFlatten, cnnUnflatten, cnnParamCount, denseParamCount } from '../assets/conv.js';
 import { mlpInit, trainer, accuracyNet, optInit, optStep, bceLogit } from '../assets/nn.js';
 import { el, pixelFill, classMarker } from '../assets/plot.js';
 import { createTrainLoop, trainButtons, trainStatus } from '../assets/train-loop.js';
@@ -26,6 +26,8 @@ export const EPOCHS = 30;
 export const ITERS = (EPOCHS * N_TRAIN) / BATCH;
 export const DENSE_HIDDEN = 18;
 export const SIDE = 8;
+// The test accuracy step 4 names: the first epoch at or above it, and it stays there.
+export const LEVEL = 0.95;
 
 // The example shown in steps 2 to 4 by default (a cross), and the cross and square of step 5.
 export const EXAMPLE = 0;
@@ -349,7 +351,7 @@ export function storyValues() {
   v['cnn-end-loss'] = num(c.losses[EPOCHS], 3);
   v['cnn-start-acc'] = pct(c.testAcc[0]);
   v['cnn-test'] = pct(c.testAcc[EPOCHS]);
-  const f = firstAbove(c.testAcc, 0.95);
+  const f = firstAbove(c.testAcc, LEVEL);
   v['first-95'] = String(f);
   v['first-95-acc'] = pct(c.testAcc[f]);
   v['before-95-acc'] = pct(c.testAcc[f - 1]);
@@ -371,6 +373,27 @@ export function storyValues() {
   v['dense-train'] = pct(d.trainAcc);
   v['dense-wrong'] = String(Math.round((1 - d.testAcc) * N_TEST));
   v['dense-end-loss'] = num(d.losses[EPOCHS], 3);
+  // Sizes and settings the step text names.
+  v['side'] = String(SIDE);
+  v['pixels'] = String(SIDE * SIDE);
+  v['n-train'] = String(N_TRAIN);
+  v['n-test'] = String(N_TEST);
+  v['shown'] = String(SHOWN);
+  const clean = shapeImages({ n: 2, noise: 0, seed: SEED_TRAIN }).X.map((m) => m.flat().filter((x) => x === 1).length);
+  v['cross-px'] = String(clean[CROSS]);
+  v['square-px'] = String(clean[SQUARE]);
+  const fw = cnnForward(sn, TR.X[EXAMPLE]);
+  v['f'] = String(sn.f);
+  v['filter-w'] = String(sn.f * sn.f);
+  v['map'] = String(convOutSize(SIDE, sn.f));
+  v['pooled'] = String(fw.pooled[0].length);
+  v['pool'] = String(fw.relu[0].length / fw.pooled[0].length);
+  v['feat'] = String(fw.feat.length);
+  v['hidden'] = String(DENSE_HIDDEN);
+  v['eta'] = String(ETA);
+  v['batch'] = String(BATCH);
+  v['epochs'] = String(EPOCHS);
+  v['level'] = pctWhole(LEVEL);
   STORY = v;
   return v;
 }
