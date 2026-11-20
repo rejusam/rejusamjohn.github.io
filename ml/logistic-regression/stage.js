@@ -18,6 +18,11 @@ export const THRESHOLDS = Array.from({ length: 19 }, (_, i) => Number(((i + 1) *
 export const GRID = [60, 56];
 // Where the sliders start in steps 2 and 3.
 export const START = { b: -2, w: 0.4 };
+// Hours studied run from 0 to HOURS; the threshold slider starts at T_START.
+export const HOURS = 10;
+export const T_START = 0.5;
+// Gradient descent counts as close once its loss is within GD_TOL of the minimum.
+export const GD_TOL = 1e-3;
 
 // Hours x ~ U(0, 10); the student passes (y = 1) when rng() < σ(−5 + x).
 let D1 = null;
@@ -27,7 +32,7 @@ export function data1D() {
     const x = [];
     const y = [];
     for (let i = 0; i < N; i++) {
-      const xi = uniform(rng, 0, 10);
+      const xi = uniform(rng, 0, HOURS);
       x.push(xi);
       y.push(rng() < sigmoid(-5 + xi) ? 1 : 0);
     }
@@ -47,7 +52,7 @@ export function olsLine() {
   const { slope, intercept } = olsFit(XS, YS);
   return {
     slope, intercept,
-    at0: intercept, at10: intercept + 10 * slope,
+    at0: intercept, at10: intercept + HOURS * slope,
     cross0: -intercept / slope, cross1: (1 - intercept) / slope,
   };
 }
@@ -171,7 +176,8 @@ export function pageValues() {
     'newton-iters': String(f.iters),
     'gd-eta': String(ETA),
     'gd-steps': String(GD_STEPS),
-    'gd-within': String(gdWithin(1e-3)),
+    'gd-within': String(gdWithin(GD_TOL)),
+    'gd-tol': String(GD_TOL),
     'cm-t': num(0.5, 2),
     'cm-tp': String(c5.tp),
     'cm-fp': String(c5.fp),
@@ -197,6 +203,13 @@ export function pageValues() {
     'dip-t1': num(dip[1], 2),
     'dip-p0': pct(confusionAt(dip[0]).precision),
     'dip-p1': pct(confusionAt(dip[1]).precision),
+    'hours-max': String(HOURS),
+    'start-b': num(START.b, 1),
+    'start-w': num(START.w, 2),
+    'start-mid': num(-START.b / START.w, 2),
+    't-start': num(T_START, 2),
+    'n-2d0': String(B2.y.filter((v) => v === 0).length),
+    'n-2d1': String(B2.y.filter((v) => v === 1).length),
   };
 }
 
@@ -245,7 +258,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const path = gdPath();
   let b = START.b;
   let w = START.w;
-  let t = 0.5;
+  let t = T_START;
   let gd = 0;
 
   const HX = linearScale([0, 10], [PX0, PX1]);
