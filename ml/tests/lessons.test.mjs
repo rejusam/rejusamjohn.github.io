@@ -121,6 +121,15 @@ test('lesson2 page agrees with the data', () => {
   assert.equal(lesson2.FRUIT[c].kind, lesson2.FRUIT[d].kind, 'the standardised winners are the same kind');
 });
 
+test('lesson2 every data-value span has a value, and every value is used', () => {
+  const pv = lesson2.pageValues();
+  const keys = new Set([...lesson2Html.matchAll(/data-value="([^"]+)"/g)].map((m) => m[1]));
+  for (const key of keys) assert.ok(key in pv, key);
+  for (const key of Object.keys(pv)) assert.ok(keys.has(key), `unused ${key}`);
+  // Spans that show text without the stage already hold the right value.
+  for (const [, key, text] of lesson2Html.matchAll(/data-value="([^"]+)">([^<]+)</g)) assert.equal(text, pv[key], key);
+});
+
 test('lesson2 claims in the text hold for the data', () => {
   const raw = lesson2.vectors();
   const { z } = lesson2.standardiseRows(raw);

@@ -61,6 +61,34 @@ export const fruitName = (i) => `fruit ${i + 1} (${FRUIT[i].kind})`;
 
 export const START = { a: 0, b: 3 };
 
+// Every number or fruit name the step text quotes, keyed by its data-value.
+export function pageValues() {
+  const raw = vectors();
+  const { z, mu, sigma } = standardiseRows(raw);
+  const nearRaw = nearestPair(raw);
+  const nearZ = nearestPair(z);
+  const gap = (i, j, k) => Math.abs(raw[i][k] - raw[j][k]);
+  return {
+    'n': String(raw.length),
+    'n-features': String(raw[0].length),
+    // Where the menus start (steps 2 to 4).
+    'start-fruit': fruitName(START.a),
+    'start-vec': vecText(raw[START.a]),
+    'start-b': fruitName(START.b),
+    'start-gap-mass': fmt(gap(START.a, START.b, 0), 0),
+    'start-gap-diam': fmt(gap(START.a, START.b, 1), 1),
+    'start-dist': fmt(distance(raw[START.a], raw[START.b]), 2),
+    // The nearest pairs (step 5).
+    'raw-pair': `${fruitName(nearRaw.i)} and ${fruitName(nearRaw.j)}`,
+    'raw-gap-mass': fmt(gap(nearRaw.i, nearRaw.j, 0), 0),
+    'z-pair': `${fruitName(nearZ.i)} and ${fruitName(nearZ.j)}`,
+    'mu-mass': fmt(mu[0], 1),
+    'sigma-mass': fmt(sigma[0], 1),
+    'mu-diameter': fmt(mu[1], 2),
+    'sigma-diameter': fmt(sigma[1], 2),
+  };
+}
+
 // ---------------------------------------------------------------- the stage
 
 const BOX = { row: 20 };
@@ -507,14 +535,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   }));
 
   // Sentences on the page that quote values from the data (hidden until filled).
-  const values = {
-    'raw-pair': `${fruitName(nearRaw.i)} and ${fruitName(nearRaw.j)}`,
-    'z-pair': `${fruitName(nearZ.i)} and ${fruitName(nearZ.j)}`,
-    'mu-mass': fmt(mu[0], 1),
-    'sigma-mass': fmt(sigma[0], 1),
-    'mu-diameter': fmt(mu[1], 2),
-    'sigma-diameter': fmt(sigma[1], 2),
-  };
+  const values = pageValues();
   for (const span of doc.querySelectorAll('main.lesson [data-value]')) {
     const v = values[span.dataset.value];
     if (v !== undefined) span.textContent = v;
