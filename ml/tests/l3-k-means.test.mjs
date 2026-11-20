@@ -177,7 +177,10 @@ test('k-means page values match the computations and the page contract', () => {
   assert.ok(keys.length >= 10);
   for (const key of keys) assert.ok(key in pv, key);
   // Quiz 2's explanation uses the computed values.
-  assert.match(html, /data-for="no">[^]*?<span data-value="e8"><\/span>[^]*?<span data-value="e3"><\/span>/);
+  assert.match(html, /data-for="no">[^]*?<span data-value="e8">[^<]+<\/span>[^]*?<span data-value="e3">[^<]+<\/span>/);
+  // Spans written out in the page hold exactly the stage's value.
+  for (const [, key, text] of html.matchAll(/<span data-value="([^"]+)">([^<]+)<\/span>/g)) assert.equal(text, pv[key], key);
+  assert.doesNotMatch(html, /<span data-value="[^"]+"><\/span>/);
   for (let step = 0; step < 6; step++) {
     for (const st of [{}, { state: 1 }, { state: 9 }, { start: 'B' }, { K: 1 }, { K: 8 }]) {
       for (const r of L.readout(step, st)) {

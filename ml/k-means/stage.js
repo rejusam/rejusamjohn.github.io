@@ -108,6 +108,12 @@ export function pageValues() {
     'starts-other': others.map(f1).join(', '),
     'drop23': f1(rows[1].best - rows[2].best),
     'drop34': f1(rows[2].best - rows[3].best),
+    'k': String(START_A.length),
+    'n-starts': String(N_STARTS),
+    'k-min': String(KS[0]),
+    'k-max': String(KS[KS.length - 1]),
+    'k-before': String(rows[1].K),
+    'k-after': String(rows[3].K),
   };
   rows.forEach((r) => { pv[`e${r.K}`] = f1(r.best); });
   return pv;
@@ -481,10 +487,6 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   for (const span of doc.querySelectorAll('main.lesson [data-value]')) {
     const val = filled[span.dataset.value];
     if (val !== undefined) span.textContent = val;
-  }
-  for (const p of doc.querySelectorAll('main.lesson [data-fill][hidden]')) {
-    const spans = [...p.querySelectorAll('[data-value]')];
-    if (spans.every((sp) => sp.dataset.value in filled)) p.hidden = false;
   }
 
   render();
