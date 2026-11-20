@@ -68,6 +68,9 @@ export function parseWeight(raw) {
 }
 export const parseFilter = (raw) => raw.map((row) => row.map(parseWeight));
 
+// Where the window sits when step 2 opens: map row 2, column 0.
+export const START = [2, 0];
+
 export const STRIDES = [1, 2];
 export const PADS = [0, 1];
 export const SHIFTS = [0, 1, 2];
@@ -257,6 +260,22 @@ export function storyValues() {
   v['shared'] = String(sharedCount());
   const sm = extremes(mapFor(shiftRight(CLEAN, 2), FILTERS.vertical), 'max');
   v['shift-at'] = placeText(sm.cells);
+  // Sizes and pixel values the step text names.
+  v['n'] = String(N);
+  v['pixels'] = String(N * N);
+  v['f'] = String(F);
+  v['map-cells'] = String(convOutSize(N, F) ** 2);
+  v['sq'] = String(CLEAN.filter((row) => row.includes(1)).length);
+  v['line-px'] = fmtV(CLEAN.flat().find((x) => x > 0 && x < 1));
+  v['w-neg'] = fmtV(FILTERS.vertical[0][0]);
+  v['w-pos'] = fmtV(FILTERS.vertical[0][2]);
+  v['start-at'] = placeText([START]);
+  v['w-min'] = fmtV(W_MIN);
+  v['w-max'] = fmtV(W_MAX);
+  v['w-step'] = fmtV(W_STEP);
+  v['line-on'] = fmtV(TRY_LINE[0][2]);
+  v['line-off'] = fmtV(TRY_LINE[0][0]);
+  v['start-cover'] = placeText(windowCells(CLEAN, FILTERS.vertical, START[0], START[1]).cells.map((k) => [k.r, k.c]));
   STORY = v;
   return v;
 }
@@ -290,7 +309,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const doc = svg.ownerDocument;
   let step = 0;
   let pix = [3, 3];
-  let pos = [2, 0];
+  let pos = START.slice();
   let filter = 'vertical';
   let image = 'clean';
   let weights = FILTERS.vertical.map((row) => row.slice());
@@ -780,7 +799,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
       sizeGroup.style.display = i === 4 ? 'flex' : 'none';
       shiftGroup.style.display = i === 5 ? 'flex' : 'none';
       syncEditor();
-      if (i === 1) pos = [2, 0];
+      if (i === 1) pos = START.slice();
       if (i === 2) return sweep(animate).then((ok) => { if (ok) announce(spoken()); });
       render();
       announce(spoken());
