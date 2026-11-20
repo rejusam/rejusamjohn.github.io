@@ -81,7 +81,7 @@
     <ol class="steps">
         <li class="step" id="step-1">
             <h2>Which line fits best?</h2>
-            <p class="lede">These 25 points rise from left to right, roughly along a straight line. Which straight line describes them best?</p>
+            <p class="lede">These <span data-value="n">25</span> points rise from left to right, roughly along a straight line. Which straight line describes them best?</p>
             <div class="happening">
                 <p>Look at the plot. Each dot is one example: an input x and its known answer y.</p>
                 <p>The three dashed lines are candidates. Each passes through the middle of the cloud, and each looks reasonable. Looking alone cannot choose between them.</p>
@@ -120,7 +120,8 @@
             <h2>Each miss as a square</h2>
             <p class="lede">Now each miss has a square drawn on it.</p>
             <div class="happening">
-                <p>Each square's side is one miss, so its area is that miss squared. The SSE is the total area, and least squares makes it as small as possible. The MSE in the box is that total divided by the number of points.</p>
+                <p>Each square's side is one miss, so its area is that miss squared. The SSE is the total area, and least squares makes it as small as possible.</p>
+                <p>The MSE in the box is that total divided by the number of points.</p>
                 <p>Keep dragging. A line close to most points but far from a few still has big squares at those few. Squaring makes a big miss count far more than a small one.</p>
                 <p>Dragging never makes you sure of the smallest total. The next step finds it exactly.</p>
                 <p>Note: the squares use the y scale both ways. Only their areas matter.</p>
@@ -136,8 +137,8 @@
             <h2>Solve for the best line</h2>
             <p class="lede">Now let the formula choose the line with the smallest SSE, the least-squares line.</p>
             <div class="happening">
-                <p>Press "Solve again" to watch the line slide there from yours, shown grey and dashed. The bars compare the two SSEs.</p>
-                <p hidden data-fill>It has intercept <span class="tex" data-tex="\hat{a}"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>a</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{a}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">a</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">^</span></span></span></span></span></span></span></span></span></span></span> = <span data-value="a-hat"></span> and slope <span class="tex" data-tex="\hat{b}"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>b</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{b}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9579em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9579em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">b</span></span><span style="top:-3.2634em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">^</span></span></span></span></span></span></span></span></span></span></span> = <span data-value="b-hat"></span>. Hats mark numbers estimated from the data.</p>
+                <p>Watch the squares shrink as the line slides from yours (grey, dashed) to the least-squares line. Press "Solve again" to replay it. The bars compare the two SSEs.</p>
+                <p hidden data-fill>The least-squares line has intercept <span class="tex" data-tex="\hat{a}"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>a</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{a}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6944em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">a</span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">^</span></span></span></span></span></span></span></span></span></span></span> = <span data-value="a-hat"></span> and slope <span class="tex" data-tex="\hat{b}"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>b</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat{b}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9579em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9579em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">b</span></span><span style="top:-3.2634em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">^</span></span></span></span></span></span></span></span></span></span></span> = <span data-value="b-hat"></span>. Hats mark numbers estimated from the data.</p>
                 <p>No line you make has a smaller SSE. Two short formulas, derived in the maths below, give it directly.</p>
                 <p>Note: finding this line needs only that the x values are not all equal. The data need not be normal (bell-shaped).</p>
             </div>
@@ -166,7 +167,7 @@
             <h2>Slope and intercept</h2>
             <p class="lede">Now read the line's two numbers.</p>
             <div class="happening">
-                <p>Move the "x" slider. The box shows the prediction ŷ at x and at x + 1. They always differ by the slope, since the line is straight.</p>
+                <p>Move the "x" slider. The box shows the prediction ŷ at x and at x + 1. They always differ by the slope.</p>
                 <p hidden data-fill>Here that is <span data-value="b-hat"></span>: an average change, not a promise about any one point.</p>
                 <p>Beyond the shaded band, the range of the data, the line is dashed. That is extrapolation: no data check it, and the real pattern may bend.</p>
                 <p hidden data-fill>The violet square is the intercept, â = <span data-value="a-hat"></span>, the prediction at x = 0. If x = 0 is impossible or far from the data, it may mean nothing.</p>
@@ -185,10 +186,10 @@
             <h2>What R² measures</h2>
             <p class="lede">Last, how much does the line help?</p>
             <div class="happening">
-                <p>Press "Misses from the mean". These violet sticks run to the mean of y, the best guess without x. Their squares add up to SST, the total sum of squares.</p>
-                <p>Press "Misses from the line" for the residuals, whose squares add up to the SSE. R² = 1 − SSE/SST is near 1 when the line removes most of the misses.</p>
+                <p>Press "Misses from the mean". These violet sticks run to the mean of y, the best single guess without x (<a href="/ml/measuring-error/">Lesson 4</a>). Their squares add up to SST, the total sum of squares.</p>
+                <p>Press "Misses from the line": these squares add up to the SSE. Then R² = 1 − SSE/SST.</p>
                 <p hidden data-fill>Here R² = 1 − <span data-value="sse"></span>/<span data-value="sst"></span> = <span data-value="r2"></span>: the line accounts for about <span data-value="r2-pct"></span>% of the variation in y.</p>
-                <p>Note: a high R² does not prove cause and effect, or that a straight line is the right shape. It covers these points, not new ones.</p>
+                <p>Note: a high R² does not prove cause and effect. Points on a gentle curve can still give a high R². It is worked out on the fitted points, so it does not test new ones.</p>
                 <p>Next, gradient descent finds this line by walking downhill.</p>
             </div>
             <details class="maths">
