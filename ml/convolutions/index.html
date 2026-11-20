@@ -83,7 +83,7 @@
             <p class="lede">To a computer, a picture is just numbers. This image X has <span data-story="n">12</span> rows and <span data-story="n">12</span> columns: <span data-story="pixels">144</span> numbers.</p>
             <div class="happening">
                 <p>Look at the image on the left. Each pixel holds one number: 0 is dark, 1 bright, <span data-story="line-px">0.5</span> grey. There is a bright <span data-story="sq">4</span> × <span data-story="sq">4</span> square near the top left and a grey diagonal line lower down. Every other pixel is 0.</p>
-                <p>Move the cyan cursor with the "row" and "column" sliders, or tap the image. The panel "the numbers there" lists the pixels in the dashed box, as in <a href="/ml/data-as-numbers/">data as numbers</a>. Rows and columns count from 0, from the top left.</p>
+                <p>Move the cyan cursor with the "row" and "column" sliders, or point at or tap the image. The panel "the numbers there" lists the pixels in the dashed box, as in <a href="/ml/data-as-numbers/">data as numbers</a>. Rows and columns count from 0, from the top left.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -95,7 +95,7 @@
             <h2>A filter, at one position</h2>
             <p class="lede">Now a smaller grid: the filter <b>W</b> (also called a kernel), <span data-story="f">3</span> × <span data-story="f">3</span> weights.</p>
             <div class="happening">
-                <p>Look at the cyan window on the image. "pixel × weight" multiplies each pixel by the weight in the same place in W, with no flip; "sum" adds the nine products.</p>
+                <p>Look at the cyan window on the image. "pixel × weight" multiplies each pixel by the weight in the same place in W, with no flip (a signal-processing convolution flips W first); "sum" adds the nine products.</p>
                 <p>This W has <span data-story="w-neg">−1</span> down its left column, 0 in the middle and <span data-story="w-pos">1</span> on the right (violet negative, cyan positive). So the sum is right column minus left, large where dark turns bright: a vertical-edge detector.</p>
                 <p>Here the window covers image <span data-story="start-cover">rows 2–4, columns 0–2</span>: three 0s on the left, three 1s on the right, so the sum is <span data-story="v-max">3</span>. Move it with the sliders.</p>
             </div>
@@ -112,7 +112,7 @@
             <p class="lede">Now do that at every position. Each sum fills one cell of a new grid, the feature map. This sliding is a convolution.</p>
             <div class="happening">
                 <p>Look at the feature map on the right; "Slide again" replays the sweep. A <span data-story="f">3</span>-wide window fits in <span data-story="out-10">10</span> places across <span data-story="n">12</span> pixels, so the map is <span data-story="out-10">10</span> × <span data-story="out-10">10</span>. Step 2’s sum is map <span data-story="start-at">row 2, column 0</span>.</p>
-                <p>In the map, cyan cells are positive, violet ones negative, with a minus sign. The largest, <span data-story="v-max">3</span>, is at <span data-story="v-max-at">rows 2–3, columns 0–1</span>, on the square’s left edge. The smallest, <span data-story="v-min">−3</span>, is at <span data-story="v-min-at">rows 2–3, columns 4–5</span>, on its right edge. Inside the square and on plain background it is 0.</p>
+                <p>In the map, cyan cells are positive, violet ones negative, with a minus sign. The largest, <span data-story="v-max">3</span>, is at <span data-story="v-max-at">rows 2–3, columns 0–1</span>, on the square’s left edge. The smallest, <span data-story="v-min">−3</span>, is at <span data-story="v-min-at">rows 2–3, columns 4–5</span>, on its right edge. Inside the square and on plain background, left and right cancel, so it is 0.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -157,7 +157,7 @@ l0,-144c-2,-159.3,-10,-310.7,-24,-454c-53.3,-528,-210,-949.7,
             <div class="happening">
                 <p>"s = 1" (the "stride" row) and "p = 0" (the "padding" row) start pressed: the map is <span data-story="size-s1p0">10</span> × <span data-story="size-s1p0">10</span>. Press "s = 2" to skip every other position: <span data-story="size-s2p0">5</span> × <span data-story="size-s2p0">5</span>.</p>
                 <p>With "s = 1" and "p = 1", a dashed ring of zeros appears, so the window can be centred on border pixels: <span data-story="size-s1p1">12</span> × <span data-story="size-s1p1">12</span>, the image’s size. With "s = 2" and "p = 1", <span data-story="size-s2p1">6</span> × <span data-story="size-s2p1">6</span>.</p>
-                <p>The read-out’s first row is the size formula (⌊ ⌋ means round down).</p>
+                <p>The read-out’s first row works the size out with the formula; ⌊ ⌋ means round down.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -174,10 +174,10 @@ l0,-144c-2,-159.3,-10,-310.7,-24,-454c-53.3,-528,-210,-949.7,
             <h2>Weight sharing</h2>
             <p class="lede">Every map so far used just <span data-story="shared">9</span> weights, shared by all <span data-story="map-cells">100</span> positions (the read-out’s last row). This is weight sharing.</p>
             <div class="happening">
-                <p>A layer giving each of the <span data-story="pixels">144</span> pixels its own weight to each of the <span data-story="map-cells">100</span> map values would need <span data-story="dense">14,400</span>. One filter will do, as an edge looks the same anywhere.</p>
-                <p>Press "2" in the "shift right" row: the image moves two columns right, and so does the largest value, to <span data-story="shift-at">rows 2–3, columns 2–3</span>.</p>
-                <p>Note: only away from the edges, where zeros come in and values slide out.</p>
-                <p>Next, convolutional networks learn their filters instead of having them typed in.</p>
+                <p>A layer with a weight from each of the <span data-story="pixels">144</span> pixels to each of the <span data-story="map-cells">100</span> map values needs <span data-story="dense">14,400</span> weights. One <span data-story="f">3</span> × <span data-story="f">3</span> filter will do, because an edge looks the same anywhere.</p>
+                <p>Press "2" in the "shift right" row: the image and its largest value move two columns right, to <span data-story="shift-at">rows 2–3, columns 2–3</span>.</p>
+                <p>Note: this holds away from the edges. Zeros come in on the left; the last two map columns slide off.</p>
+                <p>The next lesson, convolutional networks, adds more steps and lets training choose the filters.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
