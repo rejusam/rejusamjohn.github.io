@@ -41,7 +41,7 @@ test('the build runs match runAgent, and eli-shop costs $5.00', () => {
   assert.equal(S.rightRun('eli-shop').answer, 'That costs $5.00.'); // the one literal
   assert.equal(RIGHT['pair-shop'].answer, `That costs ${fmtMoney(3 * PRICES.apples + 3 * PRICES.grapes)}.`);
   assert.equal(RIGHT['tell-zoe'].answer, `Told zoe: pears cost ${fmtMoney(PRICES.pears)} each.`);
-  assert.equal(RIGHT['kai-food'].answer, 'I could not find kai.'); // kai is not in the lookup table
+  assert.equal(RIGHT['kai-food'].answer, 'I could not find kai.'); // kai is not in the invented world
 });
 
 test('the option space is the one the page offers', () => {
@@ -399,7 +399,7 @@ test('the page has the lesson parts and no free-text input', () => {
 });
 
 test('kai-food: the "when lookup finds nothing" menu changes the run and the verdict', () => {
-  assert.ok(!WORLD.people.includes('kai'), 'kai is not in the lookup table');
+  assert.ok(!WORLD.people.includes('kai'), 'kai is not in the invented world');
   const runs = {};
   for (const o of S.OPTIONS.onNotFound) {
     const r = runAgent('kai-food', cfg({}, { onNotFound: o }));
@@ -442,6 +442,6 @@ test('the page says four tasks, never three', () => {
   assert.match(src, /'The four tasks: pick one to see its trace'/);
   assert.ok(!/changes only the program/.test(html));
   const step2 = html.split('id="step-2"')[1].split('id="step-3"')[0];
-  assert.match(step2, /kai-food asks about kai, who is not in the lookup table/);
+  assert.match(step2, /Look at the tasks: eli-shop and pair-shop .* and kai-food \(kai is not in the invented world\)\. All pass at the start\./);
   assert.match(step2, /"When lookup finds nothing"/);
 });
