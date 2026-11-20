@@ -81,12 +81,12 @@
     <ol class="steps">
         <li class="step" id="step-1">
             <h2>Two numbers, one surface</h2>
-            <p class="lede">The model is the line ŷ = a + w·x. Every pair of values (a, w) has a loss, and all the pairs together make a surface. We draw it from above, as a contour map.</p>
+            <p class="lede">Now the model learns two numbers, so its loss is a surface, drawn here as a map.</p>
             <div class="happening">
-                <p>a is the intercept, as in Lesson 6. w is the slope, called the weight, as in Lesson 7. This time we do not centre the data, so both numbers have to be learned.</p>
-                <p>Each point on the map is one pair (a, w), so one line, and its loss is that line's mean squared error (MSE). The stage works the MSE out on a fine grid of pairs and joins up pairs with equal loss. Each ring (most run off the edge here) is one such height line. Inner rings are lower; the violet square marks the lowest point.</p>
-                <p>Drag the dot, or use the sliders. The line on the right moves with it.</p>
-                <p>The two axes are stretched by different amounts: one unit of w is far taller on screen than one unit of a. Without that, the rings would be too thin to see.</p>
+                <p>Look at the big chart. Each spot is one pair: intercept a across, slope w (the weight) up. That pair is one line ŷ = a + w·x, on the small chart.</p>
+                <p>Each line has a loss, its mean squared error (MSE). The rings join pairs with equal loss, like height lines on a contour map. Inner rings are lower. The violet square marks the one lowest point.</p>
+                <p>Drag the dot, or use the a and w sliders. The box gives the MSE.</p>
+                <p>Note: the axes are "not to scale", or the rings would be too thin to see.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -99,12 +99,12 @@
 
         <li class="step" id="step-2">
             <h2>The gradient points uphill</h2>
-            <p class="lede">The gradient puts the slope of the loss in each direction together. It points uphill, so gradient descent steps the opposite way.</p>
+            <p class="lede">Now look at the two arrows on the dot.</p>
             <div class="happening">
-                <p>Hold w fixed and nudge a: the loss changes at some rate, the slope in the a direction. Do the same for w. These two slopes are partial derivatives, and together they are the gradient, written ∇L. <a href="/ml/slopes/#step-5">Lesson 5</a> gave a first look at it.</p>
-                <p>Wherever the gradient is not zero, it points the way the loss rises fastest, uphill. The dashed arrow shows it. A step of gradient descent goes the opposite way, downhill, shown by the solid arrow.</p>
-                <p>The read-out gives the two slopes. At most positions the slope for w is far bigger than the slope for a. Nudge w by some amount and each prediction moves x times as far as when you nudge a by the same amount, and here x is between 100 and 300.</p>
-                <p>The arrows show direction only. Because the axes are stretched, they need not look square-on to the rings.</p>
+                <p>Nudge a with w held fixed: the loss changes at a rate, the slope in the a direction. Same for w. Together they are the gradient, ∇L (<a href="/ml/slopes/#step-5">Lesson 5</a>).</p>
+                <p>The dashed arrow, "gradient: uphill", points where the loss rises fastest. A step goes the opposite way, "step: downhill".</p>
+                <p hidden data-fill>The box lists them as ∂L/∂a and ∂L/∂w: <span data-value="ga-start"></span> and <span data-value="gw-start"></span> before you move the dot. The w slope is nearly always far bigger: nudging w moves each prediction x times as far, and x is <span data-value="x-lo"></span> to <span data-value="x-hi"></span>.</p>
+                <p>Note: the arrows show direction only, and on stretched axes need not cross the rings square-on.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -119,13 +119,12 @@
 
         <li class="step" id="step-3">
             <h2>Raw x: a long, narrow valley</h2>
-            <p class="lede">With x in the hundreds, the rings are long and thin: a narrow valley, steep across and almost flat along. Gradient descent bounces across it and barely moves along it.</p>
+            <p class="lede">Now run gradient descent from "start".</p>
             <div class="happening">
-                <p>The run starts from the line ŷ = 0, at a = 0, w = 0. Lesson 7 showed that too big an η makes the steps grow. Here the steepest direction sets that limit, and both runs in this lesson use the same rule: η is 90% of the largest stable value for its own bowl (step 5 explains the limit).</p>
-                <p hidden data-fill>That gives η = <span data-value="eta-raw"></span>. Each step jumps past the valley floor to the far wall, then back, a little less each time, while creeping along the valley. After <span data-value="k"></span> steps, a has moved from 0 to <span data-value="raw-a-k"></span>, but the bottom is at a = <span data-value="ols-a"></span>.</p>
-                <p>The chart shows the extra loss (the loss minus the lowest possible loss) after each step, on a log scale. It falls fast while the bouncing dies down, then goes almost flat.</p>
-                <p hidden data-fill>Call the run finished when the extra loss is below one millionth of its value at the start (the dotted target line, <span data-value="tol-loss"></span>). From the bowl's formula we can count the steps without running them: <span data-value="raw-steps"></span> steps.</p>
-                <p>Each step is a straight move; the dashed arcs only keep hops that retrace each other apart.</p>
+                <p hidden data-fill>The rings form a long, narrow valley, steep across and almost flat along. η sits just under the limit the steep walls set (step 5): η = <span data-value="eta-raw"></span>.</p>
+                <p hidden data-fill>Each step heads downhill from where it is, which is mostly across the valley. So it overshoots the floor to the far wall and back, a zigzag. After <span data-value="k"></span> steps, a has crept from 0 to <span data-value="raw-a-k"></span>. The bottom is at a = <span data-value="ols-a"></span>.</p>
+                <p hidden data-fill>The chart on the right plots the extra loss (loss minus the lowest), log scale. It soon flattens. Reaching the dotted "target" would take <span data-value="raw-steps"></span> steps.</p>
+                <p>Note: the arcs only keep straight hops apart.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -143,13 +142,11 @@
 
         <li class="step" id="step-4">
             <h2>Standardise x: a round bowl</h2>
-            <p class="lede">Replace each x by its z-score. The valley becomes a round bowl, and the same rule for η reaches the target in far fewer steps.</p>
+            <p class="lede">Now replace each x by its z-score.</p>
             <div class="happening">
-                <p>Standardising (<a href="/ml/data-as-numbers/#step-5">Lesson 2</a>, <a href="/ml/centre-and-spread/#step-6">Lesson 3</a>) subtracts the mean of x and divides by its standard deviation. We use the population SD (divide by n), so z has mean 0 and SD 1. The model is now ŷ = a<sub>z</sub> + w<sub>z</sub>·z.</p>
-                <p>This map uses the same scale on both axes, so round rings look round. Every direction is equally steep.</p>
-                <p hidden data-fill>The rule gives η = <span data-value="eta-std"></span>. Each step heads straight for the bottom and overshoots it by 0.8 of the distance that was left, so the bouncing dies away fast. The run reaches the same target in <span data-value="std-steps"></span> steps, against <span data-value="raw-steps"></span> on raw x.</p>
-                <p>Every hop lies on the line through the start and the bottom, so the hops are drawn straight here. "Raw x" and "Standardised x" switch the map; the chart shows both runs.</p>
-                <p hidden data-fill>Standardising changes the numbers, not the line. Turned back into the original units, this run gives a = <span data-value="fit-a"></span> and w = <span data-value="fit-w"></span>: Lesson 6's least-squares line.</p>
+                <p>Standardising (<a href="/ml/data-as-numbers/#step-5">Lesson 2</a>, <a href="/ml/centre-and-spread/#step-6">Lesson 3</a>) subtracts the mean of x and divides by its standard deviation (SD). On this equal-axes map the rings are round: every direction is equally steep, so one η suits them all.</p>
+                <p hidden data-fill>The same rule, just under this bowl's own limit, gives η = <span data-value="eta-std"></span>. Each step heads straight for the bottom, overshooting by <span data-value="q-std"></span> of the distance left. The chart shows both runs: this one hits the target in <span data-value="std-steps"></span> steps, against <span data-value="raw-steps"></span> on raw x. "Raw x" switches the map back.</p>
+                <p hidden data-fill>Mapped back to x's units, this run gives a = <span data-value="fit-a"></span> and w = <span data-value="fit-w"></span>, Lesson 6's line. Standardising changes the numbers, not the line.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -167,12 +164,11 @@
 
         <li class="step" id="step-5">
             <h2>Why: the condition number</h2>
-            <p class="lede">The steepest direction limits how big a step can be. The gentlest direction decides how many steps you need. Their ratio, the condition number, says how hard the bowl is.</p>
+            <p class="lede">Why does raw x need so many steps?</p>
             <div class="happening">
-                <p>The curvature in a direction is how fast the slope changes as you move that way; high curvature means a steep, tight wall. The arrows mark the steepest and gentlest directions through the bottom of the raw bowl.</p>
-                <p>η has to suit the steepest direction, or the steps there grow without end. In the gentle direction that same η is tiny, so each step there covers only a small fraction of the distance left. That is the crawl.</p>
-                <p hidden data-fill>The condition number κ (kappa) is the steepest curvature divided by the gentlest. For raw x it is <span data-value="kappa-raw"></span> (<span data-value="gmax-raw"></span> against <span data-value="gmin-raw"></span>). For standardised x both curvatures are <span data-value="gmax-std"></span>, so κ = <span data-value="kappa-std"></span>, the best possible.</p>
-                <p>Why so large for raw x? Its values are big and far from 0, so a and w get tangled: raise w a little and a must drop a lot to keep the line near the points. Centring x untangles them; dividing by the SD makes the curvatures equal.</p>
+                <p>The arrows mark the "steep" and "gentle" directions. Curvature is how fast the slope changes in a direction. Raise η past the steep direction's limit, and the steps across the walls grow without end. In the gentle direction a safe η is tiny, so the run crawls.</p>
+                <p hidden data-fill>The condition number κ (kappa) is γmax over γmin in the table: the steepest curvature over the gentlest. It is <span data-value="kappa-raw"></span> for raw x and <span data-value="kappa-std"></span>, the best possible, when standardised. Books get curvatures from the Hessian matrix.</p>
+                <p>Big x values far from 0 tangle a and w: a bit more w needs much less a. Centring untangles them; dividing by the SD evens the curvatures.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -186,13 +182,13 @@
 
         <li class="step" id="step-6">
             <h2>More weights, the same idea</h2>
-            <p class="lede">A model with many features has one weight per feature. You can no longer draw the surface, but everything in this lesson still applies.</p>
+            <p class="lede">Real models have many features: one weight each, so one slope each in the gradient.</p>
             <div class="happening">
-                <p>With p features the model is ŷ = a + w₁x₁ + … + w<sub>p</sub>x<sub>p</sub>, so the loss depends on p + 1 numbers. The gradient has one slope per number, and each step moves them all at once.</p>
-                <p>For a linear model with squared loss, the surface is still a bowl with one bottom, as long as no feature can be worked out exactly as a weighted sum of the others (or is constant). Its condition number still sets how hard the bottom is to reach.</p>
-                <p>That is why each feature is usually standardised with its own mean and SD before training. That fixes features on very different scales. It does not fix two features that carry nearly the same information: a narrow valley can remain.</p>
-                <p>Neural networks have losses that are not bowls (Lesson 7, step 6). Scaling the inputs still usually helps, but the neat picture here no longer holds exactly.</p>
-                <p>On the right: the standardised run, mapped back, lies on top of the least-squares line.</p>
+                <p>With squared loss, a linear model's surface is still one bowl, unless a feature is constant or exactly a weighted sum of others.</p>
+                <p>Its condition number still sets the pace, so features are usually standardised first. That fixes mixed scales, not two features that say nearly the same thing.</p>
+                <p>On the right, the run mapped back (cyan) lies on Lesson 6's dashed line.</p>
+                <p>Note: neural network losses are not bowls (<a href="/ml/gradient-descent/#step-6">Lesson 7, step 6</a>). Scaling usually helps.</p>
+                <p>Next, Train, validate, test tries models on new data.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>

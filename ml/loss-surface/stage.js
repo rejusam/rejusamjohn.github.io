@@ -8,6 +8,9 @@ import { linearScale, clamp, el, axes, pathFrom, tween } from '../assets/plot.js
 
 export const SEED = 13;
 export const N = 30;
+// The range x is drawn from.
+export const X_LO = 100;
+export const X_HI = 300;
 
 // For each point in turn: x uniform between 100 and 300, then
 // y = 50 + 0.9x + 15 × a standard normal draw.
@@ -16,7 +19,7 @@ export function lossData(seed = SEED, n = N) {
   const xs = [];
   const ys = [];
   for (let i = 0; i < n; i++) {
-    const x = uniform(rng, 100, 300);
+    const x = uniform(rng, X_LO, X_HI);
     xs.push(x);
     ys.push(50 + 0.9 * x + 15 * randn(rng));
   }
@@ -279,6 +282,7 @@ export function pageValues() {
   const o = olsFit(xs, ys);
   const fit = standardisedFit();
   const rawK = runPath(xs, ys, f.raw.eta)[K];
+  const [ga0, gw0] = gradAt(xs, ys, A_DEFAULT, W_DEFAULT);
   return {
     n: String(xs.length),
     mu: fmt(f.mu, 2),
@@ -308,6 +312,11 @@ export function pageValues() {
     'std-w-star': fmt(f.std.star[1], 2),
     'fit-a': fmt(fit.a, 2),
     'fit-w': fmt(fit.w, 4),
+    'x-lo': String(X_LO),
+    'x-hi': String(X_HI),
+    'q-std': sig(Math.abs(1 - f.std.eta * f.std.gmax), 3),
+    'ga-start': fmt(ga0, 1),
+    'gw-start': fmt(gw0, 1),
   };
 }
 
