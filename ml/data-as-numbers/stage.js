@@ -61,6 +61,13 @@ export const fruitName = (i) => `fruit ${i + 1} (${FRUIT[i].kind})`;
 
 export const START = { a: 0, b: 3 };
 
+// A pair in words, e.g. "fruits 1 and 3 (apple, nectarine)" or "fruits 1 and 5 (both apples)".
+export function pairName({ i, j }) {
+  const [p, q] = [Math.min(i, j), Math.max(i, j)];
+  const kinds = FRUIT[p].kind === FRUIT[q].kind ? `both ${FRUIT[p].kind}s` : `${FRUIT[p].kind}, ${FRUIT[q].kind}`;
+  return `fruits ${p + 1} and ${q + 1} (${kinds})`;
+}
+
 // Every number or fruit name the step text quotes, keyed by its data-value.
 export function pageValues() {
   const raw = vectors();
@@ -79,9 +86,8 @@ export function pageValues() {
     'start-gap-diam': fmt(gap(START.a, START.b, 1), 1),
     'start-dist': fmt(distance(raw[START.a], raw[START.b]), 2),
     // The nearest pairs (step 5).
-    'raw-pair': `${fruitName(nearRaw.i)} and ${fruitName(nearRaw.j)}`,
-    'raw-gap-mass': fmt(gap(nearRaw.i, nearRaw.j, 0), 0),
-    'z-pair': `${fruitName(nearZ.i)} and ${fruitName(nearZ.j)}`,
+    'raw-pair': pairName(nearRaw),
+    'z-pair': pairName(nearZ),
     'mu-mass': fmt(mu[0], 1),
     'sigma-mass': fmt(sigma[0], 1),
     'mu-diameter': fmt(mu[1], 2),

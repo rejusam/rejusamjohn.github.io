@@ -666,8 +666,9 @@ button {
 }
 
 /* While the stage is live it draws the table, so the copy in the side card
-   is kept for screen readers only. Without JS, or if the stage fails, it shows. */
-.lesson.is-live:not(.stage-failed) .data-table {
+   is kept for screen readers only. Without JS, or if the stage fails, it shows.
+   The wrapper is hidden, not the table: a table ignores a 1px height. */
+.lesson.is-live:not(.stage-failed) .data-table-wrap {
   position: absolute;
   width: 1px;
   height: 1px;
