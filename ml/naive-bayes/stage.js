@@ -419,12 +419,12 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   classMarker(keyG, AX0 + 6, 16, 0, { r: 5 });
   el('line', { x1: AX0 + 16, x2: AX0 + 34, y1: 16, y2: 16, stroke: CYAN, 'stroke-width': 2.2 }, keyG);
   label(keyG, AX0 + 40, 20, 'class 0');
-  classMarker(keyG, AX0 + 116, 16, 1, { r: 5 });
-  el('line', { x1: AX0 + 126, x2: AX0 + 144, y1: 16, y2: 16, stroke: VIOLET, 'stroke-width': 2.2, 'stroke-dasharray': '6 4' }, keyG);
-  label(keyG, AX0 + 150, 20, 'class 1');
+  classMarker(keyG, AX0 + 126, 16, 1, { r: 5 });
+  el('line', { x1: AX0 + 136, x2: AX0 + 154, y1: 16, y2: 16, stroke: VIOLET, 'stroke-width': 2.2, 'stroke-dasharray': '6 4' }, keyG);
+  label(keyG, AX0 + 160, 20, 'class 1');
   const keyNew = el('g', {}, keyG);
-  el('path', { d: diamondD(AX0 + 232, 16, 6), fill: BG, stroke: STRONG, 'stroke-width': 1.8 }, keyNew);
-  label(keyNew, AX0 + 243, 20, 'new case');
+  el('path', { d: diamondD(AX0 + 248, 16, 6), fill: BG, stroke: STRONG, 'stroke-width': 1.8 }, keyNew);
+  label(keyNew, AX0 + 259, 20, 'new case');
 
   // Read-out box.
   const box = el('g', {}, svg);
