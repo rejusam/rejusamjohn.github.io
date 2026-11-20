@@ -30,6 +30,8 @@ export const EPOCHS = 10;
 export const ITERS = (EPOCHS * N_TRAIN) / BATCH;
 export const K_LIVE = 2;
 export const K_CHOICES = [1, 2, 4, 8];
+// The test accuracy step 3 names: the first batch at or above it, and it stays there.
+export const LEVEL = 0.95;
 // The test stream drawn in steps 2 and 3, and how many lines step 5 draws.
 export const EXAMPLE = 0;
 export const LAG_SHOWN = 12;
@@ -386,7 +388,7 @@ export function storyValues() {
   const n = live.n;
   const L = live.trainer.state.epochLoss;
   v['start-acc'] = pctCount(ok[0], n);
-  const f = firstAt(ok, n, 0.95);
+  const f = firstAt(ok, n, LEVEL);
   v['first-95'] = String(f);
   v['first-95-acc'] = pctCount(ok[f], n);
   v['before-95-acc'] = pctCount(ok[f - 1], n);
@@ -413,6 +415,20 @@ export function storyValues() {
   v['k8-lag11'] = sig2(t8[T - 1]);
   v['wh-norm'] = num(spectralNorm(startNet().Wh).norm, 2);
   v['loop-p-last'] = num(loopInfo(T).ps[T - 1], 2);
+  // Sizes and settings the step text names.
+  v['shown'] = String(SEQ_SHOWN);
+  v['steps'] = String(T);
+  v['nh'] = String(NH);
+  v['k-live'] = String(K_LIVE);
+  v['n-train'] = String(N_TRAIN);
+  v['n-test'] = String(N_TEST);
+  v['lag-shown'] = String(LAG_SHOWN);
+  v['epochs'] = String(EPOCHS);
+  v['iters'] = String(ITERS);
+  v['level'] = pctCount(LEVEL * 100, 100);
+  v['chance'] = pctCount(1, 2);
+  v['k2-targets'] = String(T - K_LIVE);
+  v['k8-targets'] = String(T - 8);
   STORY = v;
   return v;
 }
