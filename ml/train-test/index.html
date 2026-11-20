@@ -83,7 +83,7 @@
             <p class="lede">So far, models were scored on the points they learned from. That flatters them.</p>
             <div class="happening">
                 <p>Look at the picture: <span data-value="n">40</span> made-up points, a smooth wave plus random noise. The dotted line is the wave itself, the true curve.</p>
-                <p hidden data-fill>The grey line joins the dots with straight pieces, so it passes through every point: its mean squared error (MSE, <a href="/ml/measuring-error/">Lesson 4</a>) on them is 0. The true curve misses each point by its noise: MSE <span data-value="truth-mse"></span>. The box gives both.</p>
+                <p hidden data-fill>The grey line joins the dots with straight pieces, so it passes through every point: its mean squared error (MSE, <a href="/ml/measuring-error/">Lesson 4</a>) on them is <span data-value="dots-mse"></span>. The true curve misses each point by its noise: MSE <span data-value="truth-mse"></span>.</p>
                 <p>Yet for a new point, the true curve is the better guess. A new point brings fresh noise, and the grey line has copied the old noise. A low score on a model's own points does not make it a good model.</p>
             </div>
             <details class="maths">
@@ -114,11 +114,10 @@
             <h2>Fit on training, score on both</h2>
             <p class="lede">Now fit a curve to the <span data-value="n-train">28</span> training points only, then score it on both sets.</p>
             <div class="happening">
-                <p hidden data-fill>The cyan curve is a polynomial of degree <span data-value="degree"></span>: a smooth curve built from x, x² and x³. Least squares fits it to the training points, as it fitted the line in <a href="/ml/linear-regression/">Lesson 6</a>.</p>
-                <p hidden data-fill data-when="train-lower">On this split the training MSE is <span data-value="train-mse"></span> and the test MSE is <span data-value="test-mse"></span>.</p>
-                <p hidden data-fill data-when="train-higher">On this split the training MSE is <span data-value="train-mse"></span> and the test MSE is <span data-value="test-mse"></span>. This time the training score is the higher one: with only <span data-value="n-test"></span> test points, a lucky set of easy ones can do that.</p>
-                <p>The bars on the right compare the two scores. The dashed violet sticks show how far the curve misses each test point.</p>
-                <p>The training score is usually the lower one. The curve was chosen to fit those very points, noise and all, so their score is optimistic. The test points had no say in the curve, so their score is the honest one.</p>
+                <p hidden data-fill>The cyan curve is a polynomial, a smooth curve built from x, x² and x³. Its highest power, x³, gives its degree: <span data-value="degree"></span>. Least squares fits it to the training points, as in <a href="/ml/linear-regression/">Lesson 6</a>.</p>
+                <p hidden data-fill>The bars on the right show its training MSE, <span data-value="train-mse"></span>, and test MSE, <span data-value="test-mse"></span>. Violet sticks show how far it misses each test point.</p>
+                <p hidden data-fill data-when="train-higher">This time the training MSE is the higher one: a lucky set of easy test points can do that.</p>
+                <p>The training score is usually the lower one. The curve was fitted to those very points, noise and all, so their score is optimistic. The test points had no say, so theirs is honest.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -132,9 +131,9 @@
             <h2>One split is one noisy estimate</h2>
             <p class="lede">Now press "New split". It picks another random <span data-value="n-test">12</span> test points from the same <span data-value="n">40</span> and refits the curve.</p>
             <div class="happening">
-                <p hidden data-fill>The strip on the right plots the first <span data-value="strip-n"></span> splits on one MSE axis, training MSE as cyan dots and test MSE as violet squares. Rings mark this split. Across them, the test MSE runs from <span data-value="strip-lo"></span> to <span data-value="strip-hi"></span>.</p>
-                <p hidden data-fill>The training MSE is lower in <span data-value="strip-below"></span> of them: usually, not always, the optimistic score. "First split" goes back.</p>
-                <p hidden data-fill>So one test MSE only estimates the error on new data. Another split gives another number. With <span data-value="n-test"></span> test points it swings a lot; a larger test set swings less.</p>
+                <p hidden data-fill>The strip on the right plots the first <span data-value="strip-n"></span> splits on one MSE axis, training MSE as cyan dots and test MSE as violet squares. Rings mark the split now showing. Across the first <span data-value="strip-n"></span>, the test MSE runs from <span data-value="strip-lo"></span> to <span data-value="strip-hi"></span>.</p>
+                <p hidden data-fill>The training MSE is lower in <span data-value="strip-below"></span> of those splits: usually, not always, the optimistic score. "First split" goes back.</p>
+                <p>So one test MSE only estimates the error on new data. Another split gives another number. With so few test points it swings a lot. A larger test set swings less.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -156,10 +155,10 @@ M1001 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
 
         <li class="step" id="step-5">
             <h2>Validate, then test once</h2>
-            <p class="lede">Now choose the degree. If the test set helped choose it, its score would be optimistic too.</p>
+            <p class="lede">Now choose a setting, the degree of the curve. If the test set helped choose it, its score would be optimistic too.</p>
             <div class="happening">
-                <p hidden data-fill>Instead, compare degrees on a validation set: training points held back for that. In k-fold cross-validation, here with k = <span data-value="k"></span>, each round (a row) fits on the cyan parts and validates on the violet one. Every training point validates exactly once. The test points stay locked.</p>
-                <p hidden data-fill>Degree <span data-value="cv-best"></span> has the lowest validation MSE averaged over the rounds (ringed). Refitted on all the training points, it is scored on the test set once: test MSE <span data-value="cv-test"></span>.</p>
+                <p>Instead, compare settings on a validation set, training points held back for that. In k‑fold cross-validation, each round (a row) fits on the cyan parts and validates on the violet one. Every training point validates exactly once. The test points stay locked.</p>
+                <p hidden data-fill>Here k = <span data-value="k"></span>. The bars on the right compare degrees <span data-value="cand-lo"></span> to <span data-value="cand-hi"></span> by validation MSE, averaged over the rounds. Degree <span data-value="cv-best"></span> is lowest (ringed). Refitted on all the training points, it is scored once on the test set: MSE <span data-value="cv-test"></span>.</p>
                 <p>Next, "Overfitting and regularisation" looks at the gap between training and test scores.</p>
             </div>
             <details class="maths">
