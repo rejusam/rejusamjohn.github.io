@@ -238,11 +238,20 @@ export function pageValues() {
     'bv-hi': String(BV_DEGREES[2]),
     'log-step': String(10 ** 2),
     'lam-end': lambdaText(ridge[ridge.length - 1].lambda),
-    // Another degree whose test MSE rounds to the best one's, if any.
-    'near-degree': rows.filter((r) => r.degree !== best && fmtMSE(r.test) === fmtMSE(rows[best].test)).map((r) => r.degree).join(' and '),
     'lam-notch': (lambdaFromSlider(1) / lambdaFromSlider(0)).toFixed(2),
   };
-  for (const p of [0, 1, 3, 12]) {
+  // Step 4 names the one other degree whose test MSE rounds to the best
+  // one's, and the degrees between them. The data are fixed (seeded), so
+  // these always exist; if they did not, the keys are left out and the page
+  // test fails rather than the page showing a broken sentence.
+  const near = rows.filter((r) => r.degree !== best && fmtMSE(r.test) === fmtMSE(rows[best].test));
+  if (near.length === 1) {
+    const q = near[0].degree;
+    const between = rows.filter((r) => r.degree > Math.min(best, q) && r.degree < Math.max(best, q));
+    out['near-degree'] = String(q);
+    if (between.length === 1 && between[0].test > near[0].test) out['between-degree'] = String(between[0].degree);
+  }
+  for (const p of [1, 3, 12]) {
     out[`d${p}-train`] = fmtMSE(rows[p].train);
     out[`d${p}-test`] = fmtMSE(rows[p].test);
   }
