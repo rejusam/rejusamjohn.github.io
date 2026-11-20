@@ -15,6 +15,8 @@ export const UNITS = ['cm', 'mm', 'std'];
 export const UNITS_ALL = ['cm', 'mm', 'std', 'std-mm'];
 // The person picked out on the plot: the first row.
 export const P1 = 0;
+// Step 6 writes arm span in mm: every arm-span number times 10.
+export const MM_FACTOR = 10;
 
 // Height ~ N(170, 8²); arm span = 0.9 (height − 170) + 170 + N(0, 4²), in cm.
 export function makeData(seed = SEED, n = N) {
@@ -29,7 +31,7 @@ export function makeData(seed = SEED, n = N) {
 }
 
 const CM = makeData();
-const MM = CM.map(([h, a]) => [h, 10 * a]);
+const MM = CM.map(([h, a]) => [h, MM_FACTOR * a]);
 // z-scores with the population SD (divide by n), as in standardise().
 const zOf = (X) => {
   const a = standardise(X.map((r) => r[0])).z;
@@ -163,6 +165,8 @@ export function pageValues() {
     'p1-ra': f1(r[1]),
     'p1-lost': f1(Math.hypot(x[0] - r[0], x[1] - r[1])),
     mse: f1(reconMSE()),
+    'mm-factor': String(MM_FACTOR),
+    'mm-var-factor': String(MM_FACTOR ** 2),
     'mm-var-a': Math.round(m.S[1][1]).toString(),
     'mm-angle': f1(pc1Angle('mm')),
     'mm-off': f1(90 - pc1Angle('mm')),
@@ -303,7 +307,8 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   };
   bar(0, CY1 + 20, CYAN, null);
   bar(1, CY1 + 60, VIOLET, '4 2');
-  el('text', { class: 'stage-text', x: CX0 + 40, y: CY1 + 104, text: 'share of total variance' }, shareG);
+  // Centred under the panel, so the label fits at phone text size too.
+  el('text', { class: 'stage-text', x: (CX0 + CX1) / 2, y: CY1 + 104, 'text-anchor': 'middle', text: 'share of total variance' }, shareG);
 
   // One number per person: the scores on a line.
   const stripG = el('g', {}, svg);
@@ -549,10 +554,6 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   for (const span of doc.querySelectorAll('main.lesson [data-value]')) {
     const val = filled[span.dataset.value];
     if (val !== undefined) span.textContent = val;
-  }
-  for (const para of doc.querySelectorAll('main.lesson [data-fill][hidden]')) {
-    const spans = [...para.querySelectorAll('[data-value]')];
-    if (spans.every((sp) => sp.dataset.value in filled)) para.hidden = false;
   }
 
   render();

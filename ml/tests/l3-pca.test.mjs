@@ -161,6 +161,14 @@ test('pca page contract', () => {
   assert.ok(keys.length >= 15);
   for (const key of keys) assert.ok(key in pv, key);
   for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+  // Spans written out in the page hold exactly the stage's value, and none is left empty.
+  for (const [, key, text] of html.matchAll(/<span data-value="([^"]+)">([^<]+)<\/span>/g)) assert.equal(text, pv[key], key);
+  assert.doesNotMatch(html, /<span data-value="[^"]+"><\/span>/);
+  assert.doesNotMatch(html, /data-fill/);
+  // Step 6: arm span in mm is every number times 10, so its variance is 100 times larger.
+  assert.equal(pv['mm-factor'], String(L.MM_FACTOR));
+  assert.equal(pv['mm-var-factor'], String(L.MM_FACTOR ** 2));
+  close(L.fit('mm').S[1][1], L.MM_FACTOR ** 2 * L.fit('cm').S[1][1], 1e-6);
 });
 
 test('pca page values match the computations', () => {
@@ -173,7 +181,7 @@ test('pca page values match the computations', () => {
   // "The best whole degree on the slider is 48°", next to the exact 47.7°.
   assert.equal(pv['grid-best'], String(L.gridBest()));
   // The quiz explanation quotes the mm angle from a span.
-  assert.match(html, /data-for="arm">[^<]*<span data-value="mm-angle"><\/span>/);
+  assert.match(html, /data-for="arm">[^<]*<span data-value="mm-angle">[^<]+<\/span>/);
   // Wording claims: height's spread is a little smaller than arm span's in cm.
   const S = L.fit('cm').S;
   assert.ok(S[0][0] < S[1][1]);
