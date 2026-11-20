@@ -138,7 +138,15 @@ export function pageValues(seed = SPLIT_SEED) {
   const many = splitStats(d, MANY);
   const cv = cvTable(d, sp);
   const tests = strip.rows.map((r) => r.test);
+  const first = splitFor(SPLIT_SEED);
   return {
+    // Fixed sizes and settings; the same for every split.
+    n: String(N),
+    'test-pct': `${Math.round(100 * TEST_FRACTION)}%`,
+    'n-test': String(first.test.length),
+    'n-train': String(first.train.length),
+    degree: String(DEGREE),
+    k: String(K),
     'truth-mse': fmt(t.truth),
     'split-no': String(splitNo(seed)),
     'train-mse': fmt(s.train),
