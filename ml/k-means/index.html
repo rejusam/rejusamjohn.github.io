@@ -99,7 +99,7 @@
             <p class="lede">First, choose how many clusters to look for, and place that many starting centres.</p>
             <div class="happening">
                 <p>Look at the <span data-value="k">3</span> large outlined shapes: the starting centres, one for each cluster.</p>
-                <p>You set K, the number of clusters; k-means does not learn it. Here K = <span data-value="k">3</span>. It is not the k of <a href="/ml/k-nearest-neighbours/">k-nearest neighbours</a>.</p>
+                <p>You set K, the number of clusters; k-means does not learn it. Here K = <span data-value="k">3</span>. It is not the k of <a href="/ml/k-nearest-neighbours/">k-nearest neighbours</a>, which counted neighbours.</p>
                 <p>Choosing where the centres start is called initialisation. Here they start on <span data-value="k">3</span> data points in the lower-left clump, a poor start on purpose, so you can watch them travel.</p>
                 <p>Circle, triangle and square mark clusters 1, 2 and 3. These are only names: another run could number them differently.</p>
             </div>
@@ -113,7 +113,7 @@
             <h2>Assign step</h2>
             <p class="lede">Now give every point to the centre nearest to it. This is the assign step.</p>
             <div class="happening">
-                <p>Look at the points: each takes the shape of its nearest centre, and the shading shows which centre is nearest to each spot. The centres started close together, so the clusters are lopsided: <span data-value="a-sizes">8, 18 and 34</span> points (the read-out's sizes row).</p>
+                <p>Look at the points: each takes the shape of its nearest centre, and the shading shows which centre is nearest to each spot, and a line marks each border. The centres started close together, so the clusters are lopsided: <span data-value="a-sizes">8, 18 and 34</span> points (the read-out's sizes row).</p>
                 <p>To score a grouping, k-means uses the inertia, or within-cluster sum of squares: add up every point's squared distance to its own centre. It is a sum, not an average, and smaller is better. Here it is <span data-value="a-first">461.9</span>.</p>
                 <p>Note: the inertia depends on the features' units, so compare it only on the same data.</p>
             </div>
@@ -133,7 +133,7 @@
             <p class="lede">Next, move each centre to the mean of its points. Then assign again, and repeat.</p>
             <div class="happening">
                 <p>Look at the centres: each has moved to the mean of its cluster's points (the average of each feature), leaving a dashed trail. Press "Next: assign" and keep pressing; the chart plots the inertia after every step.</p>
-                <p>The inertia never goes up. No point can get closer than its nearest centre, and the mean is the spot with the smallest sum of squared distances to a cluster's points.</p>
+                <p>The inertia never goes up. The assign step gives each point its nearest centre, so no distance grows. The update step puts each centre at the mean, the spot with the smallest sum of squared distances to its points.</p>
                 <p>It falls from <span data-value="a-first">461.9</span> to <span data-value="a-final">79.5</span>. In round <span data-value="a-rounds">5</span>, no point changes cluster, so k-means has converged and stops. It never saw a label, yet found the three clumps exactly.</p>
             </div>
             <details class="maths">
@@ -153,8 +153,8 @@
             <div class="happening">
                 <p>Look at the dotted rings, the <span data-value="k">3</span> starting points. Start B swaps one for another point in the same clump. Press "Start B".</p>
                 <p>Start B stops at an inertia of <span data-value="b-final">223.2</span>, against start A's <span data-value="a-final">79.5</span>. Two centres split the lower-left clump, and the third takes both others.</p>
-                <p>It has converged too, but at a worse fixed point, often loosely called a local minimum.</p>
-                <p>So run several starts and keep the lowest inertia. Each dot on the right is one random start with K = <span data-value="k">3</span>: <span data-value="starts-hit">9</span> of <span data-value="n-starts">10</span> reach <span data-value="e3">79.5</span>; the other stops at <span data-value="starts-other">240.1</span>.</p>
+                <p>It has converged too, but at a worse fixed point (a spot where neither step changes anything), often loosely called a local minimum.</p>
+                <p>So run several starts and keep the lowest inertia. Each dot on the right is one random start with K = <span data-value="k">3</span>: <span data-value="starts-hit">9</span> of <span data-value="n-starts">10</span> reach <span data-value="e3">79.5</span>; the other stops at <span data-value="starts-other">240.1</span>.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -169,9 +169,9 @@
             <h2>Choosing K</h2>
             <p class="lede">With more clusters the best inertia you can reach is always lower, so inertia alone cannot choose K.</p>
             <div class="happening">
-                <p>Move the "K" slider. The plus signs are the centres of the best of <span data-value="n-starts">10</span> random starts.</p>
-                <p>The best inertia falls at every K, because more centres let points sit nearer one. Yet K = <span data-value="k-max">8</span> only cuts the clumps into pieces.</p>
-                <p>From K = <span data-value="k-before">2</span> to <span data-value="k">3</span> the inertia drops by <span data-value="drop23">151.9</span>; from <span data-value="k">3</span> to <span data-value="k-after">4</span>, by only <span data-value="drop34">13.8</span>. That bend, the elbow, points to K = <span data-value="k">3</span>. It is a hint, not a rule: real data often bend softly or not at all.</p>
+                <p>Move the "K" slider. The plus signs are the centres of the best of <span data-value="n-starts">10</span> random starts, and lines mark the borders between their cells.</p>
+                <p>The best inertia falls at every K, because more centres let points sit nearer one. Yet K = <span data-value="k-max">8</span> only cuts the clumps into pieces.</p>
+                <p>From K = <span data-value="k-before">2</span> to <span data-value="k">3</span> the inertia drops by <span data-value="drop23">151.9</span>; from <span data-value="k">3</span> to <span data-value="k-after">4</span>, by only <span data-value="drop34">13.8</span>. That bend, the elbow, points to K = <span data-value="k">3</span>. It is a hint, not a rule: real data often bend softly or not at all.</p>
                 <p>The next lesson, principal component analysis, also uses no labels.</p>
             </div>
             <details class="maths">
