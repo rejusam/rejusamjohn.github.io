@@ -17,6 +17,10 @@ export const RHO = 0.85;
 export const BIN = [3, 4];
 // Prior slider values for class 1: 0.10, 0.15, ..., 0.90.
 export const PRIORS = Array.from({ length: 17 }, (_, i) => Number((0.1 + 0.05 * i).toFixed(2)));
+// The doubled prior of class 1 quoted in step 3 and quiz 2.
+export const PRIOR_DOUBLE = 0.8;
+// The ovals in steps 4 and 6 sit this many standard deviations from each class mean.
+export const OVAL_SD = [1, 2];
 export const X1_0 = 3.5;
 export const Q0 = [3.5, 2.5];
 export const X_DOM = [-1, 7];
@@ -220,7 +224,7 @@ export function pageValues() {
     'n-test': String(TE.X.length),
     'b1': boundaries1D(0.4)[0].toFixed(2),
     'b1-far': boundaries1D(0.4)[1].toFixed(1),
-    'b1-double': boundaries1D(0.8)[0].toFixed(2),
+    'b1-double': boundaries1D(PRIOR_DOUBLE)[0].toFixed(2),
     'x1-post': p2(nbPosterior(oneD(M), [X1_0])[1]),
     'q-post': p2(nbPosterior(M, Q0)[1]),
     'm0x': p2(M.mu[0][0]), 'm0y': p2(M.mu[0][1]),
@@ -236,6 +240,20 @@ export function pageValues() {
     'corr-cost': ((corr.bayes - corr.acc) * 100).toFixed(1),
     'corr-r0': p2(sampleCorr(CTR, 0)),
     'corr-r1': p2(sampleCorr(CTR, 1)),
+    'n-train': String(TR.X.length),
+    'n-train0': String(TR.y.filter((v) => v === 0).length),
+    'n-train1': String(TR.y.filter((v) => v === 1).length),
+    'prior0': String(M.prior[0]),
+    'prior1': String(M.prior[1]),
+    'prior-double': String(PRIOR_DOUBLE),
+    'prior-min': String(PRIORS[0]),
+    'prior-max': String(PRIORS[PRIORS.length - 1]),
+    'bin-lo': String(BIN[0]),
+    'bin-hi': String(BIN[1]),
+    'oval-in': String(OVAL_SD[0]),
+    'oval-out': String(OVAL_SD[1]),
+    'main-right': String(Math.round(main.acc * TE.X.length)),
+    'corr-right': String(Math.round(corr.acc * CTE.X.length)),
   };
 }
 
@@ -375,12 +393,12 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const drawContours = (m) => {
     contourG.replaceChildren();
     for (const c of [0, 1]) {
-      for (const k of [1, 2]) {
+      for (const k of OVAL_SD) {
         el('ellipse', {
           cx: X2(m.mu[c][0]), cy: Y2(m.mu[c][1]),
           rx: k * Math.sqrt(m.vari[c][0]) * (X2(1) - X2(0)), ry: k * Math.sqrt(m.vari[c][1]) * (Y2(0) - Y2(1)),
-          fill: 'none', stroke: c ? VIOLET : CYAN, 'stroke-width': k === 1 ? 2 : 1.4,
-          'stroke-dasharray': c ? '6 4' : null, 'stroke-opacity': k === 1 ? 1 : 0.7,
+          fill: 'none', stroke: c ? VIOLET : CYAN, 'stroke-width': k === OVAL_SD[0] ? 2 : 1.4,
+          'stroke-dasharray': c ? '6 4' : null, 'stroke-opacity': k === OVAL_SD[0] ? 1 : 0.7,
         }, contourG);
       }
     }
