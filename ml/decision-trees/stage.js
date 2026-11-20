@@ -311,6 +311,7 @@ export function pageValues() {
     'best-test': pct(rows[b - 1].test),
     'best-train': pct(rows[b - 1].train),
     'best-leaves': String(rows[b - 1].leaves),
+    'full-train': pct(rows[7].train),
     'full-d': String(full.depth),
     'full-leaves': String(full.leaves),
     'full-test': pct(rows[7].test),
@@ -465,7 +466,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   }
   el('text', { class: 'stage-text', x: (CX0 + CX1) / 2, y: CY0 + 34, 'text-anchor': 'middle', text: 'max depth' }, accG);
   const dMark = el('line', { y1: CY1, y2: CY0, stroke: STRONG, 'stroke-width': 1.4, 'stroke-dasharray': '3 3' }, accG);
-  const bestLabel = el('text', { class: 'stage-text', x: DX(best) + 2, y: AY(rows[best - 1].test) + 22, text: `best depth = ${best}` }, accG);
+  const bestLabel = el('text', { class: 'stage-text', x: DX(best) + 2, y: AY(rows[best - 1].test) + 34, text: `best depth = ${best}` }, accG);
   bestLabel.style.fill = STRONG;
   // A ring round the best depth's test square.
   el('circle', { cx: DX(best), cy: AY(rows[best - 1].test), r: 7.5, fill: 'none', stroke: STRONG, 'stroke-width': 1.6 }, accG);

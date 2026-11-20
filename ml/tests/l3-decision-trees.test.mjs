@@ -315,6 +315,9 @@ test('trees read-out rows and page', () => {
   assert.ok(keys.length >= 15);
   for (const key of keys) assert.ok(key in pv, key);
   for (const v of Object.values(pv)) assert.ok(!/NaN|undefined|Infinity/.test(v), v);
+  // Spans written out in the page hold exactly the stage's value.
+  for (const [, key, text] of html.matchAll(/<span data-value="([^"]+)">([^<]+)<\/span>/g)) assert.equal(text, pv[key], key);
+  assert.doesNotMatch(html, /<span data-value="[^"]+"><\/span>/);
 });
 
 test('trees page values match the computations', () => {
@@ -419,7 +422,7 @@ test('trees wording claims hold', () => {
   assert.match(html, /draws three levels below the root/);
   assert.equal(L.DISPLAY_DEPTH, 3);
   // Step 6: the path goes right, then left.
-  assert.match(html, /No, so go right\. Is x₁ less than <span data-value="d2-r-t"><\/span>\? Yes, so go left\./);
+  assert.match(html, /No, so go right\. Is x₁ less than <span data-value="d2-r-t">[^<]*<\/span>\? Yes, so go left\./);
   const t2 = L.treeAt(2);
   assert.equal(t2.feature, 1);
   assert.equal(t2.right.feature, 0);
