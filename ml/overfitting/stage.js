@@ -224,6 +224,23 @@ export function pageValues() {
     'bv-sets': String(BV_SETS),
     'bv-draw': String(BV_DRAW),
     'bv-x0': String(X0),
+    // Fixed sizes and settings, for the step text.
+    'n-train': String(N_TRAIN),
+    'n-test': String(N_TEST),
+    'noise-sd': String(SD),
+    'noise-var': String(SD * SD),
+    'deg-low': String(STEP_DEGREES[0]),
+    'deg-mid': String(STEP_DEGREES[1]),
+    'deg-high': String(STEP_DEGREES[2]),
+    'n-coef-high': String(STEP_DEGREES[2] + 1),
+    'bv-lo': String(BV_DEGREES[0]),
+    'bv-mid': String(BV_DEGREES[1]),
+    'bv-hi': String(BV_DEGREES[2]),
+    'log-step': String(10 ** 2),
+    'lam-end': lambdaText(ridge[ridge.length - 1].lambda),
+    // Another degree whose test MSE rounds to the best one's, if any.
+    'near-degree': rows.filter((r) => r.degree !== best && fmtMSE(r.test) === fmtMSE(rows[best].test)).map((r) => r.degree).join(' and '),
+    'lam-notch': (lambdaFromSlider(1) / lambdaFromSlider(0)).toFixed(2),
   };
   for (const p of [0, 1, 3, 12]) {
     out[`d${p}-train`] = fmtMSE(rows[p].train);
