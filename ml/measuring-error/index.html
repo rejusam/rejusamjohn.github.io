@@ -98,11 +98,11 @@
 
         <li class="step" id="step-2">
             <h2>Why not just add them up?</h2>
-            <p class="lede">So why not just add up the residuals?</p>
+            <p class="lede">So why not add up all the misses?</p>
             <div class="happening">
-                <p>On the right, the sticks are laid end to end from 0. Residuals above the line climb up (solid), then those below come back down (dashed).</p>
+                <p>On the right, the sticks are laid end to end. Misses above the line count as positive and climb up (solid). Those below count as negative and come back down (dashed).</p>
                 <p hidden data-fill>The <span data-value="n-above"></span> above add up to <span data-value="above"></span> and the <span data-value="n-below"></span> below to <span data-value="below"></span>, so the box's sum of e is <span data-value="sum"></span>. The sticks end back where they started, yet every point misses.</p>
-                <p>That is no accident. A least-squares line's residuals always add up to zero, however big the misses are. So a zero sum does not mean a perfect fit.</p>
+                <p>That is no accident: a least-squares line like this one always has residuals that add up to zero, however big the misses. So a zero sum does not mean a perfect fit.</p>
                 <p>We need a loss: one number that sums up all the misses, where every miss counts and smaller is better.</p>
             </div>
             <details class="maths">
@@ -151,10 +151,10 @@
             <h2>One big miss</h2>
             <p class="lede">Now one point moves and the line stays put. Press "Make its miss 3 times as big".</p>
             <div class="happening">
-                <p>Or drag the ringed point, or Tab to it and use the arrow keys. "Put it back" returns it, and so does leaving this step.</p>
-                <p hidden data-fill>The button takes its miss from <span data-value="e0"></span> to <span data-value="e0-3"></span>. The box then shows MAE <span data-value="mae"></span> → <span data-value="mae-3"></span>, but MSE <span data-value="mse"></span> → <span data-value="mse-3"></span>, nearly double.</p>
-                <p>On the right, k is how many times as big the miss now is (the box's "miss ×"). The point's part of the MAE becomes k times as big (dashed violet). Its square becomes k × k times as big (solid cyan, "× k²").</p>
-                <p>The other squares stay the same, so the whole MSE changes by less. Still, one far-off point can dominate the MSE.</p>
+                <p>On the right, k is how many times as big the ringed point's miss now is: the box's "miss: ×" row. Its part of the MAE becomes k times as big (dashed violet). Its square becomes k × k times as big (solid cyan).</p>
+                <p hidden data-fill>The button turns the miss <span data-value="e0"></span> into <span data-value="e0-3"></span>. The box shows MAE <span data-value="mae"></span> → <span data-value="mae-3"></span>, but MSE <span data-value="mse"></span> → <span data-value="mse-3"></span>: nearly double, not <span data-value="k3-sq"></span> times.</p>
+                <p>The other squares stay the same, so the whole MSE grows by less than k × k times. Still, one far-off point can dominate it.</p>
+                <p>You can also drag the ringed point, or Tab to it and use the arrow keys. "Put it back", or leaving this step, returns it.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -169,12 +169,12 @@
 
         <li class="step" id="step-6">
             <h2>One guess for every point</h2>
-            <p class="lede">Now ignore x and guess one number, c, for every point. Which c is best?</p>
+            <p class="lede">Now ignore x and guess one number, c.</p>
             <div class="happening">
-                <p>Drag the "c" slider to move the flat line, or press "Use the mean" or "Use the median".</p>
-                <p>On the right, the dots mark each loss at that c: dashed violet for the MAE, solid cyan for the RMSE, the square root of the MSE, in the units of y.</p>
-                <p>The MSE (and so the RMSE) is lowest at the mean of y, <span data-value="mean">5.96</span>. The MAE is lowest at the median, the middle value, <span data-value="median">5.13</span>: <span data-value="mae-at-median">2.40</span> there, <span data-value="mae-at-mean">2.47</span> at the mean. They disagree.</p>
-                <p>Note: squaring is a choice. MAE can suit better when a few far-off points should not dominate.</p>
+                <p>The flat line is the guess c, whatever x is. Each stick is a miss from c. Move c with the "c" slider or the two buttons.</p>
+                <p>On the right, the curves give each loss for every c, and the dots mark the current c. Dashed violet is the MAE. Solid cyan is the RMSE, the MSE's square root, in y's units.</p>
+                <p>The MSE is lowest at the mean (cyan line), <span data-value="mean">5.96</span>, and the MAE at the median (dashed violet), <span data-value="median">5.13</span>: they disagree. The RMSE curve is smooth, the MAE curve has corners, and smooth curves are easier to follow downhill.</p>
+                <p>Note: squaring is a choice. MAE suits cases where far-off points should not dominate.</p>
                 <p>Next: "Slopes and derivatives".</p>
             </div>
             <details class="maths">

@@ -411,6 +411,9 @@ test('lesson4 page agrees with the stage', () => {
   assert.equal(values.sum, '0.00');
   assert.equal(values['mae-3'], '1.38');
   assert.equal(values['mse-3'], '3.08');
+  assert.equal(values['k3-sq'], '9');
+  // The button label quoted on the page is the stage's own label.
+  assert.ok(lesson4Html.includes(`"${lesson4.TRIPLE_LABEL}"`));
   // Step 6: the MAE is lower at the median than at the mean.
   assert.ok(Number(values['mae-at-median']) < Number(values['mae-at-mean']));
   // The quiz answers.

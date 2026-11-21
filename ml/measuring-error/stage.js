@@ -12,6 +12,9 @@ export const N = 11;
 export const CHOSEN = 2;
 // Its miss can be dragged to at most KMAX times its starting size.
 export const KMAX = 4;
+// The step 5 button makes the ringed point's miss this many times as big.
+export const TRIPLE = 3;
+export const TRIPLE_LABEL = `Make its miss ${TRIPLE} times as big`;
 export const Y_LO = 0;
 export const Y_HI = 14;
 // The range of the constant guess c in step 6.
@@ -135,7 +138,7 @@ export function pageValues(xs, ys) {
   const r = dragRange(xs, ys, line);
   // Step 5: the losses once the button has made the ringed point's miss 3 times as big.
   const tripled = ys.slice();
-  tripled[CHOSEN] = r.yhat + 3 * r.e0;
+  tripled[CHOSEN] = r.yhat + TRIPLE * r.e0;
   const L3 = lossSummary(residualsOf(xs, tripled, line));
   return {
     n: String(L.n),
@@ -144,6 +147,7 @@ export function pageValues(xs, ys) {
     yhat0: fmt(r.yhat),
     'mae-3': fmt(L3.mae),
     'mse-3': fmt(L3.mse),
+    'k3-sq': String(TRIPLE * TRIPLE),
     // Step 2: the residuals' sum, which is zero up to rounding.
     sum: fmt(L.sum),
     'n-above': String(L.nAbove),
@@ -155,7 +159,7 @@ export function pageValues(xs, ys) {
     'sum-sq': fmt(L.sumSq),
     mse: fmt(L.mse),
     e0: signed(r.e0),
-    'e0-3': signed(3 * r.e0),
+    'e0-3': signed(TRIPLE * r.e0),
     mean: fmt(my),
     median: fmt(md),
     'mse-at-mean': fmt(mseAt(ys, my)),
@@ -354,7 +358,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
 
   // --- Controls.
   const make = (tag, props = {}) => Object.assign(doc.createElement(tag), props);
-  const tripleBtn = make('button', { type: 'button', textContent: 'Make its miss 3 times as big' });
+  const tripleBtn = make('button', { type: 'button', textContent: TRIPLE_LABEL });
   const backBtn = make('button', { type: 'button', textContent: 'Put it back' });
   const dragGroup = make('div');
   dragGroup.append(tripleBtn, backBtn);
@@ -673,7 +677,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
     onDrag: (_, py) => setY(Y.invert(py)),
   });
 
-  tripleBtn.addEventListener('click', () => animateY(range.yhat + 3 * range.e0, () => `Miss made 3 times as big. ${spoken(4)}`));
+  tripleBtn.addEventListener('click', () => animateY(range.yhat + TRIPLE * range.e0, () => `Miss made ${TRIPLE} times as big. ${spoken(4)}`));
   backBtn.addEventListener('click', () => animateY(start[CHOSEN], () => `Point put back. ${spoken(4)}`));
 
   // --- Interaction: the constant guess (step 6).
