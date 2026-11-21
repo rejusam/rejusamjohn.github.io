@@ -80,14 +80,12 @@
 
     <ol class="steps">
         <li class="step" id="step-1">
-            <h2>Residuals: how far each point misses</h2>
-            <p class="lede">A residual is a miss: the real y minus the line's prediction.</p>
+            <h2>Each stick is a miss</h2>
+            <p class="lede">Here are <span data-value="n">11</span> made-up points and one line. The line misses every point a little.</p>
             <div class="happening">
-                <p>Each vertical stick shows one residual, from a point to the line.</p>
-                <p>The line is the least-squares line for these 11 points, the "best fit" from Lesson 1. It stays fixed for the whole lesson. We are measuring its misses, not moving it.</p>
-                <p>For each point, the line gives a prediction, written ŷ and said "y-hat". The residual is y − ŷ. It is positive when the point sits above the line and negative when it sits below.</p>
-                <p>The ringed point sits above the line. The box gives its y, its ŷ and its residual, e.</p>
-                <p>The stage rounds to two decimal places.</p>
+                <p>Each dot is a point, with x across and its real value y up. The white line is the least-squares line: the line with the smallest average squared miss, the best fit from Lesson 1. It stays fixed; we only measure its misses.</p>
+                <p>For each point, the line gives a prediction, ŷ, said "y-hat". The miss, or residual, e, is y − ŷ: the stick from the point to the line. It is positive above the line and negative below.</p>
+                <p hidden data-fill>Look at the box: the ringed point has y = <span data-value="y0"></span> and ŷ = <span data-value="yhat0"></span>, so e = <span data-value="e0"></span>.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -100,13 +98,12 @@
 
         <li class="step" id="step-2">
             <h2>Why not just add them up?</h2>
-            <p class="lede">Adding the residuals sounds like a fair total. But misses above the line are positive and misses below are negative, so they cancel.</p>
+            <p class="lede">So why not just add up the residuals?</p>
             <div class="happening">
-                <p>The chart on the right lays the sticks end to end. The ones above the line go up (solid). Then the ones below come back down (dashed).</p>
-                <p hidden data-fill>The <span data-value="n-above"></span> residuals above the line add up to <span data-value="above"></span>. The <span data-value="n-below"></span> below add up to <span data-value="below"></span>.</p>
-                <p>The walk ends where it started: the residuals add up to zero, yet every point misses.</p>
-                <p>That is no accident. For a least-squares line like this one, the residuals always add up to zero. So the plain sum tells you nothing about how well the line fits.</p>
-                <p>We need a total in which every miss counts against the line, whatever its sign. There are two common fixes: use the size of each miss, or its square.</p>
+                <p>On the right, the sticks are laid end to end from 0. Residuals above the line climb up (solid), then those below come back down (dashed).</p>
+                <p hidden data-fill>The <span data-value="n-above"></span> above add up to <span data-value="above"></span> and the <span data-value="n-below"></span> below to <span data-value="below"></span>, so the box's sum of e is <span data-value="sum"></span>. The sticks end back where they started, yet every point misses.</p>
+                <p>That is no accident. A least-squares line's residuals always add up to zero, however big the misses are. So a zero sum does not mean a perfect fit.</p>
+                <p>We need a loss: one number that sums up all the misses, where every miss counts and smaller is better.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -117,14 +114,13 @@
         </li>
 
         <li class="step" id="step-3">
-            <h2>MAE: the average size of a miss</h2>
-            <p class="lede">Drop the sign and keep the size. Average the sizes of the misses, and you have the mean absolute error, or MAE.</p>
+            <h2>MAE: the average miss size</h2>
+            <p class="lede">The first loss keeps each miss's size and drops its sign. That size is the absolute value, written |e|: minus two and plus two both have size two.</p>
             <div class="happening">
-                <p>The size of a number, ignoring its sign, is its absolute value, written |e|. So the absolute value of −2 is 2, and so is the absolute value of 2.</p>
-                <p>The chart on the right stands every stick upright, in the order the points sit from left to right. The dashed bars hung below the line.</p>
-                <p>The dashed line across the chart is the average height of the bars. That is the MAE.</p>
-                <p hidden data-fill>The sizes add up to <span data-value="sum-abs"></span>, and <span data-value="sum-abs"></span>/<span data-value="n"></span> = <span data-value="mae"></span>. MAE is in the same units as y: on average, the line misses by about <span data-value="mae"></span>.</p>
-                <p>Every miss now counts against the line, and a miss twice as big counts twice as much.</p>
+                <p>On the right, each bar is one |e|, with the points in order from left to right. Dashed bars are the misses below the line.</p>
+                <p>The average bar height is the mean absolute error, or MAE: the dashed line labelled MAE.</p>
+                <p hidden data-fill>The box adds the sizes, sum of |e| = <span data-value="sum-abs"></span>, and divides by <span data-value="n"></span>: MAE = <span data-value="mae"></span>. So on average the line misses by about <span data-value="mae"></span>, in the units of y.</p>
+                <p>Every miss now counts against the line, and twice the miss counts twice as much.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -135,13 +131,13 @@
 
         <li class="step" id="step-4">
             <h2>MSE: square each miss</h2>
-            <p class="lede">Or square each miss and average the squares. That is the mean squared error, or MSE: the "average squared miss" from Lesson 1.</p>
+            <p class="lede">The second loss averages the squared misses: the mean squared error, or MSE.</p>
             <div class="happening">
-                <p>Squaring a miss gives the area of a square with that side. Each stick now carries its square.</p>
-                <p>On the right, the bars change from each |e| to each e². The big misses grow a lot. Misses smaller than 1 shrink: 0.5 squared is 0.25.</p>
-                <p>Why square? Two reasons show here. A square is never negative, so misses cannot cancel. And big misses count for far more than small ones: a miss twice as big gets a square four times as big. Step 6 adds three more reasons.</p>
-                <p hidden data-fill>The squares add up to <span data-value="sum-sq"></span>, and <span data-value="sum-sq"></span>/<span data-value="n"></span> = <span data-value="mse"></span>.</p>
-                <p>MSE is in squared units of y, which is hard to picture. Step 6 shows how to get back to the units of y.</p>
+                <p>Each stick now carries a square, with the stick as one side. Its area is the miss squared, e²: the miss times itself.</p>
+                <p>On the right, the bars grow from each |e| into each e², and the line labelled MSE is their average. Big misses grow a lot; misses under one shrink.</p>
+                <p hidden data-fill>The box adds the squares, sum of e² = <span data-value="sum-sq"></span>, and divides by <span data-value="n"></span>: MSE = <span data-value="mse"></span>.</p>
+                <p>A square is never negative, so misses cannot cancel. And twice the miss gives four times the square.</p>
+                <p>Note: MSE is in squared units of y, so it is hard to picture.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -153,15 +149,12 @@
 
         <li class="step" id="step-5">
             <h2>One big miss</h2>
-            <p class="lede">Drag the ringed point away from the line. Its square grows much faster than its stick.</p>
+            <p class="lede">Now one point moves and the line stays put. Press "Make its miss 3 times as big".</p>
             <div class="happening">
-                <p>The line stays where it is. Only this point moves, so only its residual changes.</p>
-                <p>When its miss becomes k times as big, its part of the MAE becomes k times as big too: it grows in proportion. Its part of the MSE becomes k² times as big: 3 times the miss, 9 times the square.</p>
-                <p>The chart on the right shows both. The dashed line is k and the solid curve is k².</p>
-                <p hidden data-fill>Its residual starts at <span data-value="e0"></span>. The button makes it <span data-value="e0-3"></span>: three times the miss, so nine times the square.</p>
-                <p>The MSE as a whole grows by less than nine times, because the other ten squares stay the same. The box shows both losses, before and after.</p>
-                <p>This is what "MSE punishes big misses" means: one far-off point can dominate it. Whether that is what you want depends on the problem.</p>
-                <p>Drag the point, or Tab to it and use the arrow keys. "Put it back" returns it, and it also goes back when you leave this step.</p>
+                <p>Or drag the ringed point, or Tab to it and use the arrow keys. "Put it back" returns it, and so does leaving this step.</p>
+                <p hidden data-fill>The button takes its miss from <span data-value="e0"></span> to <span data-value="e0-3"></span>. The box then shows MAE <span data-value="mae"></span> → <span data-value="mae-3"></span>, but MSE <span data-value="mse"></span> → <span data-value="mse-3"></span>, nearly double.</p>
+                <p>On the right, k is how many times as big the miss now is (the box's "miss ×"). The point's part of the MAE becomes k times as big (dashed violet). Its square becomes k × k times as big (solid cyan, "× k²").</p>
+                <p>The other squares stay the same, so the whole MSE changes by less. Still, one far-off point can dominate the MSE.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -175,16 +168,14 @@
         </li>
 
         <li class="step" id="step-6">
-            <h2>The best constant guess</h2>
-            <p class="lede">Suppose you had to guess one number, c, for every point, ignoring x. Which c is best? It depends on the loss: the mean of y for MSE, the median of y for MAE.</p>
+            <h2>One guess for every point</h2>
+            <p class="lede">Now ignore x and guess one number, c, for every point. Which c is best?</p>
             <div class="happening">
-                <p>The line is now flat at height c, and each stick is a point's miss from c. Move the slider and watch the two curves on the right. Each curve gives the loss for every possible c, and the dots mark the current one.</p>
-                <p hidden data-fill>The MSE is lowest when c is the mean of y, <span data-value="mean"></span>. The MAE is lowest when c is the median of y, <span data-value="median"></span>. These are the mean and median from Lesson 3.</p>
-                <p>There are 11 points, an odd number, so the median is a single middle value and the lowest MAE is at that one c. With an even number of points, every c between the two middle values would give the same lowest MAE.</p>
-                <p>The chart shows the RMSE, the square root of the MSE, so that both curves are in the units of y. The MSE itself is in squared units. The RMSE is lowest exactly where the MSE is.</p>
-                <p>Look at the shapes. The MSE curve is smooth. The MAE curve has a corner at each value of y.</p>
-                <p>So why square? It stops misses cancelling, and it punishes big misses more. It is smooth, so it has a slope everywhere, which makes it easy to follow downhill with gradient descent (Lesson 7). It leads to a formula for the best line (Lesson 6). And its best constant guess is the familiar mean.</p>
-                <p>MAE has its own strength: one far-out point sways it less, just as one far-out value moves the median less than the mean.</p>
+                <p>Drag the "c" slider to move the flat line, or press "Use the mean" or "Use the median".</p>
+                <p>On the right, the dots mark each loss at that c: dashed violet for the MAE, solid cyan for the RMSE, the square root of the MSE, in the units of y.</p>
+                <p>The MSE (and so the RMSE) is lowest at the mean of y, <span data-value="mean">5.96</span>. The MAE is lowest at the median, the middle value, <span data-value="median">5.13</span>: <span data-value="mae-at-median">2.40</span> there, <span data-value="mae-at-mean">2.47</span> at the mean. They disagree.</p>
+                <p>Note: squaring is a choice. MAE can suit better when a few far-off points should not dominate.</p>
+                <p>Next: "Slopes and derivatives".</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -206,6 +197,7 @@ H400000v40H845.2724
 s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7
 c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z
 M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1133em;"><span></span></span></span></span></span></span></span></span></span> and the square root only ever increases, the RMSE and the MSE are lowest at the same <span class="tex" data-tex="c"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi></mrow><annotation encoding="application/x-tex">c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span></span>.</p>
+                <p>Look at the curves' shapes: the MAE curve has a corner at each value of y, while the RMSE curve is smooth, with a slope everywhere. That makes squared error easy to follow downhill with gradient descent (Lesson 7). Squaring also leads to a formula for the best line (Lesson 6), and its best constant guess is the familiar mean, from Lesson 3.</p>
                 <p>One more reason for squaring comes from probability. Suppose <span class="tex" data-tex="y_i = a + b\,x_i + \varepsilon_i"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub><mo>=</mo><mi>a</mi><mo>+</mo><mi>b</mi><mtext> </mtext><msub><mi>x</mi><mi>i</mi></msub><mo>+</mo><msub><mi>ε</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">y_i = a + b\,x_i + \varepsilon_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">a</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord mathnormal">b</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">ε</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>, where the <span class="tex" data-tex="\varepsilon_i"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ε</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\varepsilon_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">ε</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span> are independent draws from a normal distribution with mean 0 and a fixed SD. The likelihood is the probability density of the observed <span class="tex" data-tex="y_i"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">y_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>, seen as a function of <span class="tex" data-tex="a"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi></mrow><annotation encoding="application/x-tex">a</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">a</span></span></span></span></span> and <span class="tex" data-tex="b"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span></span></span></span></span>. Its logarithm is a constant minus a positive multiple of <span class="tex" data-tex="\sum_i (y_i - a - b\,x_i)^2"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mi>i</mi></msub><mo stretchy="false">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><mi>a</mi><mo>−</mo><mi>b</mi><mtext> </mtext><msub><mi>x</mi><mi>i</mi></msub><msup><mo stretchy="false">)</mo><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\sum_i (y_i - a - b\,x_i)^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0497em;vertical-align:-0.2997em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.162em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2997em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">a</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal">b</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span>, so the line with the highest likelihood is the least-squares line. These points were made exactly that way (see About the data).</p>
             </details>
         </li>

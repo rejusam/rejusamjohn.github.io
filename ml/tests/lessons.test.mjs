@@ -404,6 +404,15 @@ test('lesson4 page agrees with the stage', () => {
   for (const v of Object.values(values)) assert.ok(!/NaN|undefined|Infinity/.test(v));
   assert.equal(values.mean, meanOf(ys).toFixed(2));
   assert.equal(values.median, medianOf(ys).toFixed(2));
+  // Every value is used, and spans that show text without the stage already hold the right value.
+  for (const k of Object.keys(values)) assert.ok(keys.includes(k), `unused ${k}`);
+  for (const [, key, text] of lesson4Html.matchAll(/data-value="([^"]+)">([^<]+)</g)) assert.equal(text, values[key], key);
+  // Step 2: the residuals add to zero. Step 5: the button takes MAE 1.12 to 1.38 and MSE 1.60 to 3.08.
+  assert.equal(values.sum, '0.00');
+  assert.equal(values['mae-3'], '1.38');
+  assert.equal(values['mse-3'], '3.08');
+  // Step 6: the MAE is lower at the median than at the mean.
+  assert.ok(Number(values['mae-at-median']) < Number(values['mae-at-mean']));
   // The quiz answers.
   const answer = (id) => lesson4Html.match(new RegExp(`<form class="q" id="${id}" data-answer="([^"]+)"`))[1];
   assert.equal(answer('q1'), 'mse');

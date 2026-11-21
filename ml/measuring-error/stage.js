@@ -133,8 +133,19 @@ export function pageValues(xs, ys) {
   const my = mean(ys);
   const md = median(ys);
   const r = dragRange(xs, ys, line);
+  // Step 5: the losses once the button has made the ringed point's miss 3 times as big.
+  const tripled = ys.slice();
+  tripled[CHOSEN] = r.yhat + 3 * r.e0;
+  const L3 = lossSummary(residualsOf(xs, tripled, line));
   return {
     n: String(L.n),
+    // Step 1: the ringed point's y and the line's prediction for it.
+    y0: fmt(ys[CHOSEN]),
+    yhat0: fmt(r.yhat),
+    'mae-3': fmt(L3.mae),
+    'mse-3': fmt(L3.mse),
+    // Step 2: the residuals' sum, which is zero up to rounding.
+    sum: fmt(L.sum),
     'n-above': String(L.nAbove),
     'n-below': String(L.nBelow),
     above: signed(L.above),
@@ -143,11 +154,8 @@ export function pageValues(xs, ys) {
     mae: fmt(L.mae),
     'sum-sq': fmt(L.sumSq),
     mse: fmt(L.mse),
-    rmse: fmt(L.rmse),
     e0: signed(r.e0),
     'e0-3': signed(3 * r.e0),
-    'e0-sq': fmt(r.e0 ** 2),
-    'e0-3-sq': fmt((3 * r.e0) ** 2),
     mean: fmt(my),
     median: fmt(md),
     'mse-at-mean': fmt(mseAt(ys, my)),
