@@ -40,3 +40,13 @@ export function pythonSnippet(url, body) {
     'print(response.status_code, response.json())',
   ].join('\n');
 }
+
+// Message for a live call that did not give a score. The proxy's own errors carry an "error"
+// field; a 429 or 503 without one came from AWS, passed through by the proxy.
+export function failMessage(status, body) {
+  const own = body && typeof body.error === 'string' ? body.error : null;
+  if ((status === 429 || status === 503) && own) return own;
+  if (status === 429 || status === 503) return `The scoring API on AWS is busy (status ${status}). Try again in a minute.`;
+  const detail = own ?? (status ? `status ${status}` : 'no answer');
+  return `The live call failed (${detail}). Showing the exported risk.`;
+}

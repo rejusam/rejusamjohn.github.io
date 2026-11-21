@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {compareRisk, curlSnippet, findStudent, formatRisk, pythonSnippet} from '../view.js';
+import {compareRisk, curlSnippet, failMessage, findStudent, formatRisk, pythonSnippet} from '../view.js';
 import {rowToStudent, requestBody} from '../whatif.js';
 
 const fixture = JSON.parse(readFileSync(new URL('./fixture-w8.json', import.meta.url)));
@@ -47,4 +47,25 @@ test('pythonSnippet uses requests and writes null as None', () => {
   assert.ok(text.includes('"mean_score": None'));
   assert.ok(!text.includes('null'));
   assert.ok(text.includes(`url = "${URL_}"`));
+});
+
+test('failMessage uses the proxy wording for the proxy limits', () => {
+  assert.equal(failMessage(429, {error: 'Too many calls from this address. Wait a minute and try again.'}),
+    'Too many calls from this address. Wait a minute and try again.');
+  assert.equal(failMessage(503, {error: 'The service is busy. Try again in a minute.'}),
+    'The service is busy. Try again in a minute.');
+});
+
+test('failMessage names AWS when the API itself is busy', () => {
+  assert.equal(failMessage(429, {message: 'Too Many Requests'}),
+    'The scoring API on AWS is busy (status 429). Try again in a minute.');
+  assert.equal(failMessage(503, {message: 'Service Unavailable'}),
+    'The scoring API on AWS is busy (status 503). Try again in a minute.');
+});
+
+test('failMessage for other failures', () => {
+  assert.equal(failMessage(422, {detail: 'x'}), 'The live call failed (status 422). Showing the exported risk.');
+  assert.equal(failMessage(0, null), 'The live call failed (no answer). Showing the exported risk.');
+  assert.equal(failMessage(502, {error: 'The scoring API could not be reached.'}),
+    'The live call failed (The scoring API could not be reached.). Showing the exported risk.');
 });

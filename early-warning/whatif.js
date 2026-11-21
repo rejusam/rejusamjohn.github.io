@@ -83,3 +83,19 @@ export function applyWhatIf(original, change) {
 }
 
 export const isOriginal = (student, original) => FIELDS.every(f => student[f] === original[f]);
+
+// Plain-language reasons why a typed what-if value did not stick. applyWhatIf caps values so the
+// row stays possible; without these notes a capped box looks broken.
+export function whatIfNotes(week, change, applied) {
+  if (applied.n_due === 0) {
+    return [`No assessment is due by week ${week} in this module, so assessments submitted and submitted late cannot change yet. Try clicks last week instead.`];
+  }
+  const notes = [];
+  if (change.n_submitted !== undefined && change.n_submitted > applied.n_submitted) {
+    notes.push(`Assessments submitted is at most ${applied.n_due}: the number due by week ${week}.`);
+  }
+  if (change.n_late !== undefined && change.n_late > applied.n_late) {
+    notes.push(`Submitted late is at most ${applied.n_submitted}, the number submitted.`);
+  }
+  return notes;
+}

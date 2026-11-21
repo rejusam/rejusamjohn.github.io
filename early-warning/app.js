@@ -1,7 +1,7 @@
 // The early-warning page: advisor lists from the exported files, and live scoring of one
 // student through the proxy. Pure logic is in whatif.js and view.js (tested with node --test).
-import {FIELDS, applyWhatIf, cutoffDay, isOriginal, problems, requestBody, rowToStudent} from './whatif.js';
-import {compareRisk, curlSnippet, findStudent, formatRisk, pythonSnippet} from './view.js';
+import {FIELDS, applyWhatIf, cutoffDay, isOriginal, problems, requestBody, rowToStudent, whatIfNotes} from './whatif.js';
+import {compareRisk, curlSnippet, failMessage, findStudent, formatRisk, pythonSnippet} from './view.js';
 
 const PROXY = 'https://ssew-proxy.rejusamjohn.workers.dev';
 const SCORE_URL = `${PROXY}/v1/score`;
@@ -74,8 +74,8 @@ function riskCell(risk) {
   return el('td', {class: 'num'}, formatRisk(risk), bar);
 }
 
-function openButton(position) {
-  return el('button', {type: 'button', class: 'small', dataset: {open: String(position)}}, 'Open');
+function openButton(position, id) {
+  return el('button', {type: 'button', class: 'small', 'aria-label': `Open student ${id}`, dataset: {open: String(position)}}, 'Open');
 }
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -101,7 +101,7 @@ function row(file, position, extra) {
   const id = r[0];
   const risk = r[file.columns.indexOf('risk')];
   const tr = el('tr', {}, el('td', {class: 'num'}, String(position + 1)), el('td', {}, String(id)), riskCell(risk));
-  tr.append(el('td', {}, extra(r)), el('td', {}, openButton(position)));
+  tr.append(el('td', {}, extra(r)), el('td', {}, openButton(position, id)));
   if (state.found === position) tr.className = 'is-found';
   return tr;
 }
@@ -149,7 +149,13 @@ async function showLists() {
 }
 
 async function search() {
-  const file = await moduleFile(state.week, state.module);
+  let file;
+  try {
+    file = await moduleFile(state.week, state.module);
+  } catch (e) {
+    $('search-message').textContent = `The cohort could not be loaded (${e.message}). Try again.`;
+    return;
+  }
   const text = $('search').value;
   const hit = findStudent(file, text);
   if (!hit) {
@@ -184,6 +190,9 @@ function setWhatIfInputs(student) {
   $('wi-submitted').max = student.n_due;
   $('wi-late').value = student.n_late;
   $('wi-late').max = student.n_submitted;
+  // Nothing due yet: there is nothing to submit, so these two cannot change.
+  $('wi-submitted').disabled = student.n_due === 0;
+  $('wi-late').disabled = student.n_due === 0;
   $('wi-clicks').value = student.clicks_last_week;
   $('wi-score').value = student.mean_score ?? '';
   // No submissions and no score: there is nothing to score until work is submitted.
@@ -214,12 +223,15 @@ function currentStudent() {
 }
 
 function onWhatIf() {
-  const student = currentStudent();
+  const change = whatIfChange();
+  const student = applyWhatIf(state.record.original, change);
   setWhatIfInputs(student);
   renderFeatures(student, state.record.original);
   renderSnippets(requestBody(state.record.week, student));
   const changed = FIELDS.some(f => student[f] !== state.record.original[f]);
-  $('whatif-note').textContent = changed ? 'Changed. Press Re-score to send it.' : '';
+  const notes = whatIfNotes(state.record.week, change, student);
+  if (changed) notes.push('Changed. Press Re-score to send it.');
+  $('whatif-note').textContent = notes.join(' ');
 }
 
 function openRecord(file, position) {
@@ -237,7 +249,7 @@ function openRecord(file, position) {
   setWhatIfInputs(original);
   renderFeatures(original, original);
   renderSnippets(requestBody(file.week, original));
-  $('whatif-note').textContent = '';
+  $('whatif-note').textContent = whatIfNotes(file.week, {}, original).join(' ');
   $('record').scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start'});
   $('record-title').focus({preventScroll: true});
   score(original, true);
@@ -268,12 +280,7 @@ function showLive(status, body, student, first) {
   $('risk-live').textContent = '–';
   $('live-reasons').replaceChildren(el('li', {}, 'No live answer. The risk in the list still stands.'));
   note.classList.add('status-bad');
-  if (status === 429) note.textContent = 'Too many tries from your address; wait a minute.';
-  else if (status === 503) note.textContent = 'The service is busy; try again in a minute.';
-  else {
-    const detail = body && body.error ? body.error : (status ? `status ${status}` : 'no answer');
-    note.textContent = `The live call failed (${detail}). Showing the exported risk.`;
-  }
+  note.textContent = failMessage(status, body);
 }
 
 async function score(student, first = false) {
@@ -368,7 +375,7 @@ async function init() {
     const {original} = state.record;
     setWhatIfInputs(original);
     renderFeatures(original, original);
-    $('whatif-note').textContent = '';
+    $('whatif-note').textContent = whatIfNotes(state.record.week, {}, original).join(' ');
     score(original, true); // from this visit's memory if it was scored already
   });
   for (const button of document.querySelectorAll('[data-copy]')) {

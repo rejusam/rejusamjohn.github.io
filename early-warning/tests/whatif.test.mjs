@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {FIELDS, applyWhatIf, cutoffDay, isOriginal, problems, requestBody, rowToStudent} from '../whatif.js';
+import {FIELDS, applyWhatIf, cutoffDay, isOriginal, problems, requestBody, rowToStudent, whatIfNotes} from '../whatif.js';
 
 const fixture = JSON.parse(readFileSync(new URL('./fixture-w8.json', import.meta.url)));
 const students = fixture.rows.map(row => rowToStudent(fixture.columns, row));
@@ -116,4 +116,27 @@ test('a what-if does not change the original row', () => {
 
 test('requestBody wraps one student', () => {
   assert.deepEqual(requestBody(8, students[0]), {week: 8, students: [students[0]]});
+});
+
+test('whatIfNotes explains why nothing about assessments can change when none is due', () => {
+  const s = {...students[0], n_due: 0, n_submitted: 0, n_missed: 0, n_late: 0, mean_score: null};
+  const applied = applyWhatIf(s, {n_submitted: 2});
+  assert.equal(applied.n_submitted, 0);
+  const notes = whatIfNotes(2, {n_submitted: 2}, applied);
+  assert.equal(notes.length, 1);
+  assert.match(notes[0], /No assessment is due by week 2/);
+  assert.match(notes[0], /clicks last week/);
+});
+
+test('whatIfNotes says when a typed value was capped', () => {
+  const s = students.find(x => x.n_due >= 2);
+  const applied = applyWhatIf(s, {n_submitted: s.n_due + 5, n_late: s.n_due + 9});
+  const notes = whatIfNotes(8, {n_submitted: s.n_due + 5, n_late: s.n_due + 9}, applied);
+  assert.ok(notes.some(n => n === `Assessments submitted is at most ${s.n_due}: the number due by week 8.`), notes);
+  assert.ok(notes.some(n => n === `Submitted late is at most ${applied.n_submitted}, the number submitted.`), notes);
+});
+
+test('whatIfNotes is empty when nothing was capped', () => {
+  const s = students.find(x => x.n_due >= 2);
+  assert.deepEqual(whatIfNotes(8, {n_submitted: 1, n_late: 0, clicks_last_week: 3}, applyWhatIf(s, {n_submitted: 1, n_late: 0, clicks_last_week: 3})), []);
 });
