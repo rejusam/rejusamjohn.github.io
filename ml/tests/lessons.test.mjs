@@ -41,10 +41,7 @@ test('lesson1 stage numbers agree with the fitted rule', () => {
   assert.equal(lesson1.fmt(34.264, 1), '34.3');
 });
 
-// ---------------------------------------------------------------- lesson 2
-
 import { readFileSync } from 'node:fs';
-
 const lesson1Html = readFileSync(new URL('../what-is-a-model/index.html', import.meta.url), 'utf8');
 
 test('lesson1 every data-value span has a value, and every value is used', () => {
@@ -69,9 +66,13 @@ test('lesson1 claims in the step text hold for the data', () => {
   assert.ok(fitMiss.mse < lesson1.missSummary(xs, ys, lesson1.GUESS).mse);
   // Step 4: the slider's ends roughly cover the examples' hours.
   assert.ok(Math.min(...xs) >= lesson1.HOURS_MIN && Math.max(...xs) <= lesson1.HOURS_MAX);
+  assert.ok(Math.min(...xs) - lesson1.HOURS_MIN < 0.5 && lesson1.HOURS_MAX - Math.max(...xs) < 0.5);
   // Step 5: the biggest miss is above the line ("marks above the line").
   assert.ok(fitMiss.residuals[fitMiss.worst] > 0);
 });
+
+// ---------------------------------------------------------------- lesson 2
+
 import { mean, sd } from '../assets/maths.js';
 import * as lesson2 from '../data-as-numbers/stage.js';
 

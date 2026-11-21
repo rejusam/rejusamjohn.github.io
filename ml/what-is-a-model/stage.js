@@ -104,7 +104,6 @@ export function pageValues() {
     'hours-max': String(HOURS_MAX),
     // The biggest miss of the fitted line (step 5).
     'worst-hours': fmt(xs[fitMiss.worst], 1),
-    'worst-mark': fmt(ys[fitMiss.worst], 0),
     'worst-miss': fmt(fitMiss.maxAbs, 1),
   };
 }
@@ -152,7 +151,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const handle = el('circle', {
     class: 'handle', r: 9, fill: '#0f172a', stroke: '#a78bfa', 'stroke-width': 2.5,
     tabindex: 0, role: 'slider', 'aria-label': 'New student’s hours studied',
-    'aria-valuemin': 1, 'aria-valuemax': 10,
+    'aria-valuemin': HOURS_MIN, 'aria-valuemax': HOURS_MAX,
   }, predictG);
   const predictLabel = el('text', { class: 'value', ...halo }, predictG);
 
@@ -399,12 +398,12 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   sh.input.addEventListener('input', () => setHours(Number(sh.input.value), { fromSlider: true }));
 
   draggable(handle, {
-    bounds: { x0: X(1), x1: X(10), y0: Y(0), y1: Y(100) },
+    bounds: { x0: X(HOURS_MIN), x1: X(HOURS_MAX), y0: Y(0), y1: Y(100) },
     onDrag: (px) => setHours(X.invert(px)),
   });
   // As a slider, up and down, Home and End also change the hours.
   handle.addEventListener('keydown', (e) => {
-    const map = { ArrowUp: hours + 0.1, ArrowDown: hours - 0.1, Home: 1, End: 10 };
+    const map = { ArrowUp: hours + 0.1, ArrowDown: hours - 0.1, Home: HOURS_MIN, End: HOURS_MAX };
     if (!(e.key in map)) return;
     e.preventDefault();
     e.stopImmediatePropagation();

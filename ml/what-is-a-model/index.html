@@ -83,7 +83,7 @@
             <h2>Start with examples</h2>
             <p class="lede">Each dot is one made-up student. Across is the hours they studied; up is the mark they got, out of <span data-value="mark-max">100</span>.</p>
             <div class="happening">
-                <p>Look at the dots: <span data-value="n">20</span> of them, one per student. These are the examples the model will learn from.</p>
+                <p>Look at the dots: <span data-value="n">20</span> students. These are the examples the model will learn from.</p>
                 <p>Each example has an input, the hours, and a known answer, the mark.</p>
                 <p>Now look at the overall shape. Students who studied longer tend to get higher marks.</p>
                 <p>But the dots do not sit on a neat line. One student studied <span data-value="pair-hi-hours">4.2</span> hours and got <span data-value="pair-hi-mark">64</span>; another studied <span data-value="pair-lo-hours">4.3</span> hours and got <span data-value="pair-lo-mark">47</span>.</p>
@@ -99,11 +99,11 @@
             <h2>A rule turns hours into a mark</h2>
             <p class="lede">A model guesses a mark from the hours with a rule. Here the rule is a straight line.</p>
             <div class="happening">
-                <p>Look at the line: it is the rule. Its height at any hours is the guessed mark, ŷ, said "y-hat".</p>
-                <p>It starts as <span data-value="guess-rule">ŷ = 75.0 − 2.00·x</span>, a deliberately poor guess: more study, lower mark.</p>
-                <p>Move the sliders: a is the mark at zero hours, and b the marks added per hour, the slope. a and b are the rule's parameters.</p>
-                <p>The thin vertical lines are the misses. The box squares each one (multiplies it by itself) and averages: the "average squared miss", <span data-value="guess-mse">406.9</span> at the start. Smaller is better.</p>
-                <p>Note: Lesson 4, "Measuring error", shows why we square.</p>
+                <p>Look at the line: it is the rule. Its height is the guessed mark, ŷ, said "y-hat".</p>
+                <p>It starts as <span data-value="guess-rule">ŷ = 75.0 − 2.00·x</span> (x is the hours, · means times): a deliberately poor guess, more study, lower mark.</p>
+                <p>Move the sliders: a is the mark at zero hours, b the marks added per hour (the slope). Both are the rule's parameters.</p>
+                <p>Each thin vertical line is a miss: a mark's gap to the line. The box at bottom right squares each one (times itself) and averages: the "average squared miss", <span data-value="guess-mse">406.9</span> at the start. Smaller is better.</p>
+                <p>Note: Lesson 4 shows why we square.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -116,12 +116,12 @@
 
         <li class="step" id="step-3">
             <h2>Training picks the best line</h2>
-            <p class="lede">Now let the examples choose a and b. That is training.</p>
+            <p class="lede">Now a and b are set from the examples. That is training.</p>
             <div class="happening">
-                <p>Look at the solid line: the best fit. The dashed line is your guess from the last step.</p>
+                <p>Look at the solid line: the best fit. The dashed line is the guess from step 2.</p>
                 <p>The best fit is <span data-value="fit-rule">ŷ = 34.3 + 5.51·x</span>. Its average squared miss is <span data-value="fit-mse">46.0</span>, against <span data-value="guess-mse">406.9</span> for the starting guess.</p>
                 <p>Training finds the a and b with the smallest average squared miss. For a straight line there is one best answer (if the hours vary), and a formula finds it.</p>
-                <p>The trained model is just those two numbers, a and b. It does not store the <span data-value="n">20</span> students.</p>
+                <p>The trained line keeps only a and b. It does not store the <span data-value="n">20</span> students.</p>
                 <p>Note: other ways of measuring a miss can give a different "best" line.</p>
             </div>
             <details class="maths">
@@ -155,11 +155,11 @@
             <h2>Useful, not perfect</h2>
             <p class="lede">Even the best line misses: some students did better than it predicts, some worse.</p>
             <div class="happening">
-                <p>Look at the vertical lines: the misses left after training. The biggest is labelled: the student with <span data-value="worst-hours">1.1</span> hours scored <span data-value="worst-mark">55</span>, <span data-value="worst-miss">14.2</span> marks above the line.</p>
-                <p>In real life, misses come from what the rule leaves out, such as sleep or luck on the day. Here, added random noise plays that part.</p>
-                <p>A model keeps the main pattern and ignores the rest. So a prediction is a best guess, not a promise.</p>
+                <p>Look at the vertical lines: the misses after training. The biggest is labelled: the <span data-value="worst-hours">1.1</span>-hour student is <span data-value="worst-miss">14.2</span> marks above the line.</p>
+                <p>In real life, misses come from what the rule leaves out, such as sleep or luck on the day. Here, a random amount added to each mark plays that part (see About the data).</p>
+                <p>A model keeps the main pattern and drops the rest. A prediction is a best guess, not a promise.</p>
                 <p>Note: a pattern in data does not, on its own, show cause and effect.</p>
-                <p>Next: "Data as numbers".</p>
+                <p>The next lesson, "Data as numbers", turns things into numbers a model can use.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
