@@ -18,7 +18,7 @@ export function lessonData(seed = SEED, n = N) {
   const ys = [];
   for (let i = 0; i < n; i++) {
     const x = uniform(rng, 1, 10);
-    const y = clamp(35 + 5 * x + 6 * randn(rng), 0, 100);
+    const y = clamp(35 + 5 * x + 6 * randn(rng), 0, MARK_MAX);
     xs.push(x);
     ys.push(y);
   }
@@ -59,6 +59,55 @@ export function ruleText({ a, b }) {
 // The deliberately poor starting guess: more study, lower marks.
 export const GUESS = { a: 75, b: -2 };
 export const START_HOURS = 6;
+
+// The two examples with the closest hours (within 0.5) whose marks differ most.
+export function closePair(xs, ys, within = 0.5) {
+  let best = null;
+  for (let i = 0; i < xs.length; i++) {
+    for (let j = 0; j < xs.length; j++) {
+      if (i === j || Math.abs(xs[i] - xs[j]) > within || ys[i] <= ys[j]) continue;
+      if (!best || ys[i] - ys[j] > best.gap) best = { hi: i, lo: j, gap: ys[i] - ys[j] };
+    }
+  }
+  return best;
+}
+
+export const HOURS_MIN = 1;
+export const HOURS_MAX = 10;
+export const MARK_MAX = 100;
+
+// Every number the step text quotes, keyed by its data-value.
+export function pageValues() {
+  const { xs, ys } = lessonData();
+  const fit = fitRule(xs, ys);
+  const fitMiss = missSummary(xs, ys, fit);
+  const pair = closePair(xs, ys);
+  return {
+    'n': String(xs.length),
+    'mark-max': String(MARK_MAX),
+    // Two students with about the same hours (step 1).
+    'pair-hi-hours': fmt(xs[pair.hi], 1),
+    'pair-hi-mark': fmt(ys[pair.hi], 0),
+    'pair-lo-hours': fmt(xs[pair.lo], 1),
+    'pair-lo-mark': fmt(ys[pair.lo], 0),
+    // The starting guess (step 2) and the best fit (step 3).
+    'guess-rule': ruleText(GUESS),
+    'guess-mse': fmt(missSummary(xs, ys, GUESS).mse, 1),
+    'fit-rule': ruleText(fit),
+    'fit-mse': fmt(fitMiss.mse, 1),
+    'a-hat': fmt(fit.a, 1),
+    'b-hat': fmt(fit.b, 2),
+    // The new student (step 4).
+    'start-hours': START_HOURS.toFixed(1),
+    'start-pred': fmt(predict(fit, START_HOURS), 1),
+    'hours-min': String(HOURS_MIN),
+    'hours-max': String(HOURS_MAX),
+    // The biggest miss of the fitted line (step 5).
+    'worst-hours': fmt(xs[fitMiss.worst], 1),
+    'worst-mark': fmt(ys[fitMiss.worst], 0),
+    'worst-miss': fmt(fitMiss.maxAbs, 1),
+  };
+}
 
 // ---------------------------------------------------------------- the stage
 
@@ -136,7 +185,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   const sb = slider('b', ' (marks added per hour)', -10, 15, 0.1, GUESS.b);
   ruleGroup.append(sa.label, sb.label);
   const newGroup = make('div');
-  const sh = slider('Hours', ' studied by the new student', 1, 10, 0.1, START_HOURS);
+  const sh = slider('Hours', ' studied by the new student', HOURS_MIN, HOURS_MAX, 0.1, START_HOURS);
   newGroup.append(sh.label);
   controls.append(ruleGroup, newGroup);
   const showGroup = (g, on) => { g.style.display = on ? 'contents' : 'none'; };
@@ -342,7 +391,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   sb.input.addEventListener('input', onRuleInput);
 
   const setHours = (h, { fromSlider = false } = {}) => {
-    hours = Math.round(clamp(h, 1, 10) * 10) / 10;
+    hours = Math.round(clamp(h, HOURS_MIN, HOURS_MAX) * 10) / 10;
     if (!fromSlider) sh.input.value = String(hours);
     render();
     say(`${hours.toFixed(1)} hours: predicted mark ${fmt(predict(fit, hours), 1)}.`);
@@ -363,11 +412,7 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   });
 
   // Sentences on the page that quote the fitted values (hidden until filled).
-  const values = {
-    n: String(dx.length),
-    'a-hat': fmt(fit.a, 1),
-    'b-hat': fmt(fit.b, 2),
-  };
+  const values = pageValues();
   for (const span of doc.querySelectorAll('main.lesson [data-value]')) {
     const v = values[span.dataset.value];
     if (v !== undefined) span.textContent = v;

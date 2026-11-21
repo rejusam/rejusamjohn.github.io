@@ -44,6 +44,34 @@ test('lesson1 stage numbers agree with the fitted rule', () => {
 // ---------------------------------------------------------------- lesson 2
 
 import { readFileSync } from 'node:fs';
+
+const lesson1Html = readFileSync(new URL('../what-is-a-model/index.html', import.meta.url), 'utf8');
+
+test('lesson1 every data-value span has a value, and every value is used', () => {
+  const pv = lesson1.pageValues();
+  const keys = new Set([...lesson1Html.matchAll(/data-value="([^"]+)"/g)].map((m) => m[1]));
+  for (const key of keys) assert.ok(key in pv, key);
+  for (const key of Object.keys(pv)) assert.ok(keys.has(key), `unused ${key}`);
+  for (const [, key, text] of lesson1Html.matchAll(/data-value="([^"]+)">([^<]+)</g)) assert.equal(text, pv[key], key);
+});
+
+test('lesson1 claims in the step text hold for the data', () => {
+  const { xs, ys } = lesson1.lessonData();
+  const fit = lesson1.fitRule(xs, ys);
+  const fitMiss = lesson1.missSummary(xs, ys, fit);
+  // Step 1: two students with nearly the same hours, marks far apart.
+  const pair = lesson1.closePair(xs, ys);
+  assert.ok(Math.abs(xs[pair.hi] - xs[pair.lo]) <= 0.5);
+  assert.ok(pair.gap > 10, `gap ${pair.gap}`);
+  // Step 2: the starting guess slopes down ("more study, lower mark").
+  assert.ok(lesson1.GUESS.b < 0);
+  // Step 3: the fit beats the starting guess.
+  assert.ok(fitMiss.mse < lesson1.missSummary(xs, ys, lesson1.GUESS).mse);
+  // Step 4: the slider's ends roughly cover the examples' hours.
+  assert.ok(Math.min(...xs) >= lesson1.HOURS_MIN && Math.max(...xs) <= lesson1.HOURS_MAX);
+  // Step 5: the biggest miss is above the line ("marks above the line").
+  assert.ok(fitMiss.residuals[fitMiss.worst] > 0);
+});
 import { mean, sd } from '../assets/maths.js';
 import * as lesson2 from '../data-as-numbers/stage.js';
 
