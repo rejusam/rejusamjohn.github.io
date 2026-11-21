@@ -525,10 +525,14 @@ test('lesson5 every data-value span has a value, and quoted labels are the stage
   assert.match(rows(2, 0), /^gap: /m);
   // Labels and buttons drawn by the stage that the step text quotes.
   const src = readFileSync(new URL('../slopes/stage.js', import.meta.url), 'utf8');
-  for (const label of ['Shrink h', 'tangent slope', 'downhill', 'slope 0', 'lowest point (']) {
+  for (const label of ['Shrink h', 'Reset h', 'tangent slope', 'downhill', 'slope 0', 'lowest point (']) {
     assert.ok(src.includes(label), label);
     assert.ok(lesson5Html.includes(`"${label}`), label);
   }
+  // The quiz asks about the same x values the explanations quote.
+  assert.ok(lesson5Html.includes(`what is the slope at x = ${lesson5.Q1_X}?`));
+  assert.ok(lesson5Html.includes(`at x = ${lesson5.Q2_X} the slope is f′(${lesson5.Q2_X}) = ${pv['q2-slope']}.`));
+  assert.equal(lesson5.downhill(lesson5.fPrime(lesson5.Q2_X)), 'right');
   assert.ok(lesson5Html.includes(`"lowest point (<span data-value="low-x">${pv['low-x']}</span>, <span data-value="low-y">${pv['low-y']}</span>)"`));
 });
 

@@ -98,8 +98,12 @@ export function readout(step, { x, h }) {
   return [`x = ${fmt(x)}`, `f(x) = ${fmt(f(x))}`, `slope = ${fmt(fPrime(x))}`, d === 'flat' ? 'the lowest point' : DIRECTION_ROW[d]];
 }
 
-// Every number the step text quotes, keyed by its data-value. None of them
+// Every number the step text, the quiz explanations and About the curve quote, keyed by its data-value. None of them
 // changes with the controls, so the spans already hold these values.
+// The x values the two quiz questions ask about.
+export const Q1_X = 4;
+export const Q2_X = 0;
+
 export function pageValues() {
   const [[x1, y1], [x2, y2]] = BIG;
   const v = vertex();
@@ -111,6 +115,17 @@ export function pageValues() {
     // f′(x) = 2A·x + B, which is x − 2 here (A = 0.5).
     'fprime-c': tickFmt(-B),
     'h-min': fmt(H_MIN),
+    'h-start': fmt(H_START),
+    'h-max': tickFmt(H_MAX),
+    // About the curve: where it is drawn.
+    'x-lo': tickFmt(X_LO),
+    'x-hi': tickFmt(X_HI),
+    // The quiz: the slope and height at x = 4, and the slope at x = 0.
+    'q1-x': tickFmt(Q1_X),
+    'q1-slope': tickFmt(fPrime(Q1_X)),
+    'q1-height': tickFmt(f(Q1_X)),
+    'q2-x': tickFmt(Q2_X),
+    'q2-slope': tickFmt(fPrime(Q2_X)),
     'low-x': tickFmt(v.x),
     'low-y': tickFmt(v.y),
   };
