@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student early warning: a deployed model you can use · Reju Sam John</title>
+    <meta name="description" content="Use a deployed early-warning model the way a student advisor would: weekly risk lists, live scoring of any student with what-if changes, and how each part of the deployment is built.">
+    <meta name="author" content="Dr Reju Sam John">
+    <link rel="canonical" href="https://rejusamjohn.pages.dev/early-warning/">
+    <meta property="og:title" content="Student early warning: a deployed model you can use">
+    <meta property="og:description" content="Weekly risk lists, live scoring with what-if changes, and the deployment piece by piece. Public OULAD data.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rejusamjohn.pages.dev/early-warning/">
+    <meta property="og:image" content="https://rejusamjohn.pages.dev/assets/og-card.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script type="module" src="app.js"></script>
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "e46c62f910fe4def882feaed064efced"}'></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --raised: #334155;
+            --line: #334155;
+            --ink: #f1f5f9;
+            --muted: #94a3b8;
+            --faint: #8190a5;
+            --cyan: #06b6d4;
+            --cyan-soft: rgb(6 182 212 / 0.15);
+            --violet: #8b5cf6;
+            --amber: #f59e0b;
+            --red: #f87171;
+            --green: #34d399;
+            --mono: 'JetBrains Mono', ui-monospace, monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        html { -webkit-text-size-adjust: 100%; }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Inter', system-ui, sans-serif;
+            font-size: 1rem;
+            line-height: 1.65;
+        }
+
+        a { color: var(--cyan); }
+        a:hover { color: #22d3ee; }
+
+        :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        .skip {
+            position: absolute;
+            left: -9999px;
+            top: 8px;
+            padding: 8px 16px;
+            background: var(--surface);
+            color: var(--ink);
+            z-index: 2000;
+        }
+        .skip:focus { left: 8px; }
+
+        /* Site navigation, as on the home page and ML Explorer. */
+        .site-nav { padding: 16px 0; }
+        .site-nav-in {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .site-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.6;
+            color: var(--ink);
+            text-decoration: none;
+        }
+        .site-logo:hover { color: var(--ink); }
+        .site-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .site-links a {
+            display: block;
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            line-height: 1.6;
+            text-decoration: none;
+            transition: color 0.3s ease, background-color 0.3s ease;
+        }
+        .site-links a:hover { color: var(--ink); background: var(--cyan-soft); }
+        .site-links .site-cta {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+            color: var(--bg);
+            font-weight: 600;
+        }
+        .site-links .site-cta:hover { background: linear-gradient(135deg, #22d3ee, #a78bfa); color: var(--bg); }
+        .site-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            padding: 8px;
+            border: 0;
+            background: none;
+            cursor: pointer;
+        }
+        .site-toggle span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            border-radius: 2px;
+            background: var(--ink);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .site-toggle[aria-expanded='true'] span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .site-toggle[aria-expanded='true'] span:nth-child(2) { opacity: 0; }
+        .site-toggle[aria-expanded='true'] span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        @media (min-width: 769px) and (max-width: 1100px) {
+            .site-links { gap: 2px; }
+            .site-links a { padding: 8px 10px; }
+            .site-links .site-cta { padding: 8px 14px; }
+        }
+
+        @media (max-width: 768px) {
+            .js .site-toggle { display: flex; position: relative; z-index: 1001; }
+            .js .site-links {
+                position: fixed;
+                top: 0;
+                right: 0;
+                z-index: 1000;
+                width: 280px;
+                height: 100vh;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+                padding: 80px 32px 32px;
+                background: var(--surface);
+                border-left: 1px solid rgb(148 163 184 / 0.1);
+                box-shadow: 0 10px 40px rgb(0 0 0 / 0.5);
+                transform: translateX(100%);
+                visibility: hidden;
+                transition: transform 0.3s ease, visibility 0s linear 0.3s;
+            }
+            .js.site-open .site-links { transform: none; visibility: visible; transition: transform 0.3s ease; }
+            .site-links a { padding: 12px 16px; font-size: 1rem; }
+            .site-links .site-cta { margin-top: 16px; text-align: center; }
+            html:not(.js) .site-nav-in, html:not(.js) .site-links { flex-wrap: wrap; }
+        }
+
+        /* Page */
+        main { max-width: 1040px; margin: 0 auto; padding: 24px 24px 80px; }
+
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin: 0 0 8px;
+        }
+
+        h1 { font-size: clamp(1.9rem, 4.5vw, 2.8rem); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+        h2 { font-size: 1.5rem; line-height: 1.25; margin: 0 0 12px; letter-spacing: -0.01em; }
+        h3 { font-size: 1.1rem; margin: 24px 0 8px; }
+
+        .lead { font-size: 1.15rem; color: var(--muted); max-width: 62ch; margin: 0 0 12px; }
+        .lead strong { color: var(--ink); font-weight: 600; }
+        .note { color: var(--faint); font-size: 0.9rem; }
+
+        section { margin-top: 56px; }
+        header.intro { margin-top: 16px; }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        /* Controls */
+        .controls { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-end; margin-bottom: 16px; }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field > span, .field > label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+        .weeks { display: flex; gap: 6px; }
+
+        button, select, input {
+            font: inherit;
+            color: var(--ink);
+        }
+        button {
+            cursor: pointer;
+            border: 1px solid var(--line);
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 6px 14px;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        button:hover { border-color: var(--cyan); }
+        button[aria-pressed='true'] { background: var(--cyan-soft); border-color: var(--cyan); color: var(--ink); }
+        button.primary { background: var(--cyan); border-color: var(--cyan); color: var(--bg); font-weight: 600; }
+        button.primary:hover { background: #22d3ee; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button.small { padding: 2px 10px; font-size: 0.85rem; }
+
+        select, input[type='number'], input[type='search'] {
+            background: var(--bg);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 6px 10px;
+            min-width: 0;
+        }
+        input[type='number'] { width: 7.5em; }
+        input[type='search'] { width: 12em; }
+
+        .summary { margin: 0 0 12px; color: var(--muted); }
+        .summary strong { color: var(--ink); }
+
+        /* Tables */
+        .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        caption { text-align: left; padding: 10px 12px; color: var(--muted); font-size: 0.85rem; }
+        th, td { padding: 8px 12px; text-align: left; vertical-align: top; border-top: 1px solid var(--line); }
+        th { color: var(--muted); font-weight: 500; font-size: 0.8rem; white-space: nowrap; }
+        td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 0.85rem; }
+        tr.is-found td { background: var(--cyan-soft); }
+        td.changed { color: var(--amber); font-weight: 600; }
+        .reasons { margin: 0; padding-left: 18px; color: var(--muted); }
+        .reasons li { margin: 0; }
+
+        .risk-bar {
+            display: inline-block;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--amber), var(--red));
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+
+        .pager { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+        .message { margin: 10px 0 0; color: var(--amber); }
+        .message:empty { display: none; }
+
+        /* Student record */
+        .record-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: baseline; }
+        .scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+        .score {
+            background: var(--bg);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+        .score .label { font-size: 0.8rem; color: var(--muted); }
+        .score .value { font-family: var(--mono); font-size: 1.8rem; font-weight: 500; line-height: 1.3; }
+        .score .sub { font-size: 0.85rem; color: var(--faint); }
+        .status-ok { color: var(--green); }
+        .status-warn { color: var(--amber); }
+        .status-bad { color: var(--red); }
+
+        .whatif { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 16px; margin: 12px 0 16px; }
+        .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+        details { margin-top: 16px; border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; }
+        details[open] { padding-bottom: 14px; }
+        summary { cursor: pointer; padding: 10px 0; color: var(--ink); font-weight: 500; }
+        pre {
+            margin: 6px 0 12px;
+            padding: 12px;
+            background: var(--bg);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            white-space: pre;
+        }
+        dl.http { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 6px 0 12px; font-size: 0.9rem; }
+        dl.http dt { color: var(--muted); }
+        dl.http dd { margin: 0; font-family: var(--mono); font-size: 0.85rem; overflow-wrap: anywhere; }
+        .snippet-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; }
+
+        /* Walkthrough */
+        .parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        .part h3 { margin-top: 0; }
+        .part p { margin: 0 0 10px; color: var(--muted); }
+        .part p:last-child { margin-bottom: 0; }
+        .part .files { font-family: var(--mono); font-size: 0.8rem; }
+        .flow { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+
+        .prose p { max-width: 70ch; color: var(--muted); }
+        .prose p strong { color: var(--ink); }
+        cite { font-style: normal; }
+
+        footer { max-width: 1040px; margin: 0 auto; padding: 24px; border-top: 1px solid var(--line); color: var(--faint); font-size: 0.85rem; }
+
+        [hidden] { display: none !important; }
+
+        @media (max-width: 640px) {
+            main { padding: 16px 16px 64px; }
+            .panel { padding: 14px; }
+            th, td { padding: 6px 8px; }
+            .site-nav-in { padding: 0 16px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+        }
+    </style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<nav class="site-nav" aria-label="Site">
+    <div class="site-nav-in">
+        <a class="site-logo" href="/" aria-label="Reju Sam John, home">RSJ</a>
+        <button type="button" class="site-toggle" aria-label="Site menu" aria-expanded="false" aria-controls="site-links">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="site-links" id="site-links">
+            <li><a href="/#about">About</a></li>
+            <li><a href="/#experience">Experience</a></li>
+            <li><a href="/#skills">Skills</a></li>
+            <li><a href="/#projects">Projects</a></li>
+            <li><a href="/ml/">ML Explorer</a></li>
+            <li><a href="/#publications">Publications</a></li>
+            <li><a href="/#showcase">Showcase</a></li>
+            <li><a href="/#education">Education</a></li>
+            <li><a href="/#contact" class="site-cta">Get in Touch</a></li>
+        </ul>
+    </div>
+</nav>
+
+<main id="main">
+    <header class="intro">
+        <p class="eyebrow">Worked example · model deployment</p>
+        <h1>Student early warning: a deployed model you can use</h1>
+        <p class="lead">At the start of weeks 2, 4, 8 and 12 of a module, the model gives every enrolled student a <strong>risk</strong>: the probability that they end the module with Fail or Withdrawn. Advisors get the top <span data-src="facts#list_pct">20</span>% of each module as a list, with reasons, and decide whom to contact first.</p>
+        <p class="lead">The data is the public Open University Learning Analytics Dataset (OULAD), presentation 2014J, which the model never saw in training. This is a worked example of deploying a model, which I use in my teaching. Below is the tool first, then how each part of it is built.</p>
+        <p class="note" id="meta-line">Loading the lists…</p>
+        <noscript><p class="message">The lists and live scoring need JavaScript. The walkthrough below reads without it.</p></noscript>
+    </header>
+
+    <section id="advisor" aria-labelledby="advisor-title">
+        <h2 id="advisor-title">The advisor's view</h2>
+        <p class="prose note">These lists were scored once, in a batch, and are served as files. Nothing here calls the model.</p>
+        <div class="panel">
+            <div class="controls">
+                <div class="field">
+                    <span id="week-label">Prediction week</span>
+                    <div class="weeks" role="group" aria-labelledby="week-label">
+                        <button type="button" data-week="2" aria-pressed="false">2</button>
+                        <button type="button" data-week="4" aria-pressed="false">4</button>
+                        <button type="button" data-week="8" aria-pressed="true">8</button>
+                        <button type="button" data-week="12" aria-pressed="false">12</button>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="module">Module</label>
+                    <select id="module">
+                        <option>AAA</option><option>BBB</option><option>CCC</option><option>DDD</option>
+                        <option>EEE</option><option>FFF</option><option>GGG</option>
+                    </select>
+                </div>
+            </div>
+            <p class="summary" id="list-summary" aria-live="polite"></p>
+
+            <div class="table-wrap">
+                <table>
+                    <caption>The list: highest risk first</caption>
+                    <thead><tr><th class="num">Rank</th><th>Student</th><th class="num">Risk</th><th>Top reasons</th><th><span class="note">Record</span></th></tr></thead>
+                    <tbody id="list-body"></tbody>
+                </table>
+            </div>
+
+            <h3>Just below the list</h3>
+            <p class="note">The next three students after the cut. Small what-if changes to them are the ones most likely to move them onto the list.</p>
+            <div class="table-wrap">
+                <table>
+                    <caption>Ranked just after the list</caption>
+                    <thead><tr><th class="num">Rank</th><th>Student</th><th class="num">Risk</th><th>Top reasons</th><th><span class="note">Record</span></th></tr></thead>
+                    <tbody id="below-body"></tbody>
+                </table>
+            </div>
+
+            <h3>Whole cohort</h3>
+            <div class="controls">
+                <div class="field">
+                    <label for="search">Find a student id</label>
+                    <input type="search" id="search" inputmode="numeric" autocomplete="off" placeholder="e.g. 11391">
+                </div>
+                <button type="button" id="search-go">Find</button>
+            </div>
+            <p class="message" id="search-message" aria-live="polite"></p>
+            <div class="table-wrap">
+                <table>
+                    <caption id="cohort-caption">Every student in the cohort, by risk</caption>
+                    <thead><tr><th class="num">Rank</th><th>Student</th><th class="num">Risk</th><th>On the list</th><th><span class="note">Record</span></th></tr></thead>
+                    <tbody id="cohort-body"></tbody>
+                </table>
+            </div>
+            <div class="pager">
+                <button type="button" id="page-prev" class="small">Previous</button>
+                <span id="page-info" class="note"></span>
+                <button type="button" id="page-next" class="small">Next</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="record" aria-labelledby="record-title" hidden>
+        <div class="panel">
+            <div class="record-head">
+                <h2 id="record-title" tabindex="-1">Student record</h2>
+                <button type="button" id="record-close" class="small">Close</button>
+            </div>
+            <p class="note" id="record-context"></p>
+
+            <div class="scores">
+                <div class="score">
+                    <div class="label">Risk in the list (batch)</div>
+                    <div class="value" id="risk-exported">–</div>
+                    <div class="sub" id="rank-exported"></div>
+                </div>
+                <div class="score">
+                    <div class="label">Risk from the live model</div>
+                    <div class="value" id="risk-live">–</div>
+                    <div class="sub" id="risk-live-note" aria-live="polite"></div>
+                </div>
+            </div>
+            <h3>Reasons from the live model</h3>
+            <ul class="reasons" id="live-reasons"><li>Waiting for the live call.</li></ul>
+
+            <h3>What if?</h3>
+            <p class="note">Change what the student has done so far, then score the changed row. Related fields follow: assessments missed move with assessments submitted, and total clicks with clicks last week. Active days and weeks are held as they are.</p>
+            <div class="whatif">
+                <div class="field">
+                    <label for="wi-submitted">Assessments submitted</label>
+                    <input type="number" id="wi-submitted" min="0" step="1">
+                </div>
+                <div class="field">
+                    <label for="wi-late">Submitted late</label>
+                    <input type="number" id="wi-late" min="0" step="1">
+                </div>
+                <div class="field">
+                    <label for="wi-clicks">Clicks last week</label>
+                    <input type="number" id="wi-clicks" min="0" step="1">
+                </div>
+                <div class="field">
+                    <label for="wi-score">Mean assessment score</label>
+                    <input type="number" id="wi-score" min="0" max="100" step="any">
+                </div>
+            </div>
+            <div class="actions">
+                <button type="button" id="rescore" class="primary">Re-score</button>
+                <button type="button" id="reset">Back to the real row</button>
+                <span class="note" id="whatif-note" aria-live="polite"></span>
+            </div>
+
+            <h3>The row sent to the model</h3>
+            <div class="table-wrap">
+                <table>
+                    <caption>Features known by the start of the week; changed values in amber</caption>
+                    <thead><tr><th>Field</th><th>Meaning</th><th class="num">Value</th></tr></thead>
+                    <tbody id="feature-body"></tbody>
+                </table>
+            </div>
+
+            <details id="http">
+                <summary>Show the HTTP request and response</summary>
+                <dl class="http">
+                    <dt>Request</dt><dd id="http-line">–</dd>
+                    <dt>Status</dt><dd id="http-status">–</dd>
+                    <dt>Time</dt><dd id="http-time">–</dd>
+                    <dt>Source</dt><dd id="http-source">–</dd>
+                </dl>
+                <p class="note">Request body</p>
+                <pre id="http-body"></pre>
+                <p class="note">Response body</p>
+                <pre id="http-response"></pre>
+                <div class="snippet-head">
+                    <p class="note">The same call with curl</p>
+                    <button type="button" class="small" data-copy="snippet-curl">Copy</button>
+                </div>
+                <pre id="snippet-curl"></pre>
+                <div class="snippet-head">
+                    <p class="note">The same call in Python</p>
+                    <button type="button" class="small" data-copy="snippet-python">Copy</button>
+                </div>
+                <pre id="snippet-python"></pre>
+                <p class="note" id="copy-note" aria-live="polite"></p>
+            </details>
+        </div>
+    </section>
+
+    <section id="deployed" aria-labelledby="deployed-title">
+        <h2 id="deployed-title">How it is deployed, piece by piece</h2>
+        <p class="flow">this page ──▶ proxy (Cloudflare Worker) ──▶ HTTP API ──▶ Lambda (container) ──▶ model files<br>
+            weekly batch job (same container) ──▶ risk lists in a private S3 bucket</p>
+        <div class="parts">
+            <article class="part panel">
+                <h3>Batch and real-time scoring</h3>
+                <p>The batch job scores every student in each module and keeps the top <span data-src="facts#list_pct">20</span>%. It is started by hand here; in a teaching period a weekly schedule would start it. A list like this needs the whole module, so it cannot come from scoring one student at a time. The lists on this page were made the same way, by an export script that scored the whole 2014J cohort once through the live API.</p>
+                <p>The student record uses real-time scoring: one row in, one risk and its reasons out, through the API.</p>
+                <p class="files"><a href="https://github.com/rejusam/student-success-early-warning/blob/main/src/early_warning/batch.py">batch.py</a> · <a href="https://github.com/rejusam/student-success-early-warning/blob/main/.github/workflows/score.yml">score.yml</a> · <a href="https://github.com/rejusam/student-success-early-warning/blob/main/src/early_warning/demo_export.py">demo_export.py</a></p>
+            </article>
+            <article class="part panel">
+                <h3>The API and its container</h3>
+                <p>A FastAPI service with two routes, <code>GET /health</code> and <code>POST /v1/score</code> (1 to <span data-src="facts#api_max_students">500</span> students a call). Pydantic rejects unknown fields, so a demographic field cannot reach the model, and rejects rows that cannot occur, such as more late submissions than submissions.</p>
+                <p>The same container image runs the API on AWS Lambda and the batch job. It holds the runtime libraries only, runs as a non-root user and is scanned for known vulnerabilities in CI.</p>
+                <p class="files"><a href="https://github.com/rejusam/student-success-early-warning/blob/main/src/early_warning/api.py">api.py</a> · <a href="https://github.com/rejusam/student-success-early-warning/blob/main/Dockerfile">Dockerfile</a></p>
+            </article>
+            <article class="part panel">
+                <h3>Access: IAM and GitHub OIDC</h3>
+                <p>There are no AWS keys anywhere. GitHub Actions signs in to AWS with a short-lived OpenID Connect token, and each job gets a role that can do only that job: the deploy role cannot read the risk lists, and the scoring role cannot change the service.</p>
+                <p class="files"><a href="https://github.com/rejusam/student-success-early-warning/tree/main/infra/foundation">infra/foundation</a></p>
+            </article>
+            <article class="part panel">
+                <h3>CI/CD and retraining</h3>
+                <p>Every pull request and every push to main runs the tests, a secret scan, a container build and scan, and Terraform checks. Retraining is a manual workflow: it reruns the whole chain from the raw data, stops if any saved result changes, then builds, scans and deploys the image and calls the live API.</p>
+                <p class="files"><a href="https://github.com/rejusam/student-success-early-warning/blob/main/.github/workflows/ci.yml">ci.yml</a> · <a href="https://github.com/rejusam/student-success-early-warning/blob/main/.github/workflows/retrain.yml">retrain.yml</a></p>
+            </article>
+            <article class="part panel">
+                <h3>Monitoring and drift</h3>
+                <p>Each batch run compares the new cohort's inputs and scores with the training cohort using the Population Stability Index (PSI): below <span data-src="facts#psi_moderate">0.1</span> is stable, <span data-src="facts#psi_major">0.25</span> or more is a major shift that a person reviews. After the module ends, the lists' recall is checked against what was expected.</p>
+                <p class="files"><a href="https://github.com/rejusam/student-success-early-warning/blob/main/src/early_warning/drift.py">drift.py</a> · <a href="https://github.com/rejusam/student-success-early-warning/blob/main/reports/monitoring_report.md">monitoring_report.md</a></p>
+            </article>
+            <article class="part panel">
+                <h3>Leakage guard</h3>
+                <p>A prediction at the start of week 8 may only use data dated on or before the day before week 8. The feature query cuts every click and submission at that day, and drops students who had withdrawn by then, so the model never sees the future it is asked to predict.</p>
+                <p class="files"><a href="https://github.com/rejusam/student-success-early-warning/blob/main/sql/features/student_week.sql">student_week.sql</a></p>
+            </article>
+            <article class="part panel">
+                <h3>This page's proxy</h3>
+                <p>The page does not call AWS directly. A small Cloudflare Worker checks each request first: JSON only, at most <span data-src="facts#proxy_max_bytes">8192</span> bytes and <span data-src="facts#proxy_max_students">5</span> students, known fields only. It allows <span data-src="facts#proxy_ip_per_min">60</span> calls a minute from one address and <span data-src="facts#proxy_upstream_per_min">240</span> a minute to AWS in all, under the API's own throttle of <span data-src="facts#aws_rate">5</span> requests a second (bursts of <span data-src="facts#aws_burst">10</span>).</p>
+                <p>CORS lets browsers call it only from this site and a local test server; curl and Python, which send no Origin header, are served as normal.</p>
+                <p class="files"><a href="https://github.com/rejusam/student-success-early-warning/blob/main/proxy/src/index.ts">proxy/src/index.ts</a></p>
+            </article>
+            <article class="part panel">
+                <h3>Caching</h3>
+                <p>The advisor lists are scored once and served as static files, the cheapest cache there is. The page also remembers each answer it already has during your visit: send the same row twice and the second answer comes from memory, which the HTTP panel says.</p>
+                <p>There is no cache in the proxy: Cloudflare's cache API does nothing on a <code>workers.dev</code> address.</p>
+                <p class="files"><a href="https://github.com/rejusam/student-success-early-warning/blob/main/proxy/README.md">proxy/README.md</a></p>
+            </article>
+        </div>
+    </section>
+
+    <section id="limits" aria-labelledby="limits-title" class="prose">
+        <h2 id="limits-title">Limits and fairness</h2>
+        <p><strong>A list of <span data-src="facts#list_pct">20</span>% cannot reach everyone.</strong> At week 8 the list reached <span data-src="facts#recall_w8">0.4135</span> of the students who went on to fail or withdraw, and <span data-src="facts#precision_w8">0.7958</span> of the students on it did. At week 2 the model is no better than ranking by fewest clicks (recall <span data-src="facts#recall_w2">0.3092</span> against <span data-src="facts#recall_clicks_w2">0.3139</span>), and it over-predicts for the whole cohort that week by <span data-src="facts#calibration_gap_w2">0.0621</span>.</p>
+        <p><strong>Groups are not reached equally.</strong> At week 12 the list reached <span data-src="facts#recall_women_w12">0.4132</span> of at-risk women and <span data-src="facts#recall_men_w12">0.4742</span> of at-risk men. Gender, age, region, education, deprivation and disability are not inputs, but leaving them out does not make a model fair by itself, so the audit checks outcomes by group.</p>
+        <p><strong>A reason is not a cause.</strong> Reasons say which inputs raised this student's score in this model. The model sees clicks and submissions only, nothing of work, caring duties or health. A person decides what happens; the list is a prompt to offer help, not a judgement.</p>
+        <p>Full results: the <a href="https://github.com/rejusam/student-success-early-warning/blob/main/docs/model_card.md">model card</a> and the <a href="https://github.com/rejusam/student-success-early-warning/blob/main/reports/fairness_report.md">fairness report</a>.</p>
+        <h3>Data</h3>
+        <p><cite>Kuzilek, J., Hlosta, M. &amp; Zdrahal, Z. (2015). <em>Open University Learning Analytics Dataset.</em> UCI Machine Learning Repository.</cite> <a href="https://doi.org/10.24432/C5KK69">https://doi.org/10.24432/C5KK69</a>. Licence: Creative Commons Attribution 4.0 International (CC BY 4.0). Students are identified only by a number; no real student is identified on this page.</p>
+    </section>
+</main>
+
+<footer>
+    <p>Code for the model, the API, the proxy and the export behind this page: <a href="https://github.com/rejusam/student-success-early-warning">github.com/rejusam/student-success-early-warning</a>. Reju Sam John.</p>
+</footer>
+</body>
+</html>

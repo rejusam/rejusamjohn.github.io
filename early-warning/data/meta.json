@@ -1,0 +1,138 @@
+{
+  "generated_at_utc": "2026-11-21T03:11:09Z",
+  "api_url": "https://au3hc4ic73.execute-api.ap-southeast-2.amazonaws.com",
+  "health": {
+    "status": "ok",
+    "model_versions": {
+      "2": 2,
+      "4": 2,
+      "8": 2,
+      "12": 2
+    },
+    "released_at_commit": "feb773f6f874f4727368f3cf6c342377f2a50568"
+  },
+  "presentation": "2014J",
+  "list": "top 20% of each module presentation by risk",
+  "weeks": {
+    "2": {
+      "AAA": {
+        "cohort": 350,
+        "listed": 70
+      },
+      "BBB": {
+        "cohort": 1791,
+        "listed": 359
+      },
+      "CCC": {
+        "cohort": 2079,
+        "listed": 416
+      },
+      "DDD": {
+        "cohort": 1481,
+        "listed": 297
+      },
+      "EEE": {
+        "cohort": 1027,
+        "listed": 206
+      },
+      "FFF": {
+        "cohort": 1886,
+        "listed": 378
+      },
+      "GGG": {
+        "cohort": 719,
+        "listed": 144
+      }
+    },
+    "4": {
+      "AAA": {
+        "cohort": 348,
+        "listed": 70
+      },
+      "BBB": {
+        "cohort": 1786,
+        "listed": 358
+      },
+      "CCC": {
+        "cohort": 2021,
+        "listed": 405
+      },
+      "DDD": {
+        "cohort": 1463,
+        "listed": 293
+      },
+      "EEE": {
+        "cohort": 1020,
+        "listed": 204
+      },
+      "FFF": {
+        "cohort": 1859,
+        "listed": 372
+      },
+      "GGG": {
+        "cohort": 717,
+        "listed": 144
+      }
+    },
+    "8": {
+      "AAA": {
+        "cohort": 342,
+        "listed": 69
+      },
+      "BBB": {
+        "cohort": 1750,
+        "listed": 350
+      },
+      "CCC": {
+        "cohort": 1880,
+        "listed": 376
+      },
+      "DDD": {
+        "cohort": 1418,
+        "listed": 284
+      },
+      "EEE": {
+        "cohort": 997,
+        "listed": 200
+      },
+      "FFF": {
+        "cohort": 1794,
+        "listed": 359
+      },
+      "GGG": {
+        "cohort": 698,
+        "listed": 140
+      }
+    },
+    "12": {
+      "AAA": {
+        "cohort": 335,
+        "listed": 67
+      },
+      "BBB": {
+        "cohort": 1723,
+        "listed": 345
+      },
+      "CCC": {
+        "cohort": 1783,
+        "listed": 357
+      },
+      "DDD": {
+        "cohort": 1372,
+        "listed": 275
+      },
+      "EEE": {
+        "cohort": 963,
+        "listed": 193
+      },
+      "FFF": {
+        "cohort": 1722,
+        "listed": 345
+      },
+      "GGG": {
+        "cohort": 673,
+        "listed": 135
+      }
+    }
+  }
+}

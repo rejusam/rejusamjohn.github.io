@@ -1,0 +1,90 @@
+{
+  "list_pct": {
+    "value": 20,
+    "source": "src/early_warning/scoring.py#LIST_FRACTION"
+  },
+  "api_max_students": {
+    "value": 500,
+    "source": "src/early_warning/api.py#MAX_STUDENTS"
+  },
+  "aws_rate": {
+    "value": 5,
+    "source": "infra/service/variables.tf#throttle_rate"
+  },
+  "aws_burst": {
+    "value": 10,
+    "source": "infra/service/variables.tf#throttle_burst"
+  },
+  "proxy_max_students": {
+    "value": 5,
+    "source": "proxy/limits.json#max_students"
+  },
+  "proxy_max_bytes": {
+    "value": 8192,
+    "source": "proxy/limits.json#max_body_bytes"
+  },
+  "proxy_ip_per_min": {
+    "value": 60,
+    "source": "proxy/limits.json#ip_per_minute"
+  },
+  "proxy_upstream_per_min": {
+    "value": 240,
+    "source": "proxy/limits.json#upstream_per_minute"
+  },
+  "psi_moderate": {
+    "value": 0.1,
+    "source": "src/early_warning/drift.py#MODERATE"
+  },
+  "psi_major": {
+    "value": 0.25,
+    "source": "src/early_warning/drift.py#MAJOR"
+  },
+  "cohort_w2": {
+    "value": 9333,
+    "source": "data/meta.json#weeks.2"
+  },
+  "cohort_w4": {
+    "value": 9214,
+    "source": "data/meta.json#weeks.4"
+  },
+  "cohort_w8": {
+    "value": 8879,
+    "source": "data/meta.json#weeks.8"
+  },
+  "cohort_w12": {
+    "value": 8571,
+    "source": "data/meta.json#weeks.12"
+  },
+  "recall_w2": {
+    "value": 0.3092,
+    "source": "reports/baseline_metrics.json#metrics.2.lr_main.top_20.recall"
+  },
+  "precision_w2": {
+    "value": 0.6428,
+    "source": "reports/baseline_metrics.json#metrics.2.lr_main.top_20.precision"
+  },
+  "recall_w8": {
+    "value": 0.4135,
+    "source": "reports/baseline_metrics.json#metrics.8.lr_main.top_20.recall"
+  },
+  "precision_w8": {
+    "value": 0.7958,
+    "source": "reports/baseline_metrics.json#metrics.8.lr_main.top_20.precision"
+  },
+  "recall_clicks_w2": {
+    "value": 0.3139,
+    "source": "reports/baseline_metrics.json#metrics.2.clicks_rank.top_20.recall"
+  },
+  "recall_women_w12": {
+    "value": 0.4132,
+    "source": "reports/fairness_groups.csv#lr_main,12,F,recall"
+  },
+  "recall_men_w12": {
+    "value": 0.4742,
+    "source": "reports/fairness_groups.csv#lr_main,12,M,recall"
+  },
+  "calibration_gap_w2": {
+    "value": 0.0621,
+    "source": "reports/fairness_groups.csv#lr_main,2,All students,calibration_gap"
+  }
+}
