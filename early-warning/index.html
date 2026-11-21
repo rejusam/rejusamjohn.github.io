@@ -362,7 +362,7 @@
 
     <section id="advisor" aria-labelledby="advisor-title">
         <h2 id="advisor-title">The advisor's view</h2>
-        <p class="prose note">These lists were scored once, in a batch, and are served as files. Nothing here calls the model.</p>
+        <p class="prose note">These lists were scored once, in a batch, and are served as files. Open any student, or look one up by id, to see their record: a live score from the model, its reasons, and what-if changes you can re-score.</p>
         <div class="panel">
             <div class="controls">
                 <div class="field">
@@ -381,7 +381,13 @@
                         <option>EEE</option><option>FFF</option><option>GGG</option>
                     </select>
                 </div>
+                <div class="field">
+                    <label for="search">Look up a student id</label>
+                    <input type="search" id="search" inputmode="numeric" autocomplete="off" placeholder="e.g. 268733">
+                </div>
+                <button type="button" id="search-go">Find</button>
             </div>
+            <p class="message" id="search-message" aria-live="polite"></p>
             <p class="summary" id="list-summary" aria-live="polite"></p>
 
             <div class="table-wrap">
@@ -403,14 +409,6 @@
             </div>
 
             <h3>Whole cohort</h3>
-            <div class="controls">
-                <div class="field">
-                    <label for="search">Find a student id</label>
-                    <input type="search" id="search" inputmode="numeric" autocomplete="off" placeholder="e.g. 11391">
-                </div>
-                <button type="button" id="search-go">Find</button>
-            </div>
-            <p class="message" id="search-message" aria-live="polite"></p>
             <div class="table-wrap">
                 <table>
                     <caption id="cohort-caption">Every student in the cohort, by risk</caption>
