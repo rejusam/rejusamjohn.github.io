@@ -117,12 +117,12 @@
 
         <li class="step" id="step-3">
             <h2>One far-out value</h2>
-            <p class="lede">A value far from the rest is called an outlier. Press "Move the largest to <span data-value="hi">120</span>" to make one.</p>
+            <p class="lede">An outlier is a value far from the rest. Press "Move the largest to <span data-value="hi">120</span>" to make one.</p>
             <div class="happening">
-                <p>Faint dotted lines mark where the mean and the median started. The box shows start → now.</p>
+                <p>Faint dotted lines show where both lines started, and the box shows start → now.</p>
                 <p hidden data-fill>From the starting data, the button moves one value <span data-value="moved-by"></span> minutes further. Shared over <span data-value="n"></span> values, that raises the mean by <span data-value="mean-shift"></span>, to <span data-value="mean-moved"></span>.</p>
-                <p>The median depends only on the order, which has not changed, so it stays put. With a few far values on one side, the median can show a typical value better.</p>
-                <p>Note: an outlier may be a mistake, or your most interesting value. Check it before deleting it.</p>
+                <p>The median is still the middle value: the button only pushed the largest further out, so it stays put. Dragging one dot across the middle moves the median only a little. So when a few values sit far out on one side, the median can show a typical value better.</p>
+                <p>Note: an outlier may be a mistake, or your most interesting value. Check it first.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -152,12 +152,11 @@
 
         <li class="step" id="step-5">
             <h2>Divide by n or by n&nbsp;−&nbsp;1?</h2>
-            <p class="lede">Often the values are only a sample: a few drawn from the population, the whole group you care about.</p>
+            <p class="lede">Often the values are a sample of a bigger group, the population.</p>
             <div class="happening">
-                <p>Divide by n for the population variance, the spread of just these values. Divide by n&nbsp;−&nbsp;1 for the sample variance, an estimate, or best guess, of the bigger group's spread.</p>
-                <p>Why? Distances from the sample's own mean come out a little too small. Dividing by n&nbsp;−&nbsp;1 fixes that on average over many samples: it is unbiased.</p>
                 <p>The dashed violet square (÷&nbsp;<span data-value="n-less">8</span>) is <span data-value="ratio">9/8 = 1.125</span> times the solid one (÷&nbsp;<span data-value="n">9</span>). The violet strip is the extra.</p>
-                <p>Note: with many values the two hardly differ. Say which you used.</p>
+                <p>Dividing by n gives the population variance, treating these values as the whole group you care about. Dividing by n&nbsp;−&nbsp;1 gives the sample variance, a best guess (estimate) of the bigger group's spread. Neither is always right, so say which you used.</p>
+                <p>Why? Squared distances from the sample's own mean add up to no more than from the group's true mean, so dividing by n tends to come out too small. Dividing by n&nbsp;−&nbsp;1 fixes that on average over many samples: it is unbiased.</p>
             </div>
             <details class="maths">
                 <summary>The maths</summary>
@@ -170,18 +169,19 @@
                 <p>and dividing by <span class="tex" data-tex="n - 1"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">n - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span></span> gives</p>
                 <div class="eq"><span class="tex" data-display data-tex="\mathbb{E}[s^2] = \sigma^2"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="double-struck">E</mi><mo stretchy="false">[</mo><msup><mi>s</mi><mn>2</mn></msup><mo stretchy="false">]</mo><mo>=</mo><msup><mi>σ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\mathbb{E}[s^2] = \sigma^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1141em;vertical-align:-0.25em;"></span><span class="mord mathbb">E</span><span class="mopen">[</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8641em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span></span></div>
                 <p>Dividing by <span class="tex" data-tex="n - 1"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">n - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span></span> is called Bessel's correction. It makes <span class="tex" data-tex="s^2"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>s</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">s^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span> an unbiased estimator of <span class="tex" data-tex="\sigma^2"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>σ</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\sigma^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span>: right on average over many samples, though any one sample can be too high or too low.</p>
+                <p>With many values, dividing by n or by n&nbsp;−&nbsp;1 hardly differs.</p>
                 <p>Lesson 2 divided by <span class="tex" data-tex="n"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span></span> because it described the six fruit themselves, not a bigger group they were drawn from.</p>
-                <p hidden data-fill>For the starting data, <span data-value="ss"></span>/8 = <span data-value="sample-var"></span> min².</p>
+                <p hidden data-fill>For the starting data, <span data-value="ss"></span>/<span data-value="n-less"></span> = <span data-value="sample-var"></span> min².</p>
             </details>
         </li>
 
         <li class="step" id="step-6">
-            <h2>Standard deviation, z-scores</h2>
-            <p class="lede">The standard deviation (SD) is the square root of the variance: roughly, a typical distance from the mean, in minutes.</p>
+            <h2>A ruler marked in SDs</h2>
+            <p class="lede">The square root of either variance is the standard deviation (SD), back in minutes: roughly a typical distance from the mean.</p>
             <div class="happening">
-                <p>The ruler labelled z counts SDs from the mean. A z-score is how many population SDs a value sits from the mean: positive above, negative below. So z = −2 is two SDs below, not two minutes.</p>
-                <p hidden data-fill>Unless you have changed the data or picked another dot, the ring is on person <span data-value="sel-person"></span> (<span data-value="max-start"></span> minutes): z = <span data-value="sel-z"></span>. With no spread, z is not defined.</p>
-                <p>Note: the square root brings a bias back. On average, the sample SD comes out a little below the true SD.</p>
+                <p>The ruler labelled z counts SDs from the mean. A z-score is how many population SDs a value sits from the mean: positive above, negative below. So z = −2 is two SDs below, not two minutes. Drag a dot, or Tab to one, to see its z-score in the box.</p>
+                <p hidden data-fill>Unless you have moved or picked a dot, person <span data-value="sel-person"></span> (<span data-value="max-start"></span> minutes) is ringed: z = <span data-value="sel-z"></span>.</p>
+                <p>Note: the square root undoes step 5's fix. Over many samples, the sample SD averages a little below the bigger group's SD, not the box's ÷&nbsp;n SD.</p>
                 <p>Next: "Measuring error".</p>
             </div>
             <details class="maths">
