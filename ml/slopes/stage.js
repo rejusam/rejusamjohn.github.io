@@ -98,6 +98,24 @@ export function readout(step, { x, h }) {
   return [`x = ${fmt(x)}`, `f(x) = ${fmt(f(x))}`, `slope = ${fmt(fPrime(x))}`, d === 'flat' ? 'the lowest point' : DIRECTION_ROW[d]];
 }
 
+// Every number the step text quotes, keyed by its data-value. None of them
+// changes with the controls, so the spans already hold these values.
+export function pageValues() {
+  const [[x1, y1], [x2, y2]] = BIG;
+  const v = vertex();
+  return {
+    'big-run': tickFmt(x2 - x1),
+    'big-rise': tickFmt(y2 - y1),
+    'line-slope': tickFmt(slopeBetween(...BIG)),
+    'x-secant': tickFmt(X_SECANT),
+    // f′(x) = 2A·x + B, which is x − 2 here (A = 0.5).
+    'fprime-c': tickFmt(-B),
+    'h-min': fmt(H_MIN),
+    'low-x': tickFmt(v.x),
+    'low-y': tickFmt(v.y),
+  };
+}
+
 // Words for numbers in the live region.
 const say2 = (v, dp = 2) => {
   const s = fmt(v, dp);
@@ -487,6 +505,13 @@ export function createStage(svg, { controls, reduced = false, announce = () => {
   };
   shrinkBtn.addEventListener('click', () => animateH(H_MIN));
   resetBtn.addEventListener('click', () => animateH(H_START));
+
+  // Numbers on the page come from the stage.
+  const values = pageValues();
+  for (const span of doc.querySelectorAll('main.lesson [data-value]')) {
+    const val = values[span.dataset.value];
+    if (val !== undefined) span.textContent = val;
+  }
 
   render();
   if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(render, () => {});

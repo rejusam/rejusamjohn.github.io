@@ -505,6 +505,33 @@ test('lesson5 read-out rows and page', () => {
   assert.equal(lesson5Html.match(/class="step"/g).length, 5);
 });
 
+test('lesson5 every data-value span has a value, and quoted labels are the stage\'s own', () => {
+  const pv = lesson5.pageValues();
+  const keys = new Set([...lesson5Html.matchAll(/data-value="([^"]+)"/g)].map((m) => m[1]));
+  for (const key of keys) assert.ok(key in pv, key);
+  for (const key of Object.keys(pv)) assert.ok(keys.has(key), `unused ${key}`);
+  for (const [, key, text] of lesson5Html.matchAll(/data-value="([^"]+)">([^<]+)</g)) assert.equal(text, pv[key], key);
+  // Step 3: the slope is always x − 2, and the gap row is exactly h/2, so it halves with h.
+  for (const x of [-1, 0, 3, 4.5]) assert.ok(Math.abs(lesson5.fPrime(x) - (x - Number(pv['fprime-c']))) < 1e-12);
+  for (const h of [2, 1, 0.5]) assert.ok(Math.abs(lesson5.secantSlope(lesson5.X_SECANT, h) - lesson5.fPrime(lesson5.X_SECANT) - h / 2) < 1e-12);
+  // The read-out rows the step text quotes.
+  const rows = (i, x) => lesson5.readout(i, { x, h: 1 }).join('\n');
+  for (const [x, label] of [[0, 'negative: go right'], [4, 'positive: go left'], [2, 'zero: flat here']]) {
+    assert.ok(rows(3, x).includes(label), label);
+    assert.ok(lesson5Html.includes(`"${label}"`), label);
+  }
+  assert.ok(rows(4, 2).includes('the lowest point'));
+  assert.match(rows(0, 0), /^small: /m);
+  assert.match(rows(2, 0), /^gap: /m);
+  // Labels and buttons drawn by the stage that the step text quotes.
+  const src = readFileSync(new URL('../slopes/stage.js', import.meta.url), 'utf8');
+  for (const label of ['Shrink h', 'tangent slope', 'downhill', 'slope 0', 'lowest point (']) {
+    assert.ok(src.includes(label), label);
+    assert.ok(lesson5Html.includes(`"${label}`), label);
+  }
+  assert.ok(lesson5Html.includes(`"lowest point (<span data-value="low-x">${pv['low-x']}</span>, <span data-value="low-y">${pv['low-y']}</span>)"`));
+});
+
 test('lesson5 downhill arrow never ends higher than it starts', () => {
   const v = lesson5.vertex();
   for (let k = 0; k <= 700; k++) {
